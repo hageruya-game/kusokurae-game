@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>同調圧力くそくらえ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- タイトル画面 -->
+  <div id="screen-title" class="screen active">
+    <div class="title-top">
+      <div class="title-label">⚠ 警告 ⚠</div>
+      <div class="title-sub">このゲームは<br>空気を読みません</div>
+    </div>
+    <div class="title-character">
+      <img src="assets/image_0.png" alt="同調圧力の化身" class="character-img pulse">
+    </div>
+    <h1 class="title-main">同調圧力<br><span class="title-accent">くそくらえ</span></h1>
+    <button id="btn-start" class="btn btn-start">ゲームスタート</button>
+    <div class="title-footer">※ 言うことを聞いたら負けです</div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="screen-game" class="screen">
+    <div class="game-header">
+      <div class="round-display">ROUND <span id="round-num">1</span> / 5</div>
+      <div class="score-display">SCORE: <span id="score-num">0</span></div>
+    </div>
+    <div class="game-command-area">
+      <div id="command-text" class="command-text"></div>
+    </div>
+    <div class="game-character">
+      <img src="assets/image_0.png" alt="同調圧力の化身" id="game-char-img" class="character-img">
+    </div>
+    <div id="feedback" class="feedback"></div>
+    <div class="game-choices" id="choices-area">
+      <button id="btn-choice-0" class="btn btn-choice"></button>
+      <button id="btn-choice-1" class="btn btn-choice"></button>
+    </div>
+  </div>
+
+  <!-- リザルト画面 -->
+  <div id="screen-result" class="screen">
+    <div class="result-title" id="result-title"></div>
+    <div class="result-character">
+      <img src="assets/image_0.png" alt="同調圧力の化身" class="character-img" id="result-char-img">
+    </div>
+    <div class="result-score">
+      <span id="result-score-num">0</span> / 5
+    </div>
+    <div class="result-message" id="result-message"></div>
+    <button id="btn-replay" class="btn btn-start">もう一回やる</button>
+    <div class="result-footer" id="result-footer"></div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
