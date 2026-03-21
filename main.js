@@ -117,9 +117,9 @@ const AudioManager = {
   sounds: {},
 
   init() {
-    this.sounds.wrong = new Audio("assets/あーあ.wav");
-    this.sounds.thanks = new Audio("assets/さんきゅうー.wav");
-    this.sounds.crow = new Audio("assets/カラス.wav");
+    this.sounds.wrong = new Audio("あーあ.wav");
+    this.sounds.thanks = new Audio("さんきゅうー.wav");
+    this.sounds.crow = new Audio("カラス.wav");
     // 全音声のボリューム設定
     Object.values(this.sounds).forEach((s) => {
       s.volume = 0.7;
