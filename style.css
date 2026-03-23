@@ -1,9 +1,5 @@
 /* ===== リセット・基本 ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
@@ -22,73 +18,59 @@ body {
   align-items: center;
   justify-content: space-between;
   min-height: 100dvh;
-  padding: 20px 16px;
-  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  transition: background 0.5s;
 }
-
-.screen.active {
-  display: flex;
-}
+.screen.active { display: flex; }
 
 /* ===== タイトル画面 ===== */
-.title-top {
-  text-align: center;
-  margin-top: 10px;
-}
-
+.title-top { text-align: center; margin-top: 8px; }
 .title-label {
   display: inline-block;
   background: #ff0040;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
-  padding: 4px 18px;
+  padding: 3px 16px;
   border-radius: 4px;
   letter-spacing: 2px;
   animation: blink 1.2s ease-in-out infinite;
 }
-
 .title-sub {
-  margin-top: 10px;
-  font-size: 15px;
+  margin-top: 8px;
+  font-size: 14px;
   color: #c0a0ff;
   line-height: 1.6;
   font-weight: 700;
 }
-
-.title-character {
-  flex-shrink: 0;
-}
-
+.title-character { flex-shrink: 0; }
 .character-img {
-  width: min(55vw, 220px);
+  width: min(48vw, 190px);
   height: auto;
   display: block;
   filter: drop-shadow(0 0 20px rgba(160, 0, 255, 0.6));
 }
-
 .title-main {
-  font-size: clamp(28px, 8vw, 42px);
+  font-size: clamp(26px, 7.5vw, 40px);
   font-weight: 900;
   text-align: center;
   line-height: 1.3;
   color: #e0d0ff;
   text-shadow: 0 0 15px rgba(180, 0, 255, 0.5);
 }
-
 .title-accent {
   color: #ff2060;
   font-size: 1.3em;
-  text-shadow:
-    0 0 10px rgba(255, 0, 80, 0.8),
-    0 0 30px rgba(255, 0, 80, 0.4);
+  text-shadow: 0 0 10px rgba(255, 0, 80, 0.8), 0 0 30px rgba(255, 0, 80, 0.4);
 }
-
 .title-footer {
-  font-size: 13px;
+  font-size: 12px;
   color: #8060a0;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  line-height: 1.6;
+  text-align: center;
 }
 
 /* ===== ボタン共通 ===== */
@@ -101,58 +83,222 @@ body {
   transition: transform 0.1s, box-shadow 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
-
-.btn:active {
-  transform: scale(0.95);
-}
-
+.btn:active { transform: scale(0.95); }
 .btn-start {
   background: linear-gradient(180deg, #ff2060, #cc0040);
   color: #fff;
   font-size: clamp(20px, 5vw, 28px);
   padding: 16px 48px;
-  box-shadow:
-    0 4px 0 #900030,
-    0 6px 20px rgba(255, 0, 80, 0.4);
+  box-shadow: 0 4px 0 #900030, 0 6px 20px rgba(255, 0, 80, 0.4);
   letter-spacing: 2px;
 }
-
 .btn-start:active {
-  box-shadow:
-    0 2px 0 #900030,
-    0 3px 10px rgba(255, 0, 80, 0.3);
+  box-shadow: 0 2px 0 #900030, 0 3px 10px rgba(255, 0, 80, 0.3);
   transform: translateY(2px) scale(0.98);
 }
 
 /* ===== ゲーム画面 ===== */
 .game-header {
-  display: flex;
-  justify-content: space-between;
   width: 100%;
   max-width: 400px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
+  text-align: right;
+}
+.score-display { color: #ffcc00; }
+
+/* 進行バー */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 4px;
+}
+.progress-label {
+  font-size: 12px;
+  font-weight: 900;
+  color: #80b0ff;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4060cc, #80b0ff);
+  border-radius: 3px;
+  transition: width 0.4s ease-out;
+  width: 0%;
 }
 
-.round-display {
-  color: #c0a0ff;
+/* ===== 支配度メーター ===== */
+.pressure-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(160, 80, 255, 0.15);
+  background: rgba(40, 10, 60, 0.4);
+  transition: border-color 0.4s, background-color 0.4s;
 }
 
-.score-display {
-  color: #ffcc00;
+/* メーター行（支配度 + バー + %） */
+.pressure-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pressure-meter-label {
+  font-size: 13px;
+  font-weight: 900;
+  color: #c0a0e0;
+  white-space: nowrap;
+  letter-spacing: 2px;
+  transition: color 0.4s;
+}
+.pressure-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.pressure-fill {
+  height: 100%;
+  width: 20%;
+  border-radius: 5px;
+  background: #7050b0;
+  transition: width 0.5s ease-out, background 0.5s;
+}
+.pressure-fill.pressure-mid { background: #d0a020; }
+.pressure-fill.pressure-high { background: #e04040; }
+.pressure-fill.pressure-critical {
+  background: #ff0020;
+  animation: pressurePulse 0.6s ease-in-out infinite;
+}
+.pressure-pct {
+  font-size: 15px;
+  font-weight: 900;
+  color: #c0a0e0;
+  min-width: 36px;
+  text-align: right;
+  transition: color 0.4s;
+}
+.pressure-pct.pct-mid { color: #d0a020; }
+.pressure-pct.pct-high { color: #e04040; }
+.pressure-pct.pct-critical { color: #ff2020; }
+
+/* ヒント行 */
+.pressure-hint {
+  font-size: 10px;
+  font-weight: 700;
+  color: #706090;
+  letter-spacing: 0.5px;
+}
+
+/* 状態行（obey/waitのみ表示） */
+.state-line {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s, opacity 0.3s, margin 0.3s;
+  margin-top: 0;
+}
+.state-line.state-active {
+  max-height: 22px;
+  opacity: 1;
+  margin-top: 2px;
+}
+
+/* --- ステート: 服従 --- */
+.pressure-meter.state-obey {
+  border-color: rgba(255, 170, 0, 0.35);
+  background: rgba(255, 170, 0, 0.08);
+}
+.pressure-meter.state-obey .pressure-meter-label { color: #ffaa00; }
+.pressure-meter.state-obey .state-line { color: #ffaa00; }
+
+/* --- ステート: 待機 --- */
+.pressure-meter.state-wait {
+  border-color: rgba(255, 40, 40, 0.35);
+  background: rgba(255, 40, 40, 0.08);
+}
+.pressure-meter.state-wait .pressure-meter-label { color: #ff4040; }
+.pressure-meter.state-wait .state-line { color: #ff4040; }
+
+/* --- ステート: アクション（tap） --- */
+.pressure-meter.state-tap {
+  border-color: rgba(0, 221, 128, 0.35);
+  background: rgba(0, 221, 128, 0.08);
+}
+.pressure-meter.state-tap .pressure-meter-label { color: #00dd80; }
+.pressure-meter.state-tap .state-line { color: #00dd80; }
+
+@keyframes pressurePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ===== 圧力による画面演出 ===== */
+.atmos-mid {
+  background: rgba(60, 0, 40, 0.15);
+}
+.atmos-high {
+  background: rgba(80, 0, 20, 0.25);
+}
+.atmos-high .character-img {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.atmos-critical {
+  background: rgba(100, 0, 0, 0.35);
+  animation: screenShake 3s ease-in-out infinite;
+}
+.atmos-critical .character-img {
+  animation: pulse 0.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.8));
+}
+.atmos-critical .command-text {
+  animation: textDistort 2s ease-in-out infinite;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-1px, 0); }
+  30% { transform: translate(1px, -1px); }
+  50% { transform: translate(0, 1px); }
+  70% { transform: translate(-1px, 0); }
+  90% { transform: translate(1px, 0); }
+}
+
+@keyframes textDistort {
+  0%, 100% { transform: scaleX(1); }
+  25% { transform: scaleX(1.02); }
+  75% { transform: scaleX(0.98); }
 }
 
 .game-command-area {
   width: 100%;
   max-width: 400px;
-  min-height: 80px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .command-text {
-  font-size: clamp(24px, 7vw, 36px);
+  font-size: clamp(21px, 6vw, 32px);
   font-weight: 900;
   text-align: center;
   color: #ff4080;
@@ -160,158 +306,342 @@ body {
   line-height: 1.4;
   padding: 0 8px;
 }
-
-.game-character {
-  flex-shrink: 0;
+/* === obey命令 - 黄色の警告テキスト === */
+.command-obey {
+  color: #ffaa00;
+  text-shadow: 0 0 12px rgba(255, 170, 0, 0.7), 0 0 30px rgba(255, 120, 0, 0.3);
+  animation: commandObeyIn 0.5s ease-out forwards;
+}
+@keyframes commandObeyIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
+/* === wait命令 - 赤い激しいテキスト === */
+.command-wait {
+  color: #ff2020;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.9), 0 0 40px rgba(255, 0, 0, 0.4);
+  animation: commandWaitIn 0.35s ease-out forwards;
+}
+@keyframes commandWaitIn {
+  0% { transform: scale(0.5) rotate(-3deg); opacity: 0; }
+  50% { transform: scale(1.25) rotate(1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* === tap命令 - 緑系のテキスト === */
+.command-tap {
+  color: #00dd80;
+  text-shadow: 0 0 12px rgba(0, 221, 128, 0.7), 0 0 30px rgba(0, 180, 80, 0.3);
+  animation: commandTapIn 0.5s ease-out forwards;
+}
+@keyframes commandTapIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* wait中に命令テキストがパルスする（「押せ！」の圧力を強調） */
+.command-wait-active {
+  animation: waitCommandPulse 0.7s ease-in-out infinite;
+  color: #ff2020;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.9);
+}
+@keyframes waitCommandPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.game-character { flex-shrink: 0; }
+
 .feedback {
-  min-height: 50px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(20px, 6vw, 30px);
+  font-size: clamp(18px, 5.5vw, 28px);
   font-weight: 900;
   text-align: center;
 }
-
 .feedback.correct {
   color: #00ff80;
   text-shadow: 0 0 10px rgba(0, 255, 128, 0.6);
   animation: popIn 0.3s ease-out;
 }
-
 .feedback.wrong {
   color: #ff3030;
   text-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
   animation: shake 0.4s ease-out;
 }
+.feedback-big {
+  font-size: clamp(24px, 7vw, 36px);
+  min-height: 52px;
+  transition: opacity 0.3s;
+}
+.feedback-fade { opacity: 0; }
 
-.game-choices {
-  display: flex;
-  gap: 16px;
+/* ===== タイマーバー ===== */
+.timer-bar {
   width: 100%;
   max-width: 400px;
-  margin-bottom: 10px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+  transition: opacity 0.3s;
+}
+.timer-bar.timer-hidden { opacity: 0; }
+.timer-fill {
+  height: 100%;
+  background: #00cc66;
+  border-radius: 3px;
+  transition: width 0.05s linear;
+}
+.timer-fill.timer-warn { background: #ffaa00; }
+.timer-fill.timer-danger {
+  background: #ff2020;
+  animation: timerPulse 0.4s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
+/* ===== ヒントメッセージ（下部・内なる声） ===== */
+.hint-message {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5a9ec0;
+  text-align: center;
+  min-height: 16px;
+  margin-bottom: 2px;
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+.hint-message.hint-visible {
+  opacity: 0.9;
+  transition: opacity 0.2s ease-in;
+}
+
+/* ===== 選択肢 ===== */
+.game-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 8px;
+}
 .btn-choice {
-  flex: 1;
-  font-size: clamp(18px, 5vw, 24px);
-  padding: 20px 8px;
+  flex: 1 1 45%;
+  font-size: clamp(16px, 4.2vw, 20px);
+  padding: 16px 6px;
   color: #fff;
   letter-spacing: 1px;
-  min-height: 70px;
+  min-height: 56px;
 }
-
 .btn-choice:nth-child(1) {
   background: linear-gradient(180deg, #6030a0, #402070);
-  box-shadow:
-    0 4px 0 #2a1050,
-    0 6px 15px rgba(100, 0, 200, 0.3);
+  box-shadow: 0 3px 0 #2a1050, 0 5px 12px rgba(100, 0, 200, 0.3);
 }
-
 .btn-choice:nth-child(2) {
   background: linear-gradient(180deg, #0080ff, #0050cc);
-  box-shadow:
-    0 4px 0 #003080,
-    0 6px 15px rgba(0, 80, 255, 0.3);
+  box-shadow: 0 3px 0 #003080, 0 5px 12px rgba(0, 80, 255, 0.3);
 }
 
-.btn-choice:active {
-  transform: translateY(2px) scale(0.97);
+/* === waitモード: ボタンが赤く脈打つ（「押すな」感） === */
+.wait-mode .btn-choice:nth-child(1) {
+  background: linear-gradient(180deg, #bb2020, #881010);
+  box-shadow: 0 3px 0 #550808, 0 5px 12px rgba(255, 0, 0, 0.3);
+  animation: temptPulse 0.9s ease-in-out infinite;
+}
+.wait-mode .btn-choice:nth-child(2) {
+  background: linear-gradient(180deg, #bb2020, #881010);
+  box-shadow: 0 3px 0 #550808, 0 5px 12px rgba(255, 0, 0, 0.3);
+  animation: temptPulse 0.9s ease-in-out infinite 0.45s;
+}
+@keyframes temptPulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.4); }
 }
 
-.btn-choice:disabled {
-  opacity: 0.5;
+/* === tapモード: ボタンの背景を暗く、画像を強調 === */
+.tap-mode .btn-choice {
+  background: linear-gradient(180deg, #1a2a1a, #0a1a0a) !important;
+  box-shadow: 0 3px 0 #050f05, 0 5px 12px rgba(0, 180, 80, 0.2) !important;
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+}
+
+/* tapターゲット画像 共通 */
+.tap-target-img {
+  display: block;
+  margin: 0 auto;
   pointer-events: none;
+}
+
+/* 豚（デコイ）: 大きく目立つ */
+.tap-decoy {
+  width: 80px;
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(255, 150, 180, 0.7));
+}
+
+/* ハエ（正解）: 小さく控えめ */
+.tap-correct {
+  width: 28px;
+  height: auto;
+  opacity: 0.7;
+}
+
+/* === obeyモード: ボタンが黄色に（「注意」感） === */
+.obey-mode .btn-choice:nth-child(1) {
+  background: linear-gradient(180deg, #aa7700, #886000);
+  box-shadow: 0 3px 0 #553800, 0 5px 12px rgba(200, 130, 0, 0.3);
+}
+.obey-mode .btn-choice:nth-child(2) {
+  background: linear-gradient(180deg, #aa7700, #886000);
+  box-shadow: 0 3px 0 #553800, 0 5px 12px rgba(200, 130, 0, 0.3);
+}
+
+.btn-choice:active { transform: translateY(2px) scale(0.97); }
+.btn-choice:disabled { opacity: 0.5; pointer-events: none; }
+.choices-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.choices-appear { animation: choicesFadeIn 0.4s ease-out forwards; }
+@keyframes choicesFadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== リザルト画面 ===== */
 .result-title {
-  font-size: clamp(24px, 7vw, 36px);
+  font-size: clamp(22px, 6.5vw, 34px);
   font-weight: 900;
   text-align: center;
-  margin-top: 10px;
+  margin-top: 8px;
   line-height: 1.4;
 }
-
-.result-character {
-  flex-shrink: 0;
-}
-
+.result-character { flex-shrink: 0; }
 .result-score {
-  font-size: clamp(48px, 12vw, 64px);
+  font-size: clamp(40px, 10vw, 56px);
   font-weight: 900;
   color: #ffcc00;
   text-shadow: 0 0 20px rgba(255, 200, 0, 0.5);
 }
-
+.result-pressure {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a080cc;
+  margin-top: 2px;
+}
+.result-pressure.contaminated {
+  color: #ff2020;
+  animation: blink 0.8s ease-in-out infinite;
+}
 .result-message {
-  font-size: clamp(16px, 4.5vw, 22px);
+  font-size: clamp(14px, 3.8vw, 19px);
   font-weight: 700;
   text-align: center;
   line-height: 1.6;
   color: #d0b0ff;
   padding: 0 16px;
-  max-width: 360px;
+  max-width: 340px;
 }
-
 .result-footer {
   font-size: 12px;
   color: #6040a0;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-/* ===== アニメーション ===== */
+/* ===== コメントバブル ===== */
+.comment-bubble {
+  font-size: clamp(12px, 3.5vw, 16px);
+  font-weight: 700;
+  color: #e0c0ff;
+  background: rgba(80, 20, 120, 0.6);
+  border: 1px solid rgba(160, 80, 255, 0.4);
+  border-radius: 10px;
+  padding: 5px 12px;
+  text-align: center;
+  max-width: 280px;
+  min-height: 28px;
+  line-height: 1.4;
+}
+.comment-bubble:empty { display: none; }
+.comment-bubble.comment-warn {
+  color: #ffcc00;
+  border-color: rgba(255, 200, 0, 0.5);
+  background: rgba(120, 80, 0, 0.5);
+}
+/* waitヒント: 青い味方ボイス */
+.comment-bubble.comment-wait-hint {
+  color: #40ccff;
+  border-color: rgba(60, 180, 255, 0.5);
+  background: rgba(0, 60, 120, 0.6);
+  animation: commentAppear 0.3s ease-out;
+}
+/* obeyヒント: 黄色の警告ボイス */
+.comment-bubble.comment-obey-hint {
+  color: #ffcc00;
+  border-color: rgba(255, 200, 0, 0.5);
+  background: rgba(120, 80, 0, 0.6);
+  animation: commentAppear 0.3s ease-out;
+}
+.comment-bubble.comment-danger {
+  color: #ff4040;
+  border-color: rgba(255, 0, 0, 0.5);
+  background: rgba(120, 0, 0, 0.5);
+  animation: commentShake 0.3s ease-out;
+}
+@keyframes commentShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+@keyframes commentAppear {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.comment-appear { animation: commentAppear 0.3s ease-out; }
+
+/* ===== アニメーション共通 ===== */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
-
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
-
-.pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
+.pulse { animation: pulse 2s ease-in-out infinite; }
 @keyframes commandIn {
-  0% {
-    transform: scale(0.3) rotate(-5deg);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.15) rotate(2deg);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
+  0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
-
-.command-appear {
-  animation: commandIn 0.4s ease-out forwards;
-}
-
+.command-appear { animation: commandIn 0.4s ease-out forwards; }
 @keyframes charEnter {
   0% { transform: scale(1.3); }
   100% { transform: scale(1); }
 }
-
-.char-enter {
-  animation: charEnter 0.3s ease-out;
-}
-
+.char-enter { animation: charEnter 0.3s ease-out; }
 @keyframes popIn {
   0% { transform: scale(0.5); opacity: 0; }
   80% { transform: scale(1.2); }
   100% { transform: scale(1); opacity: 1; }
 }
-
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-10px); }
@@ -319,44 +649,120 @@ body {
   60% { transform: translateX(-6px); }
   80% { transform: translateX(6px); }
 }
-
 @keyframes slideUp {
   0% { transform: translateY(40px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
-
-.slide-up {
-  animation: slideUp 0.5s ease-out forwards;
-}
-
+.slide-up { animation: slideUp 0.5s ease-out forwards; }
 @keyframes resultBounce {
   0% { transform: scale(0); }
   60% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
-
-.result-bounce {
-  animation: resultBounce 0.5s ease-out;
-}
+.result-bounce { animation: resultBounce 0.5s ease-out; }
 
 /* ===== 画面遷移 ===== */
-.screen.fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
+.screen.fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn {
   0% { opacity: 0; }
   100% { opacity: 1; }
 }
 
-/* ===== 背景パターン ===== */
+/* ===== デバッグラベル（テストモード用） ===== */
+.debug-label {
+  position: fixed;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 14px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  display: none;
+  letter-spacing: 2px;
+}
+.debug-label.active { display: block; }
+.debug-label.type-normal { color: #80ff80; border: 1px solid rgba(128, 255, 128, 0.3); }
+.debug-label.type-obey { color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.3); }
+.debug-label.type-wait { color: #ff4040; border: 1px solid rgba(255, 64, 64, 0.3); }
+.debug-label.type-tap { color: #00dd80; border: 1px solid rgba(0, 221, 128, 0.3); }
+
+/* ===== フェーズ変更オーバーレイ ===== */
+.phase-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0a0010;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+.phase-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.phase-char {
+  width: min(50vw, 200px);
+  filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.7)) brightness(0.9) saturate(1.4);
+  animation: phaseCharPulse 1.2s ease-in-out infinite;
+}
+@keyframes phaseCharPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.7)) brightness(0.9); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 50px rgba(255, 0, 0, 1)) brightness(1.1); }
+}
+.phase-message {
+  font-size: clamp(20px, 6vw, 32px);
+  font-weight: 900;
+  color: #ff2020;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 60px rgba(255, 0, 0, 0.3);
+  text-align: center;
+  line-height: 1.6;
+  letter-spacing: 3px;
+}
+.phase-msg-anim {
+  animation: phaseTextIn 0.5s ease-out;
+}
+@keyframes phaseTextIn {
+  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== Phase 2 雰囲気（ゲーム画面全体） ===== */
+#screen-game.phase2 {
+  background: rgba(40, 0, 0, 0.4);
+}
+#screen-game.phase2 .progress-label {
+  color: #ff6060;
+}
+#screen-game.phase2 .progress-fill {
+  background: linear-gradient(90deg, #cc2020, #ff6040);
+}
+#screen-game.phase2 .pressure-meter-label {
+  color: #ff6060;
+}
+#screen-game.phase2 .progress-fill {
+  background: linear-gradient(90deg, #ff2020, #ff6020);
+}
+#screen-game.phase2 .character-img {
+  filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.6));
+}
+
+/* デバッグラベル: Phase 2 */
+.debug-label.type-phase2 { color: #ff0040; border: 1px solid rgba(255, 0, 64, 0.5); }
+
+/* ===== 背景 ===== */
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(100, 0, 200, 0.2) 0%, transparent 60%),
     radial-gradient(ellipse at 50% 100%, rgba(200, 0, 80, 0.15) 0%, transparent 50%);
