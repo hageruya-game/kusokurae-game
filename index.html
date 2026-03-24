@@ -25,47 +25,56 @@
     <div class="title-footer">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
   </div>
 
-  <!-- ゲーム画面 -->
+  <!-- ゲーム画面（3段レイアウト: 上段/中央キャラ段/下段） -->
   <div id="screen-game" class="screen">
-    <div class="game-header">
-      <div class="score-display">SCORE: <span id="score-num">0</span></div>
-    </div>
-    <div class="progress-row">
-      <div class="progress-label">進行 <span id="round-num">1</span>/<span id="total-rounds">10</span></div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress-fill"></div>
+    <!-- 上段: 情報 + 命令 -->
+    <div class="game-zone-top">
+      <div class="game-header">
+        <div class="score-display">SCORE: <span id="score-num">0</span></div>
       </div>
-    </div>
-    <div class="pressure-meter" id="pressure-meter">
-      <div class="pressure-row">
-        <div class="pressure-meter-label">支配度</div>
-        <div class="pressure-bar">
-          <div class="pressure-fill" id="pressure-fill"></div>
+      <div class="progress-row">
+        <div class="progress-label">進行 <span id="round-num">1</span>/<span id="total-rounds">10</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
         </div>
-        <div class="pressure-pct" id="pressure-pct">20%</div>
       </div>
-      <div class="pressure-hint">※100%でゲームオーバー</div>
-      <div class="state-line" id="state-line"></div>
+      <div class="pressure-meter" id="pressure-meter">
+        <div class="pressure-row">
+          <div class="pressure-meter-label">支配度</div>
+          <div class="pressure-bar">
+            <div class="pressure-fill" id="pressure-fill"></div>
+          </div>
+          <div class="pressure-pct" id="pressure-pct">20%</div>
+        </div>
+        <div class="pressure-hint">※100%でゲームオーバー</div>
+        <div class="state-line" id="state-line"></div>
+      </div>
+      <div class="game-command-area">
+        <div id="command-text" class="command-text"></div>
+      </div>
     </div>
-    <div class="game-command-area">
-      <div id="command-text" class="command-text"></div>
+    <!-- 中央キャラ段: 位置固定 -->
+    <div class="game-zone-center">
+      <div class="game-character">
+        <img src="image_0.png" alt="同調圧力の化身" id="game-char-img" class="character-img">
+      </div>
+      <div class="mockery" id="mockery"></div>
+      <div class="tap-guide" id="tap-guide">
+        <img src="fake_guide_rat.png" class="tap-guide-img">
+      </div>
     </div>
-    <div class="game-character">
-      <img src="image_0.png" alt="同調圧力の化身" id="game-char-img" class="character-img">
-    </div>
-    <div class="mockery" id="mockery"></div>
-    <div class="tap-guide" id="tap-guide">
-      <img src="fake_guide_rat.png" class="tap-guide-img">
-    </div>
-    <div class="comment-bubble" id="game-comment"></div>
-    <div id="feedback" class="feedback"></div>
-    <div class="timer-bar timer-hidden" id="timer-bar">
-      <div class="timer-fill" id="timer-fill"></div>
-    </div>
-    <div class="hint-message" id="hint-message"></div>
-    <div class="game-choices choices-hidden" id="choices-area">
-      <button id="btn-choice-0" class="btn btn-choice"></button>
-      <button id="btn-choice-1" class="btn btn-choice"></button>
+    <!-- 下段: コメント + フィードバック + 操作 -->
+    <div class="game-zone-bottom">
+      <div class="comment-bubble" id="game-comment"></div>
+      <div id="feedback" class="feedback"></div>
+      <div class="timer-bar timer-hidden" id="timer-bar">
+        <div class="timer-fill" id="timer-fill"></div>
+      </div>
+      <div class="hint-message" id="hint-message"></div>
+      <div class="game-choices choices-hidden" id="choices-area">
+        <button id="btn-choice-0" class="btn btn-choice"></button>
+        <button id="btn-choice-1" class="btn btn-choice"></button>
+      </div>
     </div>
   </div>
 

@@ -101,6 +101,39 @@ body {
 }
 
 /* ===== ゲーム画面 ===== */
+
+/* --- 3段レイアウト（中央キャラ位置固定） ---
+   上段(1fr) / 中段(auto) / 下段(1fr)
+   上段と下段が余白を均等に吸収するため、
+   中段のY位置は上下の内容変化に影響されない */
+.game-zone-top {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.game-zone-center {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.game-zone-bottom {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .game-header {
   width: 100%;
   max-width: 400px;
@@ -210,21 +243,18 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* 状態行（obey/waitのみ表示） */
+/* 状態行（obey/waitのみ表示、高さ固定でレイアウトシフト防止） */
 .state-line {
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 2px;
-  overflow: hidden;
-  max-height: 0;
+  height: 18px;
+  margin-top: 2px;
   opacity: 0;
-  transition: max-height 0.3s, opacity 0.3s, margin 0.3s;
-  margin-top: 0;
+  transition: opacity 0.3s;
 }
 .state-line.state-active {
-  max-height: 22px;
   opacity: 1;
-  margin-top: 2px;
 }
 
 /* --- ステート: 服従 --- */
@@ -358,7 +388,7 @@ body {
   50% { transform: scale(1.08); }
 }
 
-.game-character { flex-shrink: 1; }
+.game-character { flex-shrink: 0; }
 .game-character .character-img {
   width: min(28vw, 110px);
 }
@@ -580,12 +610,15 @@ body {
 
 /* ===== ネズミガイド（tap問題の誘導役） ===== */
 .tap-guide {
-  display: none;
   align-self: flex-start;
   margin-left: 16%;
-  margin-bottom: -4px;
+  height: 0;
+  overflow: visible;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
-.tap-guide.active { display: block; }
+.tap-guide.active { opacity: 1; }
 .tap-guide-img {
   width: 24px;
   height: auto;
@@ -640,7 +673,7 @@ body {
   min-height: 28px;
   line-height: 1.4;
 }
-.comment-bubble:empty { display: none; }
+.comment-bubble:empty { visibility: hidden; }
 .comment-bubble.comment-warn {
   color: #ffcc00;
   border-color: rgba(255, 200, 0, 0.5);
