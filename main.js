@@ -138,7 +138,7 @@ function getTimeLimit(roundIndex) {
   return 3;
 }
 
-const WAIT_RATIO = 0.4;
+// wait成功 = タイマーが0になるまで何も押さなかった時
 
 const PRESSURE = {
   initial: 20,
@@ -266,7 +266,6 @@ const Game = {
   roundCommands: [],
   isWaiting: false,
   contaminated: false,
-  waitTriggered: false,
   inPhase2: false,
   el: {},
 
@@ -533,7 +532,6 @@ const Game = {
   // === Phase 1: 命令表示 ===
   startRound() {
     this.stopTimer();
-    this.waitTriggered = false;
     this.clearHint();
 
     const cmd = this.roundCommands[this.currentRound];
@@ -650,7 +648,6 @@ const Game = {
 
     const tickMs = 50;
     let lastRushLevel = -1;
-    const waitThreshold = this.timeLimit * WAIT_RATIO;
     const isWaitStage = cmd.ruleType === "wait" || (cmd.ruleType === "tap" && cmd.correctType === "wait");
 
     this.timerInterval = setInterval(() => {
@@ -663,15 +660,6 @@ const Game = {
       if (pct > 60) this.el.timerFill.className = "timer-fill";
       else if (pct > 30) this.el.timerFill.className = "timer-fill timer-warn";
       else this.el.timerFill.className = "timer-fill timer-danger";
-
-      if (isWaitStage && !this.waitTriggered && !this.isWaiting) {
-        const elapsed = this.timeLimit - this.timeLeft;
-        if (elapsed >= waitThreshold) {
-          this.waitTriggered = true;
-          this.onWaitSuccess();
-          return;
-        }
-      }
 
       const ratio = this.timeLeft / this.timeLimit;
       let rushLevel = ratio > 0.6 ? -1 : ratio > 0.35 ? 0 : ratio > 0.15 ? 1 : 2;
@@ -707,7 +695,7 @@ const Game = {
     this.el.choicesArea.classList.add("choices-hidden");
     this.el.btnChoice0.disabled = true;
     this.el.btnChoice1.disabled = true;
-    this.el.timerBar.classList.add("timer-hidden");
+    this.el.timerFill.style.width = "0%";
     this.el.commandText.textContent = "";
 
     this.score++;
@@ -723,6 +711,16 @@ const Game = {
   onTimeout() {
     if (!this.timerActive) return;
     this.stopTimer();
+
+    const cmd = this.roundCommands[this.currentRound];
+    const isWaitStage = cmd.ruleType === "wait" || (cmd.ruleType === "tap" && cmd.correctType === "wait");
+
+    // waitステージ: タイマー0到達 = 正解
+    if (isWaitStage) {
+      this.onWaitSuccess();
+      return;
+    }
+
     this.clearHint();
     this.isWaiting = true;
 
