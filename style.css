@@ -394,14 +394,14 @@ body {
 }
 
 .feedback {
-  min-height: 32px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: clamp(16px, 4.5vw, 26px);
   font-weight: 900;
   text-align: center;
-  flex-shrink: 1;
+  flex-shrink: 0;
 }
 .feedback.correct {
   color: #00ff80;
@@ -415,7 +415,6 @@ body {
 }
 .feedback-big {
   font-size: clamp(20px, 6vw, 32px);
-  min-height: 40px;
   transition: opacity 0.3s;
 }
 .feedback-fade { opacity: 0; }
@@ -971,8 +970,8 @@ body::before {
   .result-character .character-img { width: min(26vw, 100px); }
   .character-img { width: min(32vw, 120px); }
   .command-text { font-size: clamp(18px, 5vw, 26px); }
-  .feedback { min-height: 26px; font-size: clamp(14px, 4vw, 22px); }
-  .feedback-big { min-height: 32px; font-size: clamp(18px, 5vw, 28px); }
+  .feedback { min-height: 32px; font-size: clamp(14px, 4vw, 22px); }
+  .feedback-big { font-size: clamp(18px, 5vw, 28px); }
   .game-command-area { min-height: 36px; }
   .pressure-meter { padding: 4px 8px; margin-top: 2px; }
   .pressure-meter-label { font-size: 11px; }
@@ -1008,7 +1007,7 @@ body::before {
   .title-character .character-img { width: min(26vw, 95px); }
   .result-character .character-img { width: min(22vw, 80px); }
   .command-text { font-size: clamp(16px, 4.5vw, 22px); }
-  .feedback { min-height: 22px; font-size: clamp(13px, 3.5vw, 18px); }
+  .feedback { min-height: 28px; font-size: clamp(13px, 3.5vw, 18px); }
   .btn-choice { min-height: 40px; padding: 8px 4px; }
   .tap-mode .btn-choice { min-height: 52px !important; }
   .tap-decoy { width: 48px; }
