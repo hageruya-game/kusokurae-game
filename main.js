@@ -315,6 +315,7 @@ const Game = {
       hintMessage: document.getElementById("hint-message"),
       oxOverlay: document.getElementById("ox-overlay"),
       oxSymbol: document.getElementById("ox-symbol"),
+      tapGuide: document.getElementById("tap-guide"),
     };
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
@@ -564,8 +565,9 @@ const Game = {
     this.el.btnChoice0.innerHTML = "";
     this.el.btnChoice1.innerHTML = "";
 
-    // キャラ画像リセット（tap後にネズミのままにならないよう）
+    // リセット
     this.el.gameCharImg.src = "image_0.png";
+    this.el.tapGuide.classList.remove("active");
 
     // デバッグラベル
     const phase = this.inPhase2 ? "P2:" : "P1:";
@@ -590,7 +592,7 @@ const Game = {
       this.el.commandText.className = "command-text command-obey";
     } else if (cmd.ruleType === "tap") {
       this.el.commandText.className = "command-text command-tap";
-      this.el.gameCharImg.src = "fake_guide_rat.png";
+      this.el.tapGuide.classList.add("active");
     } else {
       this.el.commandText.className = "command-text command-appear";
     }
@@ -716,6 +718,7 @@ const Game = {
     this.el.btnChoice1.disabled = true;
     this.el.timerFill.style.width = "0%";
     this.el.commandText.textContent = "";
+    this.el.tapGuide.classList.remove("active");
 
     this.score++;
     this.el.scoreNum.textContent = this.score;
@@ -774,11 +777,26 @@ const Game = {
     const highPressure = this.pressureLevel >= PRESSURE.thresholdHigh;
 
     this.el.choicesArea.classList.remove("choices-appear");
-    this.el.choicesArea.classList.add("choices-hidden");
     this.el.btnChoice0.disabled = true;
     this.el.btnChoice1.disabled = true;
     this.el.timerBar.classList.add("timer-hidden");
     this.el.commandText.textContent = "";
+    this.el.tapGuide.classList.remove("active");
+
+    // tap不正解 & 正解ボタンあり → 正解フラッシュ（0.5秒間）
+    if (!isCorrect && cmd.ruleType === "tap" && cmd.correctIndex >= 0) {
+      const correctBtn = cmd.correctIndex === 0 ? this.el.btnChoice0 : this.el.btnChoice1;
+      const wrongBtn = cmd.correctIndex === 0 ? this.el.btnChoice1 : this.el.btnChoice0;
+      correctBtn.classList.add("flash-correct");
+      wrongBtn.classList.add("flash-wrong");
+      setTimeout(() => {
+        this.el.choicesArea.classList.add("choices-hidden");
+        correctBtn.classList.remove("flash-correct");
+        wrongBtn.classList.remove("flash-wrong");
+      }, 500);
+    } else {
+      this.el.choicesArea.classList.add("choices-hidden");
+    }
 
     if (isCorrect) {
       this.score++;

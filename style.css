@@ -503,11 +503,11 @@ body {
   filter: drop-shadow(0 0 10px rgba(255, 150, 180, 0.7));
 }
 
-/* ハエ（正解）: 小さく控えめ */
+/* 正解候補: デコイより小さいが候補として認識できるサイズ */
 .tap-correct {
-  width: 28px;
+  width: 40px;
   height: auto;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 /* === obeyモード: ボタンが黄色に（「注意」感） === */
@@ -576,6 +576,31 @@ body {
   color: #6040a0;
   font-weight: 700;
   margin-bottom: 8px;
+}
+
+/* ===== ネズミガイド（tap問題の誘導役） ===== */
+.tap-guide {
+  display: none;
+  align-self: flex-start;
+  margin-left: 16%;
+  margin-bottom: -4px;
+}
+.tap-guide.active { display: block; }
+.tap-guide-img {
+  width: 24px;
+  height: auto;
+  opacity: 0.45;
+  filter: drop-shadow(0 0 4px rgba(0, 200, 80, 0.3)) grayscale(0.2);
+}
+
+/* ===== 正解フラッシュ（tap不正解時） ===== */
+.btn-choice.flash-correct {
+  border: 2px solid rgba(0, 255, 128, 0.8) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 128, 0.5) !important;
+}
+.btn-choice.flash-wrong {
+  opacity: 0.3 !important;
+  transition: opacity 0.15s;
 }
 
 /* ===== コメントバブル ===== */
@@ -847,7 +872,8 @@ body::before {
   .btn-choice { min-height: 44px; padding: 10px 6px; font-size: clamp(14px, 3.8vw, 17px); }
   .tap-mode .btn-choice { min-height: 60px !important; padding: 6px !important; }
   .tap-decoy { width: 60px; }
-  .tap-correct { width: 22px; }
+  .tap-correct { width: 32px; }
+  .tap-guide-img { width: 20px; }
   .comment-bubble { font-size: clamp(11px, 3vw, 14px); padding: 4px 10px; min-height: 24px; }
   .hint-message { font-size: 10px; min-height: 14px; }
   .game-choices { gap: 6px; margin-bottom: 2px; }
@@ -875,7 +901,8 @@ body::before {
   .btn-choice { min-height: 40px; padding: 8px 4px; }
   .tap-mode .btn-choice { min-height: 52px !important; }
   .tap-decoy { width: 48px; }
-  .tap-correct { width: 18px; }
+  .tap-correct { width: 26px; }
+  .tap-guide-img { width: 18px; }
   .pressure-meter { padding: 3px 6px; }
   .title-main { font-size: clamp(20px, 6vw, 28px); }
   .btn-start { font-size: clamp(16px, 4vw, 22px); padding: 10px 30px; }
