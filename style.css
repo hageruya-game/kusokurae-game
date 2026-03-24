@@ -593,6 +593,29 @@ body {
   filter: drop-shadow(0 0 4px rgba(0, 200, 80, 0.3)) grayscale(0.2);
 }
 
+/* ===== 嘲笑テキスト ===== */
+.mockery {
+  font-size: 11px;
+  font-weight: 900;
+  color: #ff4080;
+  text-align: center;
+  min-height: 0;
+  height: 0;
+  opacity: 0;
+  letter-spacing: 2px;
+  overflow: visible;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.mockery.active {
+  opacity: 0.75;
+  animation: mockeryIn 0.3s ease-out;
+}
+@keyframes mockeryIn {
+  0% { transform: translateY(4px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 0.75; }
+}
+
 /* ===== 正解フラッシュ（tap不正解時） ===== */
 .btn-choice.flash-correct {
   border: 2px solid rgba(0, 255, 128, 0.8) !important;

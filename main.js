@@ -234,6 +234,8 @@ const COMMENTS = {
   rushMedium: ["君だけ遅い", "迷うな、合わせろ", "空気読めないの？", "置いていかれるよ？", "まだ？"],
   rushHeavy: ["黙って従えば早いのに", "決められないの、恥ずかしいよ？", "さっさとしろ", "時間がないぞ", "考えすぎだ"],
   timeout: ["判断放棄", "遅すぎる", "考えるなと言っただろ", "沈黙も同調だよ", "圧力にすら間に合わない"],
+  mockery: ["ぶはは…", "見えてないな", "遅い", "甘いな", "ふふ…", "迷ってる？", "考えすぎ"],
+  mockeryP2: ["まだやるの？", "もう諦めな", "学習しないな", "笑える", "哀れだ", "無理だろ", "見てられない"],
 };
 
 // ----- コメントシステム -----
@@ -407,6 +409,8 @@ const Game = {
   timerActive: false,
   hintTimeout: null,
   oxTimeout: null,
+  mockeryTimeout: null,
+  lastMockery: "",
 
   init() {
     this.el = {
@@ -448,6 +452,7 @@ const Game = {
       oxOverlay: document.getElementById("ox-overlay"),
       oxSymbol: document.getElementById("ox-symbol"),
       tapGuide: document.getElementById("tap-guide"),
+      mockery: document.getElementById("mockery"),
     };
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
@@ -616,6 +621,35 @@ const Game = {
     this.el.hintMessage.textContent = "";
   },
 
+  // === 嘲笑演出 ===
+  showMockery(delay) {
+    clearTimeout(this.mockeryTimeout);
+    this.mockeryTimeout = setTimeout(() => {
+      const category = this.inPhase2 ? "mockeryP2" : "mockery";
+      let text = CommentSystem.pick(category);
+      // 同じテキストの連続を防ぐ
+      if (text === this.lastMockery) {
+        text = CommentSystem.pick(category);
+      }
+      this.lastMockery = text;
+
+      this.el.mockery.textContent = text;
+      this.el.mockery.classList.remove("active");
+      void this.el.mockery.offsetWidth;
+      this.el.mockery.classList.add("active");
+
+      this.mockeryTimeout = setTimeout(() => {
+        this.el.mockery.classList.remove("active");
+      }, 1200);
+    }, delay || 0);
+  },
+
+  clearMockery() {
+    clearTimeout(this.mockeryTimeout);
+    this.el.mockery.classList.remove("active");
+    this.el.mockery.textContent = "";
+  },
+
   // === ○×フィードバック ===
   showOX(isCorrect) {
     clearTimeout(this.oxTimeout);
@@ -690,6 +724,7 @@ const Game = {
   startRound() {
     this.stopTimer();
     this.clearHint();
+    this.clearMockery();
 
     const cmd = this.roundCommands[this.currentRound];
     this.el.roundNum.textContent = this.currentRound + 1;
@@ -842,6 +877,10 @@ const Game = {
           const cls = ["", "comment-warn", "comment-danger"];
           CommentSystem.setText(CommentSystem.pick(cats[rushLevel]), this.el.gameComment, cls[rushLevel]);
         }
+        // 嘲笑: rushLevel2(残15%以下)で発動。Phase2は確定、Phase1は25%
+        if (rushLevel >= 2 && (this.inPhase2 || Math.random() < 0.25)) {
+          this.showMockery(0);
+        }
       }
     }, tickMs);
   },
@@ -908,6 +947,7 @@ const Game = {
     this.el.feedback.className = "feedback feedback-big wrong";
     this.showOX(false);
     CommentSystem.setText("時間切れ", this.el.gameComment, "comment-danger");
+    this.showMockery(400);
 
     this.advanceAfterResult();
   },
@@ -960,6 +1000,7 @@ const Game = {
       this.showOX(false);
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
       CommentSystem.show(highPressure ? "wrongHigh" : "wrong", this.el.gameComment);
+      this.showMockery(400);
     }
 
     this.advanceAfterResult();
