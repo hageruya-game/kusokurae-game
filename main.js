@@ -274,6 +274,7 @@ const Game = {
   timeLimit: 0,
   timerActive: false,
   hintTimeout: null,
+  oxTimeout: null,
 
   init() {
     this.el = {
@@ -312,6 +313,8 @@ const Game = {
       phaseOverlay: document.getElementById("phase-change-overlay"),
       phaseMessage: document.getElementById("phase-message"),
       hintMessage: document.getElementById("hint-message"),
+      oxOverlay: document.getElementById("ox-overlay"),
+      oxSymbol: document.getElementById("ox-symbol"),
     };
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
@@ -476,6 +479,22 @@ const Game = {
     clearTimeout(this.hintTimeout);
     this.el.hintMessage.classList.remove("hint-visible");
     this.el.hintMessage.textContent = "";
+  },
+
+  // === ○×フィードバック ===
+  showOX(isCorrect) {
+    clearTimeout(this.oxTimeout);
+    this.el.oxSymbol.className = "ox-symbol";
+    this.el.oxOverlay.classList.remove("ox-show");
+
+    void this.el.oxSymbol.offsetWidth; // reflow
+    this.el.oxSymbol.textContent = isCorrect ? "○" : "✕";
+    this.el.oxSymbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
+    this.el.oxOverlay.classList.add("ox-show");
+
+    this.oxTimeout = setTimeout(() => {
+      this.el.oxOverlay.classList.remove("ox-show");
+    }, 600);
   },
 
   // === 圧力メーター ===
@@ -702,6 +721,7 @@ const Game = {
     this.el.scoreNum.textContent = this.score;
     this.el.feedback.textContent = cmd.rightReaction;
     this.el.feedback.className = "feedback feedback-big correct";
+    this.showOX(true);
     this.changePressure(PRESSURE.exceptionCorrect);
     CommentSystem.show(highPressure ? "correctHigh" : "correct", this.el.gameComment);
 
@@ -735,6 +755,7 @@ const Game = {
 
     this.el.feedback.textContent = CommentSystem.pick("timeout");
     this.el.feedback.className = "feedback feedback-big wrong";
+    this.showOX(false);
     CommentSystem.setText("時間切れ", this.el.gameComment, "comment-danger");
 
     this.advanceAfterResult();
@@ -764,11 +785,13 @@ const Game = {
       this.el.scoreNum.textContent = this.score;
       this.el.feedback.textContent = cmd.rightReaction;
       this.el.feedback.className = "feedback feedback-big correct";
+      this.showOX(true);
       this.changePressure(isEx ? PRESSURE.exceptionCorrect : PRESSURE.normalCorrect);
       CommentSystem.show(highPressure ? "correctHigh" : "correct", this.el.gameComment);
     } else {
       this.el.feedback.textContent = cmd.wrongReaction;
       this.el.feedback.className = "feedback feedback-big wrong";
+      this.showOX(false);
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
       CommentSystem.show(highPressure ? "wrongHigh" : "wrong", this.el.gameComment);
     }

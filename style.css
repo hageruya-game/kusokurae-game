@@ -702,6 +702,48 @@ body {
 .debug-label.type-wait { color: #ff4040; border: 1px solid rgba(255, 64, 64, 0.3); }
 .debug-label.type-tap { color: #00dd80; border: 1px solid rgba(0, 221, 128, 0.3); }
 
+/* ===== ○×フィードバックオーバーレイ ===== */
+.ox-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+}
+.ox-overlay.ox-show { opacity: 1; }
+.ox-symbol {
+  font-size: min(40vw, 180px);
+  font-weight: 900;
+  line-height: 1;
+}
+.ox-symbol.ox-correct {
+  color: rgba(100, 200, 255, 0.9);
+  text-shadow: 0 0 30px rgba(80, 180, 255, 0.6);
+  animation: oxCorrectIn 0.5s ease-out forwards;
+}
+.ox-symbol.ox-wrong {
+  color: rgba(255, 50, 50, 0.95);
+  text-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+  animation: oxWrongIn 0.5s ease-out forwards;
+}
+@keyframes oxCorrectIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+@keyframes oxWrongIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  20% { transform: scale(1.3); opacity: 1; }
+  30% { transform: translateX(-6px) scale(1.1); }
+  40% { transform: translateX(6px) scale(1.1); }
+  50% { transform: translateX(-3px) scale(1.05); }
+  60% { transform: translateX(0) scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
 /* ===== フェーズ変更オーバーレイ ===== */
 .phase-overlay {
   position: fixed;
