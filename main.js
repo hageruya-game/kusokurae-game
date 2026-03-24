@@ -755,7 +755,7 @@ const Game = {
 
       this.mockeryTimeout = setTimeout(() => {
         this.el.mockery.classList.remove("active");
-      }, 1200);
+      }, 1600);
     }, delay || 0);
   },
 
