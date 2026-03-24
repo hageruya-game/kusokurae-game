@@ -839,6 +839,42 @@ body {
   100% { transform: scale(1); opacity: 0; }
 }
 
+/* ===== 強煽りオーバーレイ ===== */
+.taunt-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  pointer-events: none;
+  opacity: 0;
+}
+.taunt-overlay.taunt-show { opacity: 1; }
+.taunt-text {
+  font-size: clamp(30px, 9vw, 48px);
+  font-weight: 900;
+  color: #ff1030;
+  text-shadow: 0 0 20px rgba(255, 0, 30, 0.9), 0 0 60px rgba(255, 0, 30, 0.4);
+  letter-spacing: 6px;
+  line-height: 1;
+}
+.taunt-anim {
+  animation: tauntIn 0.7s ease-out forwards;
+}
+.taunt-text.taunt-p2 {
+  font-size: clamp(34px, 10vw, 52px);
+  color: #ff0020;
+  text-shadow: 0 0 30px rgba(255, 0, 0, 1), 0 0 80px rgba(255, 0, 0, 0.5);
+  letter-spacing: 8px;
+}
+@keyframes tauntIn {
+  0% { transform: scale(1.5); opacity: 0; }
+  12% { transform: scale(1.05); opacity: 1; }
+  55% { transform: scale(1); opacity: 0.95; }
+  100% { transform: scale(0.97); opacity: 0; }
+}
+
 /* ===== フェーズ変更オーバーレイ ===== */
 .phase-overlay {
   position: fixed;

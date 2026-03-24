@@ -236,6 +236,8 @@ const COMMENTS = {
   timeout: ["判断放棄", "遅すぎる", "考えるなと言っただろ", "沈黙も同調だよ", "圧力にすら間に合わない"],
   mockery: ["ぶはは…", "ぶハハハ…", "ククク…", "……ブハッ", "ふふ…", "見えてないな", "遅い", "甘いな", "迷ってる？", "考えすぎ", "へぇ…", "ぷっ"],
   mockeryP2: ["ぶハハハ…！", "ククク……哀れだ", "……ブハッ 無理だろ", "まだやるの？", "もう諦めな", "学習しないな", "見てられない", "笑える", "お前の限界だ", "ふふ…終わりだよ"],
+  taunt: ["遅い", "甘い", "見えてない", "無駄だ", "弱い", "浅い"],
+  tauntP2: ["限界だ", "終わりだ", "もう無理だろ", "遅すぎる", "話にならない", "詰んだな"],
 };
 
 // ----- コメントシステム -----
@@ -355,6 +357,75 @@ const SoundSystem = {
     osc.stop(t + 0.08);
   },
 
+  // --- 環境音: 低ドローン + 心拍パルス ---
+  ambientNodes: null,
+  ambientGains: null,
+
+  startAmbient(phase2) {
+    if (!this.enabled) return;
+    this.stopAmbient();
+    this.resume();
+    const ctx = this.ctx;
+
+    // Layer 1: 低いドローン
+    const drone = ctx.createOscillator();
+    const dg = ctx.createGain();
+    drone.type = "triangle";
+    drone.frequency.value = phase2 ? 55 : 42;
+    dg.gain.value = phase2 ? 0.04 : 0.025;
+    drone.connect(dg);
+    dg.connect(ctx.destination);
+    drone.start();
+
+    // Layer 2: 微妙にずれたドローン（うねり生成）
+    const drone2 = ctx.createOscillator();
+    const d2g = ctx.createGain();
+    drone2.type = "triangle";
+    drone2.frequency.value = phase2 ? 57.5 : 43.5;
+    d2g.gain.value = phase2 ? 0.02 : 0.012;
+    drone2.connect(d2g);
+    d2g.connect(ctx.destination);
+    drone2.start();
+
+    // Layer 3: 心拍パルス（LFOでゲイン変調）
+    const pulse = ctx.createOscillator();
+    const pg = ctx.createGain();
+    pulse.type = "sine";
+    pulse.frequency.value = phase2 ? 48 : 35;
+    pg.gain.value = 0;
+    pulse.connect(pg);
+    pg.connect(ctx.destination);
+    const lfo = ctx.createOscillator();
+    const lg = ctx.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = phase2 ? 1.1 : 0.7;
+    lg.gain.value = phase2 ? 0.035 : 0.02;
+    lfo.connect(lg);
+    lg.connect(pg.gain);
+    lfo.start();
+    pulse.start();
+
+    this.ambientNodes = [drone, drone2, pulse, lfo];
+    this.ambientGains = [dg, d2g, pg, lg];
+  },
+
+  stopAmbient() {
+    if (!this.ambientNodes) return;
+    const ctx = this.ctx;
+    if (ctx) {
+      const t = ctx.currentTime;
+      this.ambientGains.forEach(g => {
+        g.gain.linearRampToValueAtTime(0, t + 0.3);
+      });
+    }
+    const nodes = this.ambientNodes;
+    this.ambientNodes = null;
+    this.ambientGains = null;
+    setTimeout(() => {
+      nodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    }, 350);
+  },
+
   // --- フェーズ変更音: 低く不穏なうなり ---
   phaseChange() {
     if (!this.enabled) return;
@@ -411,6 +482,7 @@ const Game = {
   oxTimeout: null,
   mockeryTimeout: null,
   lastMockery: "",
+  tauntTimeout: null,
 
   init() {
     this.el = {
@@ -453,6 +525,8 @@ const Game = {
       oxSymbol: document.getElementById("ox-symbol"),
       tapGuide: document.getElementById("tap-guide"),
       mockery: document.getElementById("mockery"),
+      tauntOverlay: document.getElementById("taunt-overlay"),
+      tauntText: document.getElementById("taunt-text"),
     };
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
@@ -514,6 +588,7 @@ const Game = {
 
   startGame() {
     SoundSystem.init();
+    SoundSystem.startAmbient(false);
     this.currentRound = 0;
     this.score = 0;
     this.pressureLevel = PRESSURE.initial;
@@ -559,6 +634,7 @@ const Game = {
           this.el.phaseOverlay.classList.remove("active");
           this.inPhase2 = true;
           this.el.screenGame.classList.add("phase2");
+          SoundSystem.startAmbient(true);
           this.startRound();
         }, TIMING.phaseEndPause);
       }
@@ -650,6 +726,30 @@ const Game = {
     this.el.mockery.textContent = "";
   },
 
+  // === 強煽り演出 ===
+  showTaunt(delay) {
+    clearTimeout(this.tauntTimeout);
+    this.tauntTimeout = setTimeout(() => {
+      const category = this.inPhase2 ? "tauntP2" : "taunt";
+      const text = CommentSystem.pick(category);
+      this.el.tauntText.textContent = text;
+      this.el.tauntText.className = "taunt-text" + (this.inPhase2 ? " taunt-p2" : "");
+      this.el.tauntOverlay.classList.remove("taunt-show");
+      void this.el.tauntText.offsetWidth;
+      this.el.tauntOverlay.classList.add("taunt-show");
+      this.el.tauntText.classList.add("taunt-anim");
+
+      this.tauntTimeout = setTimeout(() => {
+        this.el.tauntOverlay.classList.remove("taunt-show");
+      }, 750);
+    }, delay || 0);
+  },
+
+  clearTaunt() {
+    clearTimeout(this.tauntTimeout);
+    this.el.tauntOverlay.classList.remove("taunt-show");
+  },
+
   // === ○×フィードバック ===
   showOX(isCorrect) {
     clearTimeout(this.oxTimeout);
@@ -725,6 +825,7 @@ const Game = {
     this.stopTimer();
     this.clearHint();
     this.clearMockery();
+    this.clearTaunt();
 
     const cmd = this.roundCommands[this.currentRound];
     this.el.roundNum.textContent = this.currentRound + 1;
@@ -881,6 +982,10 @@ const Game = {
         if (rushLevel >= 2 && (this.inPhase2 || Math.random() < 0.25)) {
           this.showMockery(0);
         }
+        // 強煽り: Phase2終盤(R8以降)の残15%以下で発動
+        if (rushLevel >= 2 && this.inPhase2 && this.currentRound >= 8) {
+          this.showTaunt(100);
+        }
       }
     }, tickMs);
   },
@@ -948,6 +1053,7 @@ const Game = {
     this.showOX(false);
     CommentSystem.setText("時間切れ", this.el.gameComment, "comment-danger");
     this.showMockery(400);
+    this.showTaunt(200);
 
     this.advanceAfterResult();
   },
@@ -1001,6 +1107,7 @@ const Game = {
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
       CommentSystem.show(highPressure ? "wrongHigh" : "wrong", this.el.gameComment);
       this.showMockery(400);
+      this.showTaunt(200);
     }
 
     this.advanceAfterResult();
@@ -1035,6 +1142,7 @@ const Game = {
 
   showResult() {
     this.stopTimer();
+    SoundSystem.stopAmbient();
     this.showScreen(this.el.screenResult);
     this.el.progressFill.style.width = "100%";
 
