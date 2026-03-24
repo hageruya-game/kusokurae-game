@@ -367,85 +367,130 @@ const SoundSystem = {
     this.resume();
     const ctx = this.ctx;
 
-    // === Master chain: filter → master → destination ===
     const master = ctx.createGain();
     master.gain.value = 1.0;
     master.connect(ctx.destination);
 
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = phase2 ? 220 : 160;
-    filter.Q.value = 0.7;
-    filter.connect(master);
+    if (phase2) {
+      // === Phase 2: 暗く重い圧迫ドローン ===
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 220;
+      filter.Q.value = 0.7;
+      filter.connect(master);
 
-    // Layer 1: Main low drone
-    const drone = ctx.createOscillator();
-    const dg = ctx.createGain();
-    drone.type = "triangle";
-    drone.frequency.value = phase2 ? 55 : 42;
-    dg.gain.value = phase2 ? 0.10 : 0.065;
-    drone.connect(dg);
-    dg.connect(filter);
-    drone.start();
+      const drone = ctx.createOscillator();
+      const dg = ctx.createGain();
+      drone.type = "triangle";
+      drone.frequency.value = 55;
+      dg.gain.value = 0.10;
+      drone.connect(dg);
+      dg.connect(filter);
+      drone.start();
 
-    // Layer 2: Detuned drone (beat frequency = wavering)
-    const drone2 = ctx.createOscillator();
-    const d2g = ctx.createGain();
-    drone2.type = "triangle";
-    drone2.frequency.value = phase2 ? 57.5 : 43.5;
-    d2g.gain.value = phase2 ? 0.05 : 0.03;
-    drone2.connect(d2g);
-    d2g.connect(filter);
-    drone2.start();
+      const drone2 = ctx.createOscillator();
+      const d2g = ctx.createGain();
+      drone2.type = "triangle";
+      drone2.frequency.value = 57.5;
+      d2g.gain.value = 0.05;
+      drone2.connect(d2g);
+      d2g.connect(filter);
+      drone2.start();
 
-    // Layer 3: Heartbeat pulse (LFO-modulated gain)
-    const pulse = ctx.createOscillator();
-    const pg = ctx.createGain();
-    pulse.type = "sine";
-    pulse.frequency.value = phase2 ? 48 : 35;
-    pg.gain.value = 0;
-    pulse.connect(pg);
-    pg.connect(filter);
-    const lfo = ctx.createOscillator();
-    const lg = ctx.createGain();
-    lfo.type = "sine";
-    lfo.frequency.value = phase2 ? 1.1 : 0.8;
-    lg.gain.value = phase2 ? 0.08 : 0.055;
-    lfo.connect(lg);
-    lg.connect(pg.gain);
-    lfo.start();
-    pulse.start();
+      const pulse = ctx.createOscillator();
+      const pg = ctx.createGain();
+      pulse.type = "sine";
+      pulse.frequency.value = 48;
+      pg.gain.value = 0;
+      pulse.connect(pg);
+      pg.connect(filter);
+      const lfo = ctx.createOscillator();
+      const lg = ctx.createGain();
+      lfo.type = "sine";
+      lfo.frequency.value = 1.1;
+      lg.gain.value = 0.08;
+      lfo.connect(lg);
+      lg.connect(pg.gain);
+      lfo.start();
+      pulse.start();
 
-    // Layer 4: Sub-bass rumble (bypasses filter, felt as vibration)
-    const sub = ctx.createOscillator();
-    const sg = ctx.createGain();
-    sub.type = "sine";
-    sub.frequency.value = phase2 ? 30 : 25;
-    sg.gain.value = phase2 ? 0.07 : 0.04;
-    sub.connect(sg);
-    sg.connect(master);
-    sub.start();
+      const sub = ctx.createOscillator();
+      const sg = ctx.createGain();
+      sub.type = "sine";
+      sub.frequency.value = 30;
+      sg.gain.value = 0.07;
+      sub.connect(sg);
+      sg.connect(master);
+      sub.start();
 
-    // Layer 5: Dark buzz (sawtooth + slow wobble, through filter)
-    const buzz = ctx.createOscillator();
-    const bg = ctx.createGain();
-    buzz.type = "sawtooth";
-    buzz.frequency.value = phase2 ? 88 : 70;
-    bg.gain.value = phase2 ? 0.025 : 0.015;
-    buzz.connect(bg);
-    bg.connect(filter);
-    const wobble = ctx.createOscillator();
-    const wg = ctx.createGain();
-    wobble.type = "sine";
-    wobble.frequency.value = phase2 ? 0.15 : 0.08;
-    wg.gain.value = phase2 ? 4 : 2.5;
-    wobble.connect(wg);
-    wg.connect(buzz.frequency);
-    wobble.start();
-    buzz.start();
+      const buzz = ctx.createOscillator();
+      const bg = ctx.createGain();
+      buzz.type = "sawtooth";
+      buzz.frequency.value = 88;
+      bg.gain.value = 0.025;
+      buzz.connect(bg);
+      bg.connect(filter);
+      const wobble = ctx.createOscillator();
+      const wg = ctx.createGain();
+      wobble.type = "sine";
+      wobble.frequency.value = 0.15;
+      wg.gain.value = 4;
+      wobble.connect(wg);
+      wg.connect(buzz.frequency);
+      wobble.start();
+      buzz.start();
 
-    this.ambientNodes = [drone, drone2, pulse, lfo, sub, buzz, wobble];
-    this.ambientGains = [dg, d2g, pg, lg, sg, bg, wg, master];
+      this.ambientNodes = [drone, drone2, pulse, lfo, sub, buzz, wobble];
+      this.ambientGains = [dg, d2g, pg, lg, sg, bg, wg, master];
+    } else {
+      // === Phase 1: くだらない圧力（ホラーではなく焦り・ムカつき） ===
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 500;
+      filter.Q.value = 0.5;
+      filter.connect(master);
+
+      // Layer 1: ナギングバズ（中音域triangle＝安っぽいブザー感）
+      const nag = ctx.createOscillator();
+      const ng = ctx.createGain();
+      nag.type = "triangle";
+      nag.frequency.value = 150;
+      ng.gain.value = 0.035;
+      nag.connect(ng);
+      ng.connect(filter);
+      nag.start();
+
+      // Layer 2: 6Hzビート（速いうねり＝イラつく振動）
+      const nag2 = ctx.createOscillator();
+      const n2g = ctx.createGain();
+      nag2.type = "triangle";
+      nag2.frequency.value = 156;
+      n2g.gain.value = 0.022;
+      nag2.connect(n2g);
+      n2g.connect(filter);
+      nag2.start();
+
+      // Layer 3: せっかちパルス（速いLFO＝時計のカチカチ感）
+      const tick = ctx.createOscillator();
+      const tg = ctx.createGain();
+      tick.type = "sine";
+      tick.frequency.value = 90;
+      tg.gain.value = 0;
+      tick.connect(tg);
+      tg.connect(filter);
+      const lfo = ctx.createOscillator();
+      const lg = ctx.createGain();
+      lfo.type = "sine";
+      lfo.frequency.value = 2.8;
+      lg.gain.value = 0.04;
+      lfo.connect(lg);
+      lg.connect(tg.gain);
+      lfo.start();
+      tick.start();
+
+      this.ambientNodes = [nag, nag2, tick, lfo];
+      this.ambientGains = [ng, n2g, tg, lg, master];
+    }
   },
 
   stopAmbient() {
