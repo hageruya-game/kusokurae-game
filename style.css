@@ -6,7 +6,7 @@ body {
   background: #1a0a2e;
   color: #fff;
   min-height: 100dvh;
-  overflow: hidden;
+  overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
@@ -19,8 +19,11 @@ body {
   justify-content: space-between;
   min-height: 100dvh;
   padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
   transition: background 0.5s;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .screen.active { display: flex; }
 
@@ -44,9 +47,9 @@ body {
   line-height: 1.6;
   font-weight: 700;
 }
-.title-character { flex-shrink: 0; }
+.title-character { flex-shrink: 1; }
 .character-img {
-  width: min(48vw, 190px);
+  width: min(40vw, 160px);
   height: auto;
   display: block;
   filter: drop-shadow(0 0 20px rgba(160, 0, 255, 0.6));
@@ -141,15 +144,16 @@ body {
 .pressure-meter {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   width: 100%;
   max-width: 400px;
-  margin-top: 6px;
-  padding: 6px 10px;
+  margin-top: 4px;
+  padding: 5px 10px;
   border-radius: 8px;
   border: 1px solid rgba(160, 80, 255, 0.15);
   background: rgba(40, 10, 60, 0.4);
   transition: border-color 0.4s, background-color 0.4s;
+  flex-shrink: 0;
 }
 
 /* メーター行（支配度 + バー + %） */
@@ -292,10 +296,11 @@ body {
 .game-command-area {
   width: 100%;
   max-width: 400px;
-  min-height: 60px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 1;
 }
 .command-text {
   font-size: clamp(21px, 6vw, 32px);
@@ -353,16 +358,20 @@ body {
   50% { transform: scale(1.08); }
 }
 
-.game-character { flex-shrink: 0; }
+.game-character { flex-shrink: 1; }
+.game-character .character-img {
+  width: min(28vw, 110px);
+}
 
 .feedback {
-  min-height: 40px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(18px, 5.5vw, 28px);
+  font-size: clamp(16px, 4.5vw, 26px);
   font-weight: 900;
   text-align: center;
+  flex-shrink: 1;
 }
 .feedback.correct {
   color: #00ff80;
@@ -375,8 +384,8 @@ body {
   animation: shake 0.4s ease-out;
 }
 .feedback-big {
-  font-size: clamp(24px, 7vw, 36px);
-  min-height: 52px;
+  font-size: clamp(20px, 6vw, 32px);
+  min-height: 40px;
   transition: opacity 0.3s;
 }
 .feedback-fade { opacity: 0; }
@@ -430,18 +439,19 @@ body {
 .game-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 400px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 .btn-choice {
   flex: 1 1 45%;
-  font-size: clamp(16px, 4.2vw, 20px);
-  padding: 16px 6px;
+  font-size: clamp(15px, 4vw, 19px);
+  padding: 14px 6px;
   color: #fff;
   letter-spacing: 1px;
-  min-height: 56px;
+  min-height: 50px;
 }
 .btn-choice:nth-child(1) {
   background: linear-gradient(180deg, #6030a0, #402070);
@@ -472,11 +482,11 @@ body {
 .tap-mode .btn-choice {
   background: linear-gradient(180deg, #1a2a1a, #0a1a0a) !important;
   box-shadow: 0 3px 0 #050f05, 0 5px 12px rgba(0, 180, 80, 0.2) !important;
-  padding: 10px 6px;
+  padding: 8px 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 90px;
+  min-height: 72px;
 }
 
 /* tapターゲット画像 共通 */
@@ -532,9 +542,12 @@ body {
   margin-top: 8px;
   line-height: 1.4;
 }
-.result-character { flex-shrink: 0; }
+.result-character { flex-shrink: 1; }
+.result-character .character-img {
+  width: min(32vw, 130px);
+}
 .result-score {
-  font-size: clamp(40px, 10vw, 56px);
+  font-size: clamp(36px, 9vw, 50px);
   font-weight: 900;
   color: #ffcc00;
   text-shadow: 0 0 20px rgba(255, 200, 0, 0.5);
@@ -768,4 +781,60 @@ body::before {
     radial-gradient(ellipse at 50% 100%, rgba(200, 0, 80, 0.15) 0%, transparent 50%);
   pointer-events: none;
   z-index: -1;
+}
+
+/* ====================================================
+   レスポンシブ: 小さい端末（iPhone SE等 高さ680px以下）
+   ==================================================== */
+@media (max-height: 680px) {
+  .screen { padding: 8px 14px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+  .game-character .character-img { width: min(22vw, 85px); }
+  .title-character .character-img { width: min(32vw, 120px); }
+  .result-character .character-img { width: min(26vw, 100px); }
+  .character-img { width: min(32vw, 120px); }
+  .command-text { font-size: clamp(18px, 5vw, 26px); }
+  .feedback { min-height: 26px; font-size: clamp(14px, 4vw, 22px); }
+  .feedback-big { min-height: 32px; font-size: clamp(18px, 5vw, 28px); }
+  .game-command-area { min-height: 36px; }
+  .pressure-meter { padding: 4px 8px; margin-top: 2px; }
+  .pressure-meter-label { font-size: 11px; }
+  .pressure-pct { font-size: 13px; }
+  .pressure-hint { font-size: 9px; }
+  .pressure-bar { height: 8px; }
+  .progress-row { margin-top: 2px; }
+  .btn-choice { min-height: 44px; padding: 10px 6px; font-size: clamp(14px, 3.8vw, 17px); }
+  .tap-mode .btn-choice { min-height: 60px !important; padding: 6px !important; }
+  .tap-decoy { width: 60px; }
+  .tap-correct { width: 22px; }
+  .comment-bubble { font-size: clamp(11px, 3vw, 14px); padding: 4px 10px; min-height: 24px; }
+  .hint-message { font-size: 10px; min-height: 14px; }
+  .game-choices { gap: 6px; margin-bottom: 2px; }
+  .timer-bar { margin-bottom: 2px; }
+  .result-title { font-size: clamp(18px, 5.5vw, 28px); margin-top: 4px; }
+  .result-score { font-size: clamp(32px, 8vw, 44px); }
+  .result-message { font-size: clamp(12px, 3.5vw, 16px); }
+  .btn-start { font-size: clamp(18px, 4.5vw, 24px); padding: 12px 36px; }
+  .title-main { font-size: clamp(22px, 6.5vw, 34px); }
+  .title-footer { font-size: 10px; margin-bottom: 4px; }
+  .result-footer { font-size: 10px; margin-bottom: 4px; }
+  .phase-char { width: min(40vw, 160px); }
+  .phase-message { font-size: clamp(18px, 5vw, 26px); }
+}
+
+/* ====================================================
+   レスポンシブ: 非常に小さい端末（高さ580px以下）
+   ==================================================== */
+@media (max-height: 580px) {
+  .game-character .character-img { width: min(18vw, 65px); }
+  .title-character .character-img { width: min(26vw, 95px); }
+  .result-character .character-img { width: min(22vw, 80px); }
+  .command-text { font-size: clamp(16px, 4.5vw, 22px); }
+  .feedback { min-height: 22px; font-size: clamp(13px, 3.5vw, 18px); }
+  .btn-choice { min-height: 40px; padding: 8px 4px; }
+  .tap-mode .btn-choice { min-height: 52px !important; }
+  .tap-decoy { width: 48px; }
+  .tap-correct { width: 18px; }
+  .pressure-meter { padding: 3px 6px; }
+  .title-main { font-size: clamp(20px, 6vw, 28px); }
+  .btn-start { font-size: clamp(16px, 4vw, 22px); padding: 10px 30px; }
 }
