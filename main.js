@@ -258,6 +258,138 @@ const CommentSystem = {
   },
 };
 
+// ============================================================
+// 音演出（Web Audio API）
+// ============================================================
+const SoundSystem = {
+  ctx: null,
+  enabled: false,
+
+  init() {
+    if (this.ctx) return;
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.enabled = true;
+    } catch (e) {
+      this.enabled = false;
+    }
+  },
+
+  resume() {
+    if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+  },
+
+  // --- 正解音: 短く澄んだ上昇音（「見抜いた」感） ---
+  correct() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, t);
+    osc.frequency.exponentialRampToValueAtTime(1320, t + 0.08);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.start(t);
+    osc.stop(t + 0.15);
+  },
+
+  // --- 不正解音: 短い不快な下降音 ---
+  wrong() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+
+    // メイン: ノコギリ波の下降
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(240, t);
+    osc1.frequency.exponentialRampToValueAtTime(110, t + 0.2);
+    gain1.gain.setValueAtTime(0.09, t);
+    gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc1.start(t);
+    osc1.stop(t + 0.25);
+
+    // 不協和: わずかにずれた音を重ねる
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.type = "square";
+    osc2.frequency.setValueAtTime(247, t);
+    osc2.frequency.exponentialRampToValueAtTime(105, t + 0.2);
+    gain2.gain.setValueAtTime(0.04, t);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc2.start(t);
+    osc2.stop(t + 0.2);
+  },
+
+  // --- 焦り音: 低い脈動（心拍のような短パルス） ---
+  tick() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(90, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.07);
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.start(t);
+    osc.stop(t + 0.08);
+  },
+
+  // --- フェーズ変更音: 低く不穏なうなり ---
+  phaseChange() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+
+    // 低いドローン
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.type = "triangle";
+    osc1.frequency.setValueAtTime(65, t);
+    osc1.frequency.exponentialRampToValueAtTime(130, t + 0.9);
+    gain1.gain.setValueAtTime(0.001, t);
+    gain1.gain.linearRampToValueAtTime(0.1, t + 0.25);
+    gain1.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+    osc1.start(t);
+    osc1.stop(t + 1.1);
+
+    // 微妙にずれた音でうねり
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(68, t);
+    osc2.frequency.exponentialRampToValueAtTime(126, t + 0.9);
+    gain2.gain.setValueAtTime(0.001, t);
+    gain2.gain.linearRampToValueAtTime(0.06, t + 0.3);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+    osc2.start(t);
+    osc2.stop(t + 1.1);
+  },
+};
+
 // ----- ゲーム本体 -----
 const Game = {
   currentRound: 0,
@@ -376,6 +508,7 @@ const Game = {
   },
 
   startGame() {
+    SoundSystem.init();
     this.currentRound = 0;
     this.score = 0;
     this.pressureLevel = PRESSURE.initial;
@@ -404,6 +537,7 @@ const Game = {
   // === フェーズ変更演出 ===
   showPhaseChange() {
     this.updateDebugLabel("▶ PHASE 2", "phase2");
+    SoundSystem.phaseChange();
 
     this.el.phaseOverlay.classList.add("active");
 
@@ -492,6 +626,9 @@ const Game = {
     this.el.oxSymbol.textContent = isCorrect ? "○" : "✕";
     this.el.oxSymbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
     this.el.oxOverlay.classList.add("ox-show");
+
+    if (isCorrect) SoundSystem.correct();
+    else SoundSystem.wrong();
 
     this.oxTimeout = setTimeout(() => {
       this.el.oxOverlay.classList.remove("ox-show");
@@ -669,6 +806,7 @@ const Game = {
 
     const tickMs = 50;
     let lastRushLevel = -1;
+    let lastTickTime = 0;
     const isWaitStage = cmd.ruleType === "wait" || (cmd.ruleType === "tap" && cmd.correctType === "wait");
 
     this.timerInterval = setInterval(() => {
@@ -681,6 +819,16 @@ const Game = {
       if (pct > 60) this.el.timerFill.className = "timer-fill";
       else if (pct > 30) this.el.timerFill.className = "timer-fill timer-warn";
       else this.el.timerFill.className = "timer-fill timer-danger";
+
+      // 焦り音: 残り30%以下で断続的に鳴らす（間隔が徐々に短くなる）
+      if (pct <= 30) {
+        const now = Date.now();
+        const interval = pct <= 15 ? 350 : 650;
+        if (now - lastTickTime >= interval) {
+          SoundSystem.tick();
+          lastTickTime = now;
+        }
+      }
 
       const ratio = this.timeLeft / this.timeLimit;
       let rushLevel = ratio > 0.6 ? -1 : ratio > 0.35 ? 0 : ratio > 0.15 ? 1 : 2;
