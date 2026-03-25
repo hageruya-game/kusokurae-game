@@ -234,10 +234,10 @@ const COMMENTS = {
   rushMedium: ["君だけ遅い", "迷うな、合わせろ", "空気読めないの？", "置いていかれるよ？", "まだ？"],
   rushHeavy: ["黙って従えば早いのに", "決められないの、恥ずかしいよ？", "さっさとしろ", "時間がないぞ", "考えすぎだ"],
   timeout: ["判断放棄", "遅すぎる", "考えるなと言っただろ", "沈黙も同調だよ", "圧力にすら間に合わない"],
-  mockery: ["ぶはは…", "ぶハハハ…", "ククク…", "……ブハッ", "ふふ…", "見えてないな", "遅い", "甘いな", "迷ってる？", "考えすぎ", "へぇ…", "ぷっ"],
-  mockeryP2: ["ぶハハハ…！", "ククク……哀れだ", "……ブハッ 無理だろ", "まだやるの？", "もう諦めな", "学習しないな", "見てられない", "笑える", "お前の限界だ", "ふふ…終わりだよ"],
-  taunt: ["遅い", "甘い", "見えてない", "無駄だ", "弱い", "浅い"],
-  tauntP2: ["限界だ", "終わりだ", "もう無理だろ", "遅すぎる", "話にならない", "詰んだな"],
+  mockery: ["ぶはは…", "ぶハハハ…", "ククク…", "……ブハッ", "ふふ…", "へぇ…", "ぷっ", "ふーん…", "はっ", "ぷぷっ…"],
+  mockeryP2: ["ぶハハハ…！", "ククク……哀れだ", "……ブハッ 無理だろ", "笑える", "ふふ…終わりだよ", "ぷはっ…もう無理", "くくく…滑稽だ", "あはは…まだやるの"],
+  taunt: ["遅い", "甘い", "無駄だ", "弱い", "浅い", "見えてない"],
+  tauntP2: ["限界だ", "終わりだ", "遅すぎる", "話にならない", "詰んだな", "もう無理だろ"],
 };
 
 // ----- コメントシステム -----
@@ -566,6 +566,10 @@ const Game = {
   oxTimeout: null,
   mockeryTimeout: null,
   lastMockery: "",
+  mockeryActive: false,
+  tauntActive: false,
+  speechCommentText: "",
+  speechCommentClass: "",
   tauntTimeout: null,
 
   init() {
@@ -591,7 +595,7 @@ const Game = {
       resultCharImg: document.getElementById("result-char-img"),
       resultFooter: document.getElementById("result-footer"),
       titleComment: document.getElementById("title-comment"),
-      gameComment: document.getElementById("game-comment"),
+      speech: document.getElementById("game-speech"),
       resultComment: document.getElementById("result-comment"),
       timerBar: document.getElementById("timer-bar"),
       timerFill: document.getElementById("timer-fill"),
@@ -608,7 +612,7 @@ const Game = {
       oxOverlay: document.getElementById("ox-overlay"),
       oxSymbol: document.getElementById("ox-symbol"),
       tapGuide: document.getElementById("tap-guide"),
-      mockery: document.getElementById("mockery"),
+      // mockery removed — now uses speech bubble
       tauntOverlay: document.getElementById("taunt-overlay"),
       tauntText: document.getElementById("taunt-text"),
     };
@@ -681,6 +685,12 @@ const Game = {
     this.el.scoreNum.textContent = "0";
 
     this.roundCommands = TEST_MODE ? this.buildRoundsTest() : this.buildRounds();
+
+    this.clearMockery();
+    this.clearTaunt();
+    this.speechCommentText = "";
+    this.speechCommentClass = "";
+    this.clearSpeech();
 
     document.getElementById("screen-game").className = "screen";
     if (this.el.phaseOverlay) this.el.phaseOverlay.classList.remove("active");
@@ -782,37 +792,78 @@ const Game = {
   },
 
   // === 嘲笑演出 ===
+  // === 吹き出し表示 ===
+  showSpeech(text, cssClass) {
+    const el = this.el.speech;
+    el.textContent = text;
+    el.className = "game-speech speech-show" + (cssClass ? " " + cssClass : "");
+  },
+
+  clearSpeech() {
+    const el = this.el.speech;
+    el.className = "game-speech";
+    el.textContent = "";
+  },
+
+  // コメント表示（mockery・tauntより低優先）
+  showGameComment(text, cssClass) {
+    this.speechCommentText = text;
+    this.speechCommentClass = cssClass || "";
+    if (!this.mockeryActive && !this.tauntActive) {
+      this.showSpeech(text, cssClass);
+    }
+  },
+
+  clearGameComment() {
+    this.speechCommentText = "";
+    this.speechCommentClass = "";
+    if (!this.mockeryActive && !this.tauntActive) {
+      this.clearSpeech();
+    }
+  },
+
   showMockery(delay) {
     clearTimeout(this.mockeryTimeout);
     this.mockeryTimeout = setTimeout(() => {
       const category = this.inPhase2 ? "mockeryP2" : "mockery";
       let text = CommentSystem.pick(category);
-      // 同じテキストの連続を防ぐ
       if (text === this.lastMockery) {
         text = CommentSystem.pick(category);
       }
       this.lastMockery = text;
 
-      this.el.mockery.textContent = text;
-      this.el.mockery.classList.remove("active");
-      void this.el.mockery.offsetWidth;
-      this.el.mockery.classList.add("active");
+      // まず吹き出しを完全に消してからmockeryを表示（二重表示防止）
+      this.clearSpeech();
+      this.mockeryActive = true;
+
+      // 1フレーム待ってからmockeryを表示（opacity遷移で自然にフェードイン）
+      requestAnimationFrame(() => {
+        this.showSpeech(text, this.inPhase2 ? "speech-mockery-p2" : "speech-mockery");
+      });
 
       this.mockeryTimeout = setTimeout(() => {
-        this.el.mockery.classList.remove("active");
+        this.mockeryActive = false;
+        // mockery消去後にcommentを復帰
+        if (this.speechCommentText) {
+          this.showSpeech(this.speechCommentText, this.speechCommentClass);
+        } else {
+          this.clearSpeech();
+        }
       }, 1600);
     }, delay || 0);
   },
 
   clearMockery() {
     clearTimeout(this.mockeryTimeout);
-    this.el.mockery.classList.remove("active");
-    this.el.mockery.textContent = "";
+    this.mockeryActive = false;
+    this.clearSpeech();
   },
 
-  // === 強煽り演出 ===
+  // === 強煽り演出（taunt中はmockery・speech抑制） ===
   showTaunt(delay) {
     clearTimeout(this.tauntTimeout);
+    this.clearMockery();
+    this.tauntActive = true;
     this.tauntTimeout = setTimeout(() => {
       const category = this.inPhase2 ? "tauntP2" : "taunt";
       const text = CommentSystem.pick(category);
@@ -825,6 +876,7 @@ const Game = {
 
       this.tauntTimeout = setTimeout(() => {
         this.el.tauntOverlay.classList.remove("taunt-show");
+        this.tauntActive = false;
       }, 750);
     }, delay || 0);
   },
@@ -832,6 +884,7 @@ const Game = {
   clearTaunt() {
     clearTimeout(this.tauntTimeout);
     this.el.tauntOverlay.classList.remove("taunt-show");
+    this.tauntActive = false;
   },
 
   // === ○×フィードバック ===
@@ -908,6 +961,8 @@ const Game = {
   startRound() {
     this.stopTimer();
     this.clearHint();
+    this.speechCommentText = "";
+    this.speechCommentClass = "";
     this.clearMockery();
     this.clearTaunt();
 
@@ -957,15 +1012,15 @@ const Game = {
     // キャラ演出
     this.el.gameCharImg.className = "character-img char-enter";
 
-    // 圧力コメント
+    // 圧力コメント（吹き出し）
     if (cmd.ruleType === "wait") {
-      CommentSystem.show("pressureWait", this.el.gameComment);
+      this.showGameComment(CommentSystem.pick("pressureWait"));
     } else if (cmd.ruleType === "obey") {
-      CommentSystem.show("pressureObey", this.el.gameComment);
+      this.showGameComment(CommentSystem.pick("pressureObey"));
     } else if (cmd.ruleType === "tap") {
-      CommentSystem.show("pressureTap", this.el.gameComment);
+      this.showGameComment(CommentSystem.pick("pressureTap"));
     } else {
-      CommentSystem.show("pressure", this.el.gameComment);
+      this.showGameComment(CommentSystem.pick("pressure"));
     }
 
     this.isWaiting = true;
@@ -983,7 +1038,7 @@ const Game = {
       this.el.btnChoice0.innerHTML = '<img src="' + cmd.images[0] + '" alt="' + cmd.alts[0] + '" class="tap-target-img ' + cls0 + '">';
       this.el.btnChoice1.innerHTML = '<img src="' + cmd.images[1] + '" alt="' + cmd.alts[1] + '" class="tap-target-img ' + cls1 + '">';
       this.el.choicesArea.classList.add("tap-mode");
-      CommentSystem.setText(cmd.misdirect, this.el.gameComment);
+      this.showGameComment(cmd.misdirect);
       this.showHint();
     } else {
       this.el.btnChoice0.textContent = cmd.choices[0];
@@ -996,14 +1051,14 @@ const Game = {
     if (cmd.ruleType === "wait") {
       this.el.choicesArea.classList.add("wait-mode");
       this.el.commandText.classList.add("command-wait-active");
-      CommentSystem.clear(this.el.gameComment);
+      this.clearGameComment();
       this.showHint();
     } else if (cmd.ruleType === "obey") {
       this.el.choicesArea.classList.add("obey-mode");
-      CommentSystem.clear(this.el.gameComment);
+      this.clearGameComment();
       this.showHint();
     } else if (cmd.ruleType !== "tap") {
-      CommentSystem.clear(this.el.gameComment);
+      this.clearGameComment();
     }
 
     this.el.choicesArea.classList.remove("choices-hidden");
@@ -1056,19 +1111,19 @@ const Game = {
         lastRushLevel = rushLevel;
         if (isWaitStage) {
           const cats = ["waitRush1", "waitRush2", "waitRush3"];
-          CommentSystem.setText(CommentSystem.pick(cats[rushLevel]), this.el.gameComment, "comment-wait-hint");
+          this.showGameComment(CommentSystem.pick(cats[rushLevel]), "speech-wait-hint");
         } else {
           const cats = ["rushLight", "rushMedium", "rushHeavy"];
-          const cls = ["", "comment-warn", "comment-danger"];
-          CommentSystem.setText(CommentSystem.pick(cats[rushLevel]), this.el.gameComment, cls[rushLevel]);
+          const cls = ["", "speech-warn", "speech-danger"];
+          this.showGameComment(CommentSystem.pick(cats[rushLevel]), cls[rushLevel]);
         }
-        // 嘲笑: rushLevel2(残15%以下)で発動。Phase2は確定、Phase1は25%
-        if (rushLevel >= 2 && (this.inPhase2 || Math.random() < 0.25)) {
-          this.showMockery(0);
-        }
-        // 強煽り: Phase2終盤(R8以降)の残15%以下で発動
+        // 嘲笑/強煽りは排他: taunt優先
         if (rushLevel >= 2 && this.inPhase2 && this.currentRound >= 8) {
+          // Phase2終盤: 強煽り（中央）のみ
           this.showTaunt(100);
+        } else if (rushLevel >= 2 && (this.inPhase2 || Math.random() < 0.25)) {
+          // それ以外: mockery（吹き出し）のみ
+          this.showMockery(0);
         }
       }
     }, tickMs);
@@ -1102,7 +1157,7 @@ const Game = {
     this.el.feedback.className = "feedback feedback-big correct";
     this.showOX(true);
     this.changePressure(PRESSURE.exceptionCorrect);
-    CommentSystem.show(highPressure ? "correctHigh" : "correct", this.el.gameComment);
+    this.showGameComment(CommentSystem.pick(highPressure ? "correctHigh" : "correct"));
 
     this.advanceAfterResult();
   },
@@ -1135,9 +1190,13 @@ const Game = {
     this.el.feedback.textContent = CommentSystem.pick("timeout");
     this.el.feedback.className = "feedback feedback-big wrong";
     this.showOX(false);
-    CommentSystem.setText("時間切れ", this.el.gameComment, "comment-danger");
-    this.showMockery(400);
-    this.showTaunt(200);
+    this.showGameComment("時間切れ", "speech-danger");
+    // 強煽り(中央)とmockery(吹き出し)は排他。taunt優先
+    if (this.inPhase2) {
+      this.showTaunt(200);
+    } else {
+      this.showMockery(400);
+    }
 
     this.advanceAfterResult();
   },
@@ -1183,15 +1242,19 @@ const Game = {
       this.el.feedback.className = "feedback feedback-big correct";
       this.showOX(true);
       this.changePressure(isEx ? PRESSURE.exceptionCorrect : PRESSURE.normalCorrect);
-      CommentSystem.show(highPressure ? "correctHigh" : "correct", this.el.gameComment);
+      this.showGameComment(CommentSystem.pick(highPressure ? "correctHigh" : "correct"));
     } else {
       this.el.feedback.textContent = cmd.wrongReaction;
       this.el.feedback.className = "feedback feedback-big wrong";
       this.showOX(false);
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
-      CommentSystem.show(highPressure ? "wrongHigh" : "wrong", this.el.gameComment);
-      this.showMockery(400);
-      this.showTaunt(200);
+      this.showGameComment(CommentSystem.pick(highPressure ? "wrongHigh" : "wrong"));
+      // 強煽り(中央)とmockery(吹き出し)は排他。taunt優先
+      if (this.inPhase2) {
+        this.showTaunt(200);
+      } else {
+        this.showMockery(400);
+      }
     }
 
     this.advanceAfterResult();
@@ -1200,7 +1263,7 @@ const Game = {
   advanceAfterResult() {
     setTimeout(() => {
       this.el.feedback.classList.add("feedback-fade");
-      CommentSystem.clear(this.el.gameComment);
+      this.clearGameComment();
 
       setTimeout(() => {
         if (this.contaminated) {
@@ -1275,4 +1338,941 @@ const Game = {
   },
 };
 
-document.addEventListener("DOMContentLoaded", () => { Game.init(); });
+// ============================================================
+// 逆指示ダンジョン
+// ============================================================
+
+// 0=path, 1=wall, 2=trap(見た目はpath), 3=goal
+const DUNGEON_ROWS = 9;
+const DUNGEON_COLS = 7;
+
+const DUNGEON_STAGES = [
+  {
+    name: "STAGE 1",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 1, 1, 3, 1, 1, 1], // row0: ゴール (3,0)
+      [1, 1, 1, 0, 1, 1, 1], // row1
+      [1, 2, 0, 0, 0, 0, 1], // row2: D3 corridor, trap(1,2)
+      [1, 2, 1, 1, 1, 0, 1], // row3: trap(1,3), open(5,3)
+      [1, 0, 0, 0, 0, 0, 1], // row4: D2 corridor
+      [1, 0, 1, 1, 1, 2, 1], // row5: open(1,5), trap(5,5)
+      [1, 0, 0, 0, 0, 0, 1], // row6: D1 corridor
+      [1, 1, 1, 0, 1, 1, 1], // row7
+      [1, 1, 1, 0, 1, 1, 1], // row8: スタート (3,8)
+    ],
+    trapWarps: {
+      "2,1": { row: 4, col: 5 },
+      "3,1": { row: 6, col: 1 },
+      "5,5": { row: 7, col: 3 },
+    },
+    decisions: [
+      {
+        row: 6, col: 3, type: "normal", correctDir: "left",
+        command: "右へ行け！", comment: "指示に従え…",
+        wrongReaction: "言われた通り動いたな", rightReaction: "指示を無視した",
+        penaltyPos: { row: 8, col: 3 },
+      },
+      {
+        row: 4, col: 3, type: "obey", correctDir: "right",
+        command: "右が安全だ、信じろ", comment: "…素直に聞くか？",
+        wrongReaction: "疑いすぎた", rightReaction: "正しい判断だ",
+        penaltyPos: { row: 6, col: 1 },
+      },
+      {
+        row: 2, col: 3, type: "wait",
+        command: "急げ！止まるな！", comment: "焦るなよ…",
+        wrongReaction: "焦って動いてしまった", rightReaction: "落ち着いて待てた",
+        penaltyPos: { row: 4, col: 5 },
+      },
+    ],
+    lures: [
+      { row: 4, col: 1, text: "上だ…近道がある", comment: "急げ" },
+      { row: 6, col: 5, text: "もう少しだ…上へ", comment: "" },
+      { row: 2, col: 2, text: "壁沿いを行け", comment: "左が安全だ" },
+    ],
+  },
+  {
+    name: "STAGE 2",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 3, 1, 1, 1, 1, 1], // row0: goal(1,0)
+      [1, 0, 2, 1, 1, 0, 1], // row1: trap(2,1)
+      [1, 0, 1, 1, 1, 2, 1], // row2: trap(5,2)
+      [1, 0, 0, 0, 0, 0, 1], // row3: D3 corridor
+      [1, 2, 1, 1, 1, 0, 1], // row4: trap(1,4)
+      [1, 0, 0, 0, 0, 0, 1], // row5: D2 corridor
+      [1, 0, 1, 1, 1, 2, 1], // row6: trap(5,6)
+      [1, 0, 0, 0, 0, 0, 1], // row7: D1 corridor
+      [1, 1, 0, 0, 0, 1, 1], // row8: start(3,8)
+    ],
+    trapWarps: {
+      "6,5": { row: 8, col: 3 },
+      "4,1": { row: 7, col: 1 },
+      "2,5": { row: 5, col: 5 },
+      "1,2": { row: 3, col: 1 },
+    },
+    decisions: [
+      {
+        row: 7, col: 3, type: "normal", correctDir: "left",
+        command: "右に曲がれ！", comment: "迷うなよ…",
+        wrongReaction: "言われた通りだな", rightReaction: "命令に従わなかった",
+        penaltyPos: { row: 8, col: 3 },
+      },
+      {
+        row: 5, col: 3, type: "normal", correctDir: "right",
+        command: "左に曲がれ！", comment: "指示に従え…",
+        wrongReaction: "素直に曲がったな", rightReaction: "逆を行ったか",
+        penaltyPos: { row: 7, col: 1 },
+      },
+      {
+        row: 3, col: 3, type: "obey", correctDir: "left",
+        command: "左が安全だ、信じろ", comment: "…今度は信じるか？",
+        wrongReaction: "疑いすぎた", rightReaction: "素直に従えた",
+        penaltyPos: { row: 5, col: 5 },
+      },
+      {
+        row: 1, col: 1, type: "wait",
+        command: "急げ！ゴールは目の前だ！", comment: "焦るなよ…",
+        wrongReaction: "最後に焦った", rightReaction: "最後まで冷静だった",
+        penaltyPos: { row: 3, col: 1 },
+      },
+    ],
+    lures: [
+      { row: 5, col: 1, text: "上に抜けろ", comment: "行き止まりじゃないぞ" },
+      { row: 7, col: 5, text: "そのまま進め", comment: "迷うなよ" },
+      { row: 3, col: 5, text: "上だ、ゴールは近い", comment: "" },
+      { row: 2, col: 1, text: "右に逃げ道がある", comment: "急げ" },
+    ],
+  },
+  // ---- Stage 3: 方向転換 ----
+  {
+    name: "STAGE 3",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 1, 1, 3, 1, 1, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+      [1, 0, 0, 0, 0, 2, 1], // trap(5,2)
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,3)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,5)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+    ],
+    trapWarps: {
+      "2,5": { row: 4, col: 1 },
+      "3,5": { row: 6, col: 5 },
+      "5,1": { row: 7, col: 3 },
+    },
+    decisions: [
+      { row: 6, col: 3, type: "normal", correctDir: "right",
+        command: "左に行け！", comment: "従え…",
+        wrongReaction: "指示通りだな", rightReaction: "逆を選んだか",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 4, col: 3, type: "obey", correctDir: "left",
+        command: "左が安全だ、信じろ", comment: "…信じるか？",
+        wrongReaction: "疑いすぎた", rightReaction: "正しい判断だ",
+        penaltyPos: { row: 6, col: 5 } },
+      { row: 2, col: 3, type: "wait",
+        command: "走れ！止まったら詰みだ！", comment: "焦るなよ…",
+        wrongReaction: "焦って動いた", rightReaction: "冷静に待てた",
+        penaltyPos: { row: 4, col: 5 } },
+    ],
+    lures: [
+      { row: 6, col: 1, text: "上へ、近道だ", comment: "" },
+      { row: 4, col: 5, text: "ここから上へ", comment: "急げ" },
+      { row: 2, col: 4, text: "右に出口がある", comment: "" },
+    ],
+  },
+  // ---- Stage 4: 忍耐 ----
+  {
+    name: "STAGE 4",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 1, 1, 3, 1, 1, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+      [1, 2, 0, 0, 0, 0, 1], // trap(1,2)
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,3)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,5)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+    ],
+    trapWarps: {
+      "2,1": { row: 4, col: 5 },
+      "3,5": { row: 6, col: 1 },
+      "5,5": { row: 7, col: 3 },
+    },
+    decisions: [
+      { row: 6, col: 3, type: "normal", correctDir: "left",
+        command: "右へ進め！", comment: "迷うな…",
+        wrongReaction: "命令に従ったな", rightReaction: "指示を拒否した",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 4, col: 3, type: "wait",
+        command: "逃げろ！動け！", comment: "…本当に？",
+        wrongReaction: "焦って動いた", rightReaction: "耐えた",
+        penaltyPos: { row: 6, col: 1 } },
+      { row: 2, col: 3, type: "wait",
+        command: "急げ！あと少しだ！", comment: "…焦るなよ",
+        wrongReaction: "また焦った", rightReaction: "二度目も耐えた",
+        penaltyPos: { row: 4, col: 5 } },
+    ],
+    lures: [
+      { row: 6, col: 5, text: "上に抜けろ", comment: "" },
+      { row: 4, col: 5, text: "もう少し上だ", comment: "急げ" },
+      { row: 2, col: 2, text: "左が近い", comment: "" },
+    ],
+  },
+  // ---- Stage 5: 甘言 ----
+  {
+    name: "STAGE 5",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 3, 1, 1, 1, 1, 1],
+      [1, 0, 2, 1, 1, 0, 1], // trap(2,1)
+      [1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,6)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 0, 0, 0, 1, 1],
+    ],
+    trapWarps: {
+      "1,2": { row: 3, col: 5 },
+      "4,1": { row: 7, col: 1 },
+      "6,5": { row: 8, col: 3 },
+    },
+    decisions: [
+      { row: 7, col: 3, type: "obey", correctDir: "left",
+        command: "左が安全だ", comment: "信じろ…",
+        wrongReaction: "疑いすぎた", rightReaction: "素直に従えた",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 5, col: 3, type: "obey", correctDir: "right",
+        command: "右を信じろ", comment: "今度も信じるか？",
+        wrongReaction: "信じなかった", rightReaction: "正しく信じた",
+        penaltyPos: { row: 7, col: 5 } },
+      { row: 3, col: 3, type: "normal", correctDir: "left",
+        command: "右に行け！", comment: "…本当に？",
+        wrongReaction: "騙された", rightReaction: "見抜いた",
+        penaltyPos: { row: 5, col: 5 } },
+      { row: 1, col: 1, type: "wait",
+        command: "走れ！ゴールだ！", comment: "…焦るな",
+        wrongReaction: "最後に焦った", rightReaction: "最後まで冷静だった",
+        penaltyPos: { row: 3, col: 1 } },
+    ],
+    lures: [
+      { row: 7, col: 5, text: "上に抜けろ", comment: "" },
+      { row: 5, col: 1, text: "上だ、近道がある", comment: "急げ" },
+      { row: 3, col: 5, text: "右に出口が見える", comment: "" },
+    ],
+  },
+  // ---- Stage 6: 疑心 ----
+  {
+    name: "STAGE 6",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 1, 1, 1, 1, 3, 1],
+      [1, 1, 1, 0, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,3)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,5)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 0, 1, 0, 1], // trap(1,7)
+      [1, 0, 1, 0, 1, 0, 1],
+    ],
+    trapWarps: {
+      "7,1": { row: 8, col: 3 },
+      "5,5": { row: 6, col: 1 },
+      "3,1": { row: 4, col: 5 },
+    },
+    decisions: [
+      { row: 6, col: 3, type: "normal", correctDir: "right",
+        command: "左に行け！", comment: "従え…",
+        wrongReaction: "言いなりだ", rightReaction: "逆を行った",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 4, col: 3, type: "obey", correctDir: "right",
+        command: "右が安全だ", comment: "信じるか？",
+        wrongReaction: "疑いすぎた", rightReaction: "正しく信じた",
+        penaltyPos: { row: 6, col: 1 } },
+      { row: 2, col: 3, type: "normal", correctDir: "right",
+        command: "左だ！急げ！", comment: "…本当に？",
+        wrongReaction: "また騙された", rightReaction: "見抜いた",
+        penaltyPos: { row: 4, col: 1 } },
+      { row: 1, col: 3, type: "obey", correctDir: "right",
+        command: "右へ、信じろ", comment: "…最後だ",
+        wrongReaction: "疑って失敗", rightReaction: "信じて正解",
+        penaltyPos: { row: 2, col: 1 } },
+    ],
+    lures: [
+      { row: 6, col: 1, text: "上に近道がある", comment: "" },
+      { row: 4, col: 1, text: "左を進め", comment: "安全だ" },
+      { row: 2, col: 1, text: "壁沿いが正解", comment: "" },
+    ],
+  },
+  // ---- Stage 7: 焦燥 ----
+  {
+    name: "STAGE 7",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 1, 1, 3, 1, 1, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+      [1, 0, 0, 0, 0, 2, 1], // trap(5,2)
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,3)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 2, 1], // trap(1,5), trap(5,5)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+      [1, 1, 1, 0, 1, 1, 1],
+    ],
+    trapWarps: {
+      "5,5": { row: 7, col: 3 },
+      "5,1": { row: 7, col: 3 },
+      "3,1": { row: 6, col: 5 },
+      "2,5": { row: 4, col: 1 },
+    },
+    decisions: [
+      { row: 6, col: 3, type: "wait",
+        command: "逃げろ！すぐ動け！", comment: "…我慢だ",
+        wrongReaction: "焦った", rightReaction: "耐えた",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 4, col: 3, type: "normal", correctDir: "right",
+        command: "左だ！急げ！", comment: "…逆だ",
+        wrongReaction: "騙された", rightReaction: "見抜いた",
+        penaltyPos: { row: 6, col: 1 } },
+      { row: 2, col: 3, type: "wait",
+        command: "止まるな！走れ！", comment: "…もう一度",
+        wrongReaction: "また焦った", rightReaction: "二度目も耐えた",
+        penaltyPos: { row: 4, col: 5 } },
+    ],
+    lures: [
+      { row: 6, col: 5, text: "上へ急げ", comment: "" },
+      { row: 6, col: 1, text: "上に抜けろ", comment: "" },
+      { row: 4, col: 5, text: "もう少し上だ", comment: "急げ" },
+      { row: 4, col: 1, text: "左が近い", comment: "" },
+    ],
+  },
+  // ---- Stage 8: 欺瞞 ----
+  {
+    name: "STAGE 8",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 3, 1, 1, 1, 1, 1],
+      [1, 0, 2, 1, 1, 0, 1], // trap(2,1)
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,2)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,4)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,6)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 0, 0, 0, 1, 1],
+    ],
+    trapWarps: {
+      "1,2": { row: 3, col: 5 },
+      "2,5": { row: 5, col: 1 },
+      "4,5": { row: 7, col: 5 },
+      "6,1": { row: 8, col: 3 },
+    },
+    decisions: [
+      { row: 7, col: 3, type: "obey", correctDir: "left",
+        command: "左に行け、信じろ", comment: "…信じるか？",
+        wrongReaction: "疑いすぎた", rightReaction: "正しく信じた",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 5, col: 3, type: "normal", correctDir: "right",
+        command: "左に行け！", comment: "…命令だ",
+        wrongReaction: "従ってしまった", rightReaction: "逆を行った",
+        penaltyPos: { row: 7, col: 1 } },
+      { row: 3, col: 3, type: "obey", correctDir: "left",
+        command: "左が安全だ", comment: "…もう一度信じるか？",
+        wrongReaction: "疑った", rightReaction: "信じて正解",
+        penaltyPos: { row: 5, col: 5 } },
+      { row: 1, col: 1, type: "normal", correctDir: "up",
+        command: "右に逃げろ！", comment: "…本当に？",
+        wrongReaction: "罠に引っかかった", rightReaction: "無視してゴールへ",
+        penaltyPos: { row: 3, col: 1 } },
+    ],
+    lures: [
+      { row: 7, col: 5, text: "上に抜けろ", comment: "" },
+      { row: 5, col: 1, text: "左が近道だ", comment: "急げ" },
+      { row: 3, col: 5, text: "右に出口がある", comment: "" },
+    ],
+  },
+  // ---- Stage 9: 混沌 ----
+  {
+    name: "STAGE 9",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 3, 1, 1, 1, 1, 1], // goal(1,0)
+      [1, 0, 2, 1, 1, 0, 1], // trap(2,1)
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,2)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,6)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 0, 0, 0, 1, 1],
+    ],
+    trapWarps: {
+      "6,5": { row: 8, col: 3 },
+      "4,1": { row: 7, col: 1 },
+      "2,5": { row: 5, col: 5 },
+      "1,2": { row: 3, col: 1 },
+    },
+    decisions: [
+      { row: 7, col: 3, type: "normal", correctDir: "left",
+        command: "右に行け！", comment: "…従うのか？",
+        wrongReaction: "指示通りだ", rightReaction: "指示を無視した",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 5, col: 3, type: "obey", correctDir: "right",
+        command: "右が安全だ", comment: "…信じるか？",
+        wrongReaction: "疑った", rightReaction: "信じて正解",
+        penaltyPos: { row: 7, col: 1 } },
+      { row: 3, col: 3, type: "wait",
+        command: "急げ！もう時間がない！", comment: "…落ち着け",
+        wrongReaction: "焦った", rightReaction: "耐えた",
+        penaltyPos: { row: 5, col: 1 } },
+      { row: 1, col: 1, type: "normal", correctDir: "up",
+        command: "戻れ！下だ！", comment: "…本当に？",
+        wrongReaction: "言いなりだ", rightReaction: "ゴールを見つけた",
+        penaltyPos: { row: 3, col: 1 } },
+    ],
+    lures: [
+      { row: 7, col: 5, text: "上に行け", comment: "" },
+      { row: 5, col: 1, text: "上が近い", comment: "急げ" },
+      { row: 3, col: 5, text: "右に出口がある", comment: "" },
+      { row: 2, col: 1, text: "右に逃げろ", comment: "" },
+    ],
+  },
+  // ---- Stage 10: 脱出 ----
+  {
+    name: "STAGE 10",
+    startRow: 8, startCol: 3,
+    map: [
+      [1, 3, 1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 1, 0, 1],
+      [1, 0, 1, 0, 1, 2, 1], // trap(5,2)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,6)
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 1, 0, 0, 0, 1, 1],
+    ],
+    trapWarps: {
+      "2,5": { row: 5, col: 1 },
+      "4,1": { row: 7, col: 5 },
+      "6,5": { row: 8, col: 3 },
+    },
+    decisions: [
+      { row: 7, col: 3, type: "normal", correctDir: "left",
+        command: "右に行け！", comment: "…最後の戦いだ",
+        wrongReaction: "指示に従った", rightReaction: "最後まで逆らった",
+        penaltyPos: { row: 8, col: 3 } },
+      { row: 5, col: 3, type: "obey", correctDir: "right",
+        command: "右が安全だ", comment: "…信じるか？",
+        wrongReaction: "疑った", rightReaction: "信じて正解",
+        penaltyPos: { row: 7, col: 1 } },
+      { row: 3, col: 3, type: "wait",
+        command: "走れ！逃げろ！", comment: "…我慢だ",
+        wrongReaction: "焦った", rightReaction: "耐え抜いた",
+        penaltyPos: { row: 5, col: 5 } },
+      { row: 2, col: 3, type: "normal", correctDir: "left",
+        command: "右だ！右に行け！", comment: "…見抜けるか？",
+        wrongReaction: "騙された", rightReaction: "見抜いた",
+        penaltyPos: { row: 3, col: 5 } },
+      { row: 1, col: 1, type: "obey", correctDir: "up",
+        command: "上だ、信じろ", comment: "…最後の判断",
+        wrongReaction: "最後に疑った", rightReaction: "最後まで信じた",
+        penaltyPos: { row: 2, col: 3 } },
+    ],
+    lures: [
+      { row: 7, col: 5, text: "上に抜けろ", comment: "" },
+      { row: 5, col: 1, text: "上だ、近道だ", comment: "急げ" },
+      { row: 3, col: 5, text: "右に出口がある", comment: "" },
+      { row: 2, col: 1, text: "左が安全だ", comment: "" },
+    ],
+  },
+];
+
+const Dungeon = {
+  currentStage: 0,
+  playerRow: 0,
+  playerCol: 0,
+  pressure: 20,
+  will: 3,
+  activeDecision: null,
+  activeDecisionIndex: -1,
+  isWaitPhase: false,
+  waitTimer: null,
+  waitCountInterval: null,
+  resolved: null,
+  trappedTiles: null,
+  moving: false,
+  resultShown: false,
+  cells: [],
+  el: {},
+  feedbackTimer: null,
+  lureTimer: null,
+
+  stage() {
+    return DUNGEON_STAGES[this.currentStage];
+  },
+
+  init() {
+    this.el = {
+      screen: document.getElementById("screen-dungeon"),
+      grid: document.getElementById("dg-grid"),
+      command: document.getElementById("dg-command"),
+      comment: document.getElementById("dg-comment"),
+      feedback: document.getElementById("dg-feedback"),
+      pressureNum: document.getElementById("dg-pressure-num"),
+      dpad: document.getElementById("dg-dpad"),
+      resultOverlay: document.getElementById("dg-result-overlay"),
+      resultTitle: document.getElementById("dg-result-title"),
+      resultMsg: document.getElementById("dg-result-msg"),
+      stageLabel: document.getElementById("dg-stage-label"),
+      btnNext: document.getElementById("dg-btn-next"),
+      willDisplay: document.getElementById("dg-will"),
+    };
+
+    document.getElementById("dg-up").addEventListener("click", () => this.move("up"));
+    document.getElementById("dg-down").addEventListener("click", () => this.move("down"));
+    document.getElementById("dg-left").addEventListener("click", () => this.move("left"));
+    document.getElementById("dg-right").addEventListener("click", () => this.move("right"));
+
+    document.addEventListener("keydown", (e) => {
+      if (!this.el.screen.classList.contains("active")) return;
+      const map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+      if (map[e.key]) { e.preventDefault(); this.move(map[e.key]); }
+    });
+
+    document.getElementById("dg-back").addEventListener("click", () => this.goTitle());
+    document.getElementById("dg-btn-retry").addEventListener("click", () => { this.will = 3; this.start(); });
+    document.getElementById("dg-btn-title").addEventListener("click", () => this.goTitle());
+    document.getElementById("btn-dungeon").addEventListener("click", () => { this.currentStage = 0; this.will = 3; this.start(); });
+    this.el.btnNext.addEventListener("click", () => this.nextStage());
+  },
+
+  goTitle() {
+    this.cleanup();
+    Game.showScreen(document.getElementById("screen-title"));
+  },
+
+  cleanup() {
+    clearTimeout(this.waitTimer);
+    clearInterval(this.waitCountInterval);
+    clearTimeout(this.feedbackTimer);
+    clearTimeout(this.lureTimer);
+    this.isWaitPhase = false;
+    this.moving = false;
+  },
+
+  start() {
+    SoundSystem.init();
+    const s = this.stage();
+    this.playerRow = s.startRow;
+    this.playerCol = s.startCol;
+    this.pressure = 20;
+    this.activeDecision = null;
+    this.activeDecisionIndex = -1;
+    this.isWaitPhase = false;
+    this.moving = false;
+    this.resultShown = false;
+    this.resolved = new Set();
+    this.trappedTiles = new Set();
+    clearTimeout(this.waitTimer);
+    clearInterval(this.waitCountInterval);
+    clearTimeout(this.feedbackTimer);
+    clearTimeout(this.lureTimer);
+
+    this.el.stageLabel.textContent = s.name;
+    this.el.command.textContent = "";
+    this.el.command.className = "dg-command";
+    this.el.comment.textContent = "";
+    this.el.feedback.textContent = "";
+    this.el.feedback.className = "dg-feedback";
+    this.el.dpad.classList.remove("dg-wait-mode");
+    this.el.resultOverlay.classList.remove("dg-result-show");
+    this.el.btnNext.classList.remove("dg-next-show");
+    this.el.screen.classList.remove("dg-clear-flash", "dg-trap-screen-flash", "dg-warp-flash");
+    this.updatePressureUI();
+    this.updateWillUI();
+    this.renderGrid();
+    Game.showScreen(this.el.screen);
+  },
+
+  nextStage() {
+    this.currentStage++;
+    this.start();
+  },
+
+  renderGrid() {
+    const map = this.stage().map;
+    this.el.grid.innerHTML = "";
+    this.cells = [];
+    for (let r = 0; r < DUNGEON_ROWS; r++) {
+      this.cells[r] = [];
+      for (let c = 0; c < DUNGEON_COLS; c++) {
+        const cell = document.createElement("div");
+        cell.className = "dg-cell";
+        const val = map[r][c];
+        if (val === 1) cell.classList.add("dg-wall");
+        else if (val === 3) cell.classList.add("dg-goal");
+        else cell.classList.add("dg-path");
+        if (r === this.playerRow && c === this.playerCol) cell.classList.add("dg-player");
+        this.el.grid.appendChild(cell);
+        this.cells[r][c] = cell;
+      }
+    }
+  },
+
+  updatePlayerCell(oldR, oldC) {
+    this.cells[oldR][oldC].classList.remove("dg-player");
+    this.cells[this.playerRow][this.playerCol].classList.add("dg-player");
+  },
+
+  updatePressureUI() {
+    const p = Math.round(this.pressure);
+    this.el.pressureNum.textContent = p;
+    const el = this.el.pressureNum.parentElement;
+    if (p >= 85) el.style.color = "#ff2020";
+    else if (p >= 65) el.style.color = "#e04040";
+    else if (p >= 40) el.style.color = "#d0a020";
+    else el.style.color = "#c0a0e0";
+  },
+
+  updateWillUI() {
+    let html = "";
+    for (let i = 0; i < 5; i++) {
+      if (i < this.will) html += '<span class="dg-heart">♥</span>';
+      else if (i < 3 || i < this.will + 1) html += '<span class="dg-heart dg-heart-lost">♡</span>';
+    }
+    this.el.willDisplay.innerHTML = html;
+  },
+
+  changeWill(delta) {
+    const prev = this.will;
+    this.will = Math.max(0, Math.min(5, this.will + delta));
+    this.updateWillUI();
+    if (delta < 0 && prev > this.will) {
+      const hearts = this.el.willDisplay.querySelectorAll(".dg-heart-lost");
+      if (hearts.length > 0) {
+        const h = hearts[0];
+        h.classList.remove("dg-heart-lost");
+        void h.offsetWidth;
+        h.classList.add("dg-heart-lost");
+      }
+    } else if (delta > 0 && prev < this.will) {
+      const hearts = this.el.willDisplay.querySelectorAll(".dg-heart:not(.dg-heart-lost)");
+      if (hearts.length > 0) {
+        const h = hearts[hearts.length - 1];
+        h.classList.add("dg-heart-gain");
+        setTimeout(() => h.classList.remove("dg-heart-gain"), 400);
+      }
+    }
+    return this.will;
+  },
+
+  changePressure(delta) {
+    this.pressure = Math.max(0, Math.min(100, this.pressure + delta));
+    this.updatePressureUI();
+  },
+
+  showLure(lure) {
+    this.el.command.textContent = lure.text;
+    this.el.command.className = "dg-command dg-cmd-lure";
+    this.el.comment.textContent = lure.comment || "";
+    clearTimeout(this.lureTimer);
+    this.lureTimer = setTimeout(() => {
+      if (this.activeDecision === null) {
+        this.el.command.textContent = "";
+        this.el.command.className = "dg-command";
+        this.el.comment.textContent = "";
+      }
+    }, 2500);
+  },
+
+  clearLure() {
+    clearTimeout(this.lureTimer);
+    if (this.activeDecision === null) {
+      this.el.command.textContent = "";
+      this.el.command.className = "dg-command";
+      this.el.comment.textContent = "";
+    }
+  },
+
+  showFeedback(text, isCorrect) {
+    this.el.feedback.textContent = text;
+    this.el.feedback.className = "dg-feedback " + (isCorrect ? "dg-fb-correct" : "dg-fb-wrong");
+    clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = setTimeout(() => {
+      this.el.feedback.textContent = "";
+      this.el.feedback.className = "dg-feedback";
+    }, 2000);
+  },
+
+  move(dir) {
+    if (this.moving || this.resultShown) return;
+    this.clearLure();
+    const map = this.stage().map;
+    const decisions = this.stage().decisions;
+
+    // waitフェーズ中に矢印 → 即不正解
+    if (this.isWaitPhase) {
+      clearTimeout(this.waitTimer);
+      clearInterval(this.waitCountInterval);
+      this.isWaitPhase = false;
+      this.el.dpad.classList.remove("dg-wait-mode");
+      this.resolveDecision(false);
+      return;
+    }
+
+    const dr = dir === "up" ? -1 : dir === "down" ? 1 : 0;
+    const dc = dir === "left" ? -1 : dir === "right" ? 1 : 0;
+    const nr = this.playerRow + dr;
+    const nc = this.playerCol + dc;
+
+    if (nr < 0 || nr >= DUNGEON_ROWS || nc < 0 || nc >= DUNGEON_COLS) return;
+    if (map[nr][nc] === 1) return;
+
+    const oldR = this.playerRow;
+    const oldC = this.playerCol;
+    this.playerRow = nr;
+    this.playerCol = nc;
+    this.updatePlayerCell(oldR, oldC);
+
+    // トラップ判定
+    const key = nr + "," + nc;
+    if (map[nr][nc] === 2 && !this.trappedTiles.has(key)) {
+      this.triggerTrap(nr, nc, oldR, oldC);
+      return;
+    }
+
+    // アクティブ判断: 移動で正誤判定
+    if (this.activeDecision !== null && this.activeDecision.type !== "wait") {
+      const cd = this.activeDecision.correctDir;
+      const horiz = cd === "left" || cd === "right";
+      const vert = cd === "up" || cd === "down";
+      if ((horiz && (dir === "left" || dir === "right")) ||
+          (vert && (dir === "up" || dir === "down"))) {
+        this.resolveDecision(dir === cd);
+      }
+    }
+
+    // 新しい判断ポイントトリガー
+    if (this.activeDecision === null) {
+      for (let i = 0; i < decisions.length; i++) {
+        if (!this.resolved.has(i) && nr === decisions[i].row && nc === decisions[i].col) {
+          this.triggerDecision(i);
+          break;
+        }
+      }
+    }
+
+    // ゴール判定
+    if (map[nr][nc] === 3) {
+      this.showClear();
+      return;
+    }
+
+    // Lureチェック（判断イベントが無い場合のみ）
+    if (this.activeDecision === null) {
+      const lures = this.stage().lures;
+      if (lures) {
+        for (const lure of lures) {
+          if (nr === lure.row && nc === lure.col) {
+            this.showLure(lure);
+            break;
+          }
+        }
+      }
+    }
+  },
+
+  triggerDecision(index) {
+    const d = this.stage().decisions[index];
+    this.activeDecision = d;
+    this.activeDecisionIndex = index;
+    this.el.command.textContent = d.command;
+    this.el.comment.textContent = d.comment;
+    if (d.type === "wait") {
+      this.el.command.className = "dg-command dg-cmd-wait";
+      this.startWait();
+    } else if (d.type === "obey") {
+      this.el.command.className = "dg-command dg-cmd-obey";
+    } else {
+      this.el.command.className = "dg-command";
+    }
+  },
+
+  resolveDecision(correct) {
+    const d = this.stage().decisions[this.activeDecisionIndex];
+    this.resolved.add(this.activeDecisionIndex);
+    this.activeDecision = null;
+    this.activeDecisionIndex = -1;
+    this.el.command.textContent = "";
+    this.el.command.className = "dg-command";
+    this.el.comment.textContent = "";
+    if (correct) {
+      this.changePressure(-5);
+      this.showFeedback(d.rightReaction, true);
+      SoundSystem.correct();
+    } else {
+      this.changePressure(5);
+      this.showFeedback(d.wrongReaction, false);
+      SoundSystem.wrong();
+      if (this.changeWill(-1) <= 0) {
+        setTimeout(() => this.showGameOver("will"), 400);
+        return;
+      }
+      if (d.penaltyPos) {
+        this.moving = true;
+        setTimeout(() => {
+          this.warpPlayer(d.penaltyPos.row, d.penaltyPos.col);
+          this.showFeedback("遠回りだ…", false);
+          this.moving = false;
+        }, 400);
+      }
+    }
+  },
+
+  triggerTrap(row, col, prevRow, prevCol) {
+    this.moving = true;
+    this.trappedTiles.add(row + "," + col);
+    this.cells[row][col].classList.add("dg-trap-flash");
+    this.changePressure(15);
+    this.showFeedback("罠だ！", false);
+    SoundSystem.wrong();
+    this.changeWill(-1);
+    // 赤スクリーンフラッシュ
+    this.el.screen.classList.remove("dg-trap-screen-flash");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("dg-trap-screen-flash");
+    if (this.will <= 0) {
+      setTimeout(() => this.showGameOver("will"), 500);
+      return;
+    }
+    if (this.pressure >= 100) {
+      setTimeout(() => this.showGameOver("pressure"), 500);
+      return;
+    }
+    const trapWarps = this.stage().trapWarps;
+    const key = row + "," + col;
+    const warpTo = trapWarps && trapWarps[key];
+    setTimeout(() => {
+      this.cells[row][col].classList.remove("dg-trap-flash");
+      if (warpTo) {
+        this.warpPlayer(warpTo.row, warpTo.col);
+        this.showFeedback("飛ばされた！", false);
+      } else {
+        this.playerRow = prevRow;
+        this.playerCol = prevCol;
+        this.updatePlayerCell(row, col);
+      }
+      this.moving = false;
+    }, 600);
+  },
+
+  warpPlayer(toRow, toCol) {
+    const oldR = this.playerRow;
+    const oldC = this.playerCol;
+    this.playerRow = toRow;
+    this.playerCol = toCol;
+    this.updatePlayerCell(oldR, oldC);
+    // ワープ演出: 画面フラッシュ + セル出現アニメーション
+    this.el.screen.classList.remove("dg-warp-flash");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("dg-warp-flash");
+    this.cells[toRow][toCol].classList.remove("dg-warp-in");
+    void this.cells[toRow][toCol].offsetWidth;
+    this.cells[toRow][toCol].classList.add("dg-warp-in");
+  },
+
+  startWait() {
+    this.isWaitPhase = true;
+    this.el.dpad.classList.add("dg-wait-mode");
+    let count = 3;
+    this.el.feedback.textContent = "…" + count;
+    this.el.feedback.className = "dg-feedback";
+    this.waitCountInterval = setInterval(() => {
+      count--;
+      if (count > 0) this.el.feedback.textContent = "…" + count;
+      else this.el.feedback.textContent = "";
+    }, 1000);
+    this.waitTimer = setTimeout(() => {
+      clearInterval(this.waitCountInterval);
+      this.isWaitPhase = false;
+      this.el.dpad.classList.remove("dg-wait-mode");
+      this.resolveDecision(true);
+    }, 3000);
+  },
+
+  playClearSound() {
+    if (!SoundSystem.enabled) return;
+    SoundSystem.resume();
+    const ctx = SoundSystem.ctx;
+    const t = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      const start = t + i * 0.12;
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.12, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
+  },
+
+  showClear() {
+    this.resultShown = true;
+    this.playClearSound();
+    this.changeWill(1);
+    // 緑フラッシュ
+    this.el.screen.classList.remove("dg-clear-flash");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("dg-clear-flash");
+    // リザルト
+    const isLastStage = this.currentStage >= DUNGEON_STAGES.length - 1;
+    if (isLastStage) {
+      this.el.resultTitle.textContent = "完全脱出！";
+      this.el.resultTitle.style.color = "#ffcc00";
+      this.el.resultMsg.textContent = "全ステージクリア！\n同調圧力を完全に打ち破った\n最終圧力: " + Math.round(this.pressure) + "% / 意志: " + this.will;
+    } else {
+      this.el.resultTitle.textContent = "脱出成功！";
+      this.el.resultTitle.style.color = "#00ff80";
+      this.el.resultMsg.textContent = "同調圧力から逃げ切った\n圧力: " + Math.round(this.pressure) + "% / 意志: " + this.will;
+    }
+    // 次のステージボタン
+    if (!isLastStage) {
+      this.el.btnNext.classList.add("dg-next-show");
+    } else {
+      this.el.btnNext.classList.remove("dg-next-show");
+    }
+    this.el.resultOverlay.classList.add("dg-result-show");
+  },
+
+  showGameOver(reason) {
+    this.resultShown = true;
+    this.el.btnNext.classList.remove("dg-next-show");
+    if (reason === "will") {
+      this.el.resultTitle.textContent = "意志が折れた…";
+      this.el.resultTitle.style.color = "#ff4060";
+      this.el.resultMsg.textContent = "心が支配された…\n支配度: " + Math.round(this.pressure) + "%";
+    } else {
+      this.el.resultTitle.textContent = "同調汚染：完了";
+      this.el.resultTitle.style.color = "#ff2020";
+      this.el.resultMsg.textContent = "圧力に屈した…\n支配度: 100%";
+    }
+    this.el.resultOverlay.classList.add("dg-result-show");
+  },
+};
+
+document.addEventListener("DOMContentLoaded", () => { Game.init(); Dungeon.init(); });

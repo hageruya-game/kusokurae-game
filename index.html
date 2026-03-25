@@ -22,6 +22,7 @@
     <div class="comment-bubble" id="title-comment"></div>
     <h1 class="title-main">同調圧力<br><span class="title-accent">くそくらえ</span></h1>
     <button id="btn-start" class="btn btn-start">ゲームスタート</button>
+    <button id="btn-dungeon" class="btn btn-dungeon">逆指示ダンジョン（試作）</button>
     <div class="title-footer">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
   </div>
 
@@ -52,20 +53,19 @@
       <div class="game-command-area">
         <div id="command-text" class="command-text"></div>
       </div>
-      <div class="mockery" id="mockery"></div>
     </div>
-    <!-- 中央キャラ段: 位置固定 -->
+    <!-- 中央キャラ段: 吹き出し(左) + キャラ(右) -->
     <div class="game-zone-center">
+      <div class="game-speech" id="game-speech"></div>
       <div class="game-character">
         <img src="image_0.png" alt="同調圧力の化身" id="game-char-img" class="character-img">
-      </div>
-      <div class="tap-guide" id="tap-guide">
-        <img src="fake_guide_rat.png" class="tap-guide-img">
+        <div class="tap-guide" id="tap-guide">
+          <img src="fake_guide_rat.png" class="tap-guide-img">
+        </div>
       </div>
     </div>
-    <!-- 下段: コメント + フィードバック + 操作 -->
+    <!-- 下段: フィードバック + 操作 -->
     <div class="game-zone-bottom">
-      <div class="comment-bubble" id="game-comment"></div>
       <div id="feedback" class="feedback"></div>
       <div class="timer-bar timer-hidden" id="timer-bar">
         <div class="timer-fill" id="timer-fill"></div>
@@ -108,6 +108,46 @@
     <div class="result-message" id="result-message"></div>
     <button id="btn-replay" class="btn btn-start">もう一回やる</button>
     <div class="result-footer" id="result-footer"></div>
+  </div>
+
+  <!-- 逆指示ダンジョン画面 -->
+  <div id="screen-dungeon" class="screen">
+    <!-- 上段: ヘッダー + 命令 -->
+    <div class="dg-zone-top">
+      <div class="dg-header">
+        <button id="dg-back" class="dg-back">← 戻る</button>
+        <div class="dg-stage-label" id="dg-stage-label">STAGE 1</div>
+        <div class="dg-will" id="dg-will">♥♥♥</div>
+        <div class="dg-pressure">圧力: <span id="dg-pressure-num">20</span>%</div>
+      </div>
+      <div class="dg-command" id="dg-command"></div>
+      <div class="dg-comment" id="dg-comment"></div>
+    </div>
+    <!-- 中段: グリッド迷路 -->
+    <div class="dg-zone-center">
+      <div class="dg-grid" id="dg-grid"></div>
+    </div>
+    <!-- 下段: フィードバック + D-pad -->
+    <div class="dg-zone-bottom">
+      <div class="dg-feedback" id="dg-feedback"></div>
+      <div class="dg-dpad" id="dg-dpad">
+        <button class="dg-arrow dg-up" id="dg-up">▲</button>
+        <div class="dg-dpad-row">
+          <button class="dg-arrow dg-left" id="dg-left">◀</button>
+          <div class="dg-dpad-center"></div>
+          <button class="dg-arrow dg-right" id="dg-right">▶</button>
+        </div>
+        <button class="dg-arrow dg-down" id="dg-down">▼</button>
+      </div>
+    </div>
+    <!-- クリア/ゲームオーバー オーバーレイ -->
+    <div class="dg-result-overlay" id="dg-result-overlay">
+      <div class="dg-result-title" id="dg-result-title"></div>
+      <div class="dg-result-msg" id="dg-result-msg"></div>
+      <button id="dg-btn-next" class="btn btn-start dg-btn-next">次のステージ →</button>
+      <button id="dg-btn-retry" class="btn btn-start">もう一回</button>
+      <button id="dg-btn-title" class="btn btn-dungeon">タイトルへ</button>
+    </div>
   </div>
 
   <script src="main.js"></script>
