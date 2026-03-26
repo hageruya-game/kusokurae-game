@@ -1346,6 +1346,10 @@ const Game = {
 const DUNGEON_ROWS = 9;
 const DUNGEON_COLS = 7;
 
+// 各ステージの理論最小ミス数（回避不能トラップ: S4=1, S7=2）
+const STAGE_MIN_MISSES = [0, 0, 0, 1, 0, 0, 2, 0, 0, 0];
+const TOTAL_MIN_MISSES = STAGE_MIN_MISSES.reduce((a, b) => a + b, 0); // = 3
+
 const DUNGEON_STAGES = [
   {
     name: "STAGE 1",
@@ -2227,12 +2231,13 @@ const Dungeon = {
   },
 
   getRank(totalMisses) {
-    if (totalMisses === 0) return { name: "完全覚醒", color: "#ffd700", msg: "同調圧力を完全に克服した" };
-    if (totalMisses <= 3) return { name: "鉄の意志", color: "#00ff80", msg: "ほとんど流されなかった" };
-    if (totalMisses <= 8) return { name: "抵抗者", color: "#40ccff", msg: "空気を読まずに戦えた" };
-    if (totalMisses <= 15) return { name: "半覚醒", color: "#ffcc00", msg: "まだ流されやすい" };
-    if (totalMisses <= 25) return { name: "流され体質", color: "#ff8040", msg: "空気を読みすぎている" };
-    return { name: "完全同調", color: "#ff3060", msg: "完全に支配されている" };
+    const delta = totalMisses - TOTAL_MIN_MISSES;
+    if (delta <= 0) return { name: "完全覚醒", color: "#ffd700", msg: "全ての誘導を見抜いた" };
+    if (delta <= 3) return { name: "鉄の意志", color: "#00ff80", msg: "ほぼ完璧に見抜いた" };
+    if (delta <= 8) return { name: "抵抗者", color: "#40ccff", msg: "素早く適応した" };
+    if (delta <= 14) return { name: "半覚醒", color: "#ffcc00", msg: "徐々に見抜き始めた" };
+    if (delta <= 21) return { name: "流され体質", color: "#ff8040", msg: "まだ空気を読みすぎている" };
+    return { name: "完全同調", color: "#ff3060", msg: "完全に支配された" };
   },
 
   showClear() {
@@ -2246,16 +2251,24 @@ const Dungeon = {
     const isLastStage = this.currentStage >= DUNGEON_STAGES.length - 1;
     if (isLastStage) {
       const rank = this.getRank(this.totalMisses);
+      const delta = this.totalMisses - TOTAL_MIN_MISSES;
       this.el.resultTitle.textContent = "全ステージ脱出！";
       this.el.resultTitle.style.color = "#ffcc00";
       this.el.resultRank.textContent = "【" + rank.name + "】";
       this.el.resultRank.style.color = rank.color;
-      this.el.resultMsg.textContent = rank.msg + "\n総ミス数: " + this.totalMisses;
+      const deltaStr = delta === 0 ? "±0" : "+" + delta;
+      this.el.resultMsg.textContent = rank.msg
+        + "\n総ミス: " + this.totalMisses + "（理論最小 " + TOTAL_MIN_MISSES + "  " + deltaStr + "）";
     } else {
+      const stageMin = STAGE_MIN_MISSES[this.currentStage] || 0;
+      const stageDelta = this.missCount - stageMin;
+      const stageDeltaStr = stageDelta === 0 ? "±0" : "+" + stageDelta;
       this.el.resultTitle.textContent = "脱出成功！";
       this.el.resultTitle.style.color = "#00ff80";
       this.el.resultRank.textContent = "";
-      this.el.resultMsg.textContent = "ミス: " + this.missCount + "\n累計ミス: " + this.totalMisses;
+      this.el.resultMsg.textContent = "ミス: " + this.missCount
+        + "（最小 " + stageMin + "  " + stageDeltaStr + "）"
+        + "\n累計: " + this.totalMisses;
     }
     // 次のステージボタン（最終ステージでは非表示）
     if (!isLastStage) {
