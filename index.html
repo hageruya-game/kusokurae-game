@@ -118,7 +118,15 @@
         <button id="dg-back" class="dg-back">← 戻る</button>
         <div class="dg-stage-label" id="dg-stage-label">STAGE 1</div>
         <div class="dg-miss" id="dg-miss">MISS: 0</div>
-        <div class="dg-pressure">圧力: <span id="dg-pressure-num">20</span>%</div>
+        <div class="dg-pressure-wrap">
+          <div class="dg-pressure-top">
+            <span class="dg-pressure-label">支配度</span>
+            <span class="dg-pressure-val"><span id="dg-pressure-num">20</span>%</span>
+          </div>
+          <div class="dg-pressure-bar">
+            <div class="dg-pressure-fill" id="dg-pressure-fill"></div>
+          </div>
+        </div>
       </div>
       <div class="dg-command" id="dg-command"></div>
       <div class="dg-comment" id="dg-comment"></div>

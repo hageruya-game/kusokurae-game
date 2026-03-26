@@ -1446,7 +1446,7 @@ const DUNGEON_STAGES = [
       { row: 5, col: 1, text: "上に抜けろ", comment: "行き止まりじゃないぞ" },
       { row: 7, col: 5, text: "そのまま進め", comment: "迷うなよ" },
       { row: 3, col: 5, text: "上だ、ゴールは近い", comment: "" },
-      { row: 2, col: 1, text: "右に逃げ道がある", comment: "急げ" },
+      { row: 2, col: 1, text: "上に逃げ道がある", comment: "急げ" },
     ],
   },
   // ---- Stage 3: 方向転換 ----
@@ -1486,8 +1486,8 @@ const DUNGEON_STAGES = [
     lures: [
       { row: 6, col: 1, text: "上へ、近道だ", comment: "行き止まりじゃない" },
       { row: 4, col: 5, text: "ここから上へ", comment: "急げ" },
-      { row: 1, col: 1, text: "左に隠し通路がある", comment: "" },
-      { row: 1, col: 5, text: "右に出口がある", comment: "" },
+      { row: 1, col: 1, text: "ここが近道だ", comment: "" },
+      { row: 1, col: 5, text: "ここが出口だ", comment: "" },
     ],
   },
   // ---- Stage 4: 忍耐 ----
@@ -1572,7 +1572,7 @@ const DUNGEON_STAGES = [
       { row: 7, col: 5, text: "上に抜けろ", comment: "" },
       { row: 5, col: 1, text: "上だ、近道がある", comment: "急げ" },
       { row: 2, col: 2, text: "上に抜け道がある", comment: "トラップじゃない" },
-      { row: 3, col: 5, text: "右に出口が見える", comment: "" },
+      { row: 3, col: 5, text: "上に出口が見える", comment: "" },
     ],
   },
   // ---- Stage 6: 疑心 ----
@@ -1615,7 +1615,7 @@ const DUNGEON_STAGES = [
     ],
     lures: [
       { row: 6, col: 1, text: "上に近道がある", comment: "" },
-      { row: 4, col: 1, text: "左を進め", comment: "安全だ" },
+      { row: 4, col: 1, text: "上を進め", comment: "安全だ" },
       { row: 1, col: 1, text: "ここが出口だ", comment: "行き止まりじゃない" },
       { row: 2, col: 1, text: "壁沿いが正解", comment: "" },
     ],
@@ -1658,9 +1658,9 @@ const DUNGEON_STAGES = [
     lures: [
       { row: 6, col: 5, text: "上へ急げ", comment: "罠じゃない" },
       { row: 6, col: 1, text: "上に抜けろ", comment: "" },
-      { row: 1, col: 1, text: "左に隠し出口", comment: "行き止まりじゃない" },
-      { row: 1, col: 5, text: "右に出口がある", comment: "" },
-      { row: 4, col: 1, text: "左が近い", comment: "" },
+      { row: 1, col: 1, text: "ここが出口だ", comment: "行き止まりじゃない" },
+      { row: 1, col: 5, text: "ここが出口だ", comment: "" },
+      { row: 4, col: 1, text: "上が近い", comment: "" },
     ],
   },
   // ---- Stage 8: 欺瞞 ----
@@ -1704,7 +1704,7 @@ const DUNGEON_STAGES = [
     ],
     lures: [
       { row: 7, col: 5, text: "上に抜けろ", comment: "" },
-      { row: 5, col: 1, text: "左が近道だ", comment: "急げ" },
+      { row: 5, col: 1, text: "下に近道がある", comment: "急げ" },
       { row: 3, col: 5, text: "上に抜け道がある", comment: "ゴールは近い" },
     ],
   },
@@ -1751,7 +1751,7 @@ const DUNGEON_STAGES = [
       { row: 7, col: 5, text: "上に行け", comment: "" },
       { row: 5, col: 1, text: "上が近い", comment: "急げ" },
       { row: 3, col: 5, text: "上がゴールだ", comment: "近道だ" },
-      { row: 2, col: 1, text: "右に逃げろ", comment: "" },
+      { row: 2, col: 1, text: "下に逃げろ", comment: "" },
     ],
   },
   // ---- Stage 10: 脱出 ----
@@ -1800,7 +1800,7 @@ const DUNGEON_STAGES = [
     lures: [
       { row: 7, col: 5, text: "上に抜けろ", comment: "" },
       { row: 5, col: 1, text: "上だ、近道だ", comment: "急げ" },
-      { row: 3, col: 5, text: "右に出口がある", comment: "" },
+      { row: 3, col: 5, text: "上に出口がある", comment: "" },
       { row: 3, col: 1, text: "まっすぐ上だ", comment: "ゴールは近い" },
     ],
   },
@@ -1839,6 +1839,8 @@ const Dungeon = {
       comment: document.getElementById("dg-comment"),
       feedback: document.getElementById("dg-feedback"),
       pressureNum: document.getElementById("dg-pressure-num"),
+      pressureFill: document.getElementById("dg-pressure-fill"),
+      pressureWrap: document.getElementById("dg-pressure-num").closest(".dg-pressure-wrap"),
       dpad: document.getElementById("dg-dpad"),
       resultOverlay: document.getElementById("dg-result-overlay"),
       resultTitle: document.getElementById("dg-result-title"),
@@ -1959,11 +1961,22 @@ const Dungeon = {
   updatePressureUI() {
     const p = Math.round(this.pressure);
     this.el.pressureNum.textContent = p;
-    const el = this.el.pressureNum.parentElement;
-    if (p >= 85) el.style.color = "#ff2020";
-    else if (p >= 65) el.style.color = "#e04040";
-    else if (p >= 40) el.style.color = "#d0a020";
-    else el.style.color = "#c0a0e0";
+    // バー幅
+    this.el.pressureFill.style.width = p + "%";
+    // 色（数値・バー連動）
+    let color, barColor;
+    if (p >= 85)      { color = "#ff2020"; barColor = "#ff2020"; }
+    else if (p >= 65) { color = "#e04040"; barColor = "#e04040"; }
+    else if (p >= 40) { color = "#d0a020"; barColor = "#d0a020"; }
+    else              { color = "#c0a0e0"; barColor = "#8060c0"; }
+    this.el.pressureNum.parentElement.style.color = color;
+    this.el.pressureFill.style.backgroundColor = barColor;
+    // 高圧時に脈動
+    if (p >= 70) {
+      this.el.pressureWrap.classList.add("dg-pressure-high");
+    } else {
+      this.el.pressureWrap.classList.remove("dg-pressure-high");
+    }
   },
 
   updateMissUI() {
