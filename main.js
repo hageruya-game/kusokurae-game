@@ -1701,7 +1701,7 @@ const DUNGEON_STAGES = [
     lures: [
       { row: 7, col: 5, text: "上に抜けろ", comment: "" },
       { row: 5, col: 1, text: "左が近道だ", comment: "急げ" },
-      { row: 3, col: 5, text: "右に出口がある", comment: "" },
+      { row: 3, col: 5, text: "上に抜け道がある", comment: "ゴールは近い" },
     ],
   },
   // ---- Stage 9: 混沌 ----
@@ -1746,7 +1746,7 @@ const DUNGEON_STAGES = [
     lures: [
       { row: 7, col: 5, text: "上に行け", comment: "" },
       { row: 5, col: 1, text: "上が近い", comment: "急げ" },
-      { row: 3, col: 5, text: "右に出口がある", comment: "" },
+      { row: 3, col: 5, text: "上がゴールだ", comment: "近道だ" },
       { row: 2, col: 1, text: "右に逃げろ", comment: "" },
     ],
   },
@@ -1757,7 +1757,7 @@ const DUNGEON_STAGES = [
     map: [
       [1, 3, 1, 1, 1, 1, 1],
       [1, 0, 0, 0, 1, 0, 1],
-      [1, 0, 1, 0, 1, 2, 1], // trap(5,2)
+      [1, 2, 1, 0, 1, 2, 1], // trap(1,2) trap(5,2) ← c1は錯覚トラップ
       [1, 0, 0, 0, 0, 0, 1],
       [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
       [1, 0, 0, 0, 0, 0, 1],
@@ -1766,6 +1766,7 @@ const DUNGEON_STAGES = [
       [1, 1, 0, 0, 0, 1, 1],
     ],
     trapWarps: {
+      "2,1": { row: 5, col: 3 },
       "2,5": { row: 5, col: 1 },
       "4,1": { row: 7, col: 5 },
       "6,5": { row: 8, col: 3 },
@@ -1796,7 +1797,7 @@ const DUNGEON_STAGES = [
       { row: 7, col: 5, text: "上に抜けろ", comment: "" },
       { row: 5, col: 1, text: "上だ、近道だ", comment: "急げ" },
       { row: 3, col: 5, text: "右に出口がある", comment: "" },
-      { row: 2, col: 1, text: "左が安全だ", comment: "" },
+      { row: 3, col: 1, text: "まっすぐ上だ", comment: "ゴールは近い" },
     ],
   },
 ];
@@ -2112,6 +2113,9 @@ const Dungeon = {
     this.activeDecisionIndex = index;
     this.el.command.textContent = d.command;
     this.el.comment.textContent = d.comment;
+    // 命令文を読む猶予: 280ms入力ロック
+    this.moving = true;
+    setTimeout(() => { this.moving = false; }, 280);
     if (d.type === "wait") {
       this.el.command.className = "dg-command dg-cmd-wait";
       this.startWait();
