@@ -1960,10 +1960,11 @@ const Dungeon = {
   },
 
   updateWillUI() {
+    const slots = Math.max(3, this.will);
     let html = "";
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < slots; i++) {
       if (i < this.will) html += '<span class="dg-heart">♥</span>';
-      else if (i < 3 || i < this.will + 1) html += '<span class="dg-heart dg-heart-lost">♡</span>';
+      else html += '<span class="dg-heart dg-heart-lost">♡</span>';
     }
     this.el.willDisplay.innerHTML = html;
   },
@@ -2062,19 +2063,22 @@ const Dungeon = {
     // トラップ判定
     const key = nr + "," + nc;
     if (map[nr][nc] === 2 && !this.trappedTiles.has(key)) {
+      // 判断が残っていたらクリア（トラップ自体がペナルティになる）
+      if (this.activeDecision !== null) {
+        this.resolved.add(this.activeDecisionIndex);
+        this.activeDecision = null;
+        this.activeDecisionIndex = -1;
+        this.el.command.textContent = "";
+        this.el.command.className = "dg-command";
+        this.el.comment.textContent = "";
+      }
       this.triggerTrap(nr, nc, oldR, oldC);
       return;
     }
 
-    // アクティブ判断: 移動で正誤判定
+    // アクティブ判断: 最初の有効移動で正誤判定（軸を問わない）
     if (this.activeDecision !== null && this.activeDecision.type !== "wait") {
-      const cd = this.activeDecision.correctDir;
-      const horiz = cd === "left" || cd === "right";
-      const vert = cd === "up" || cd === "down";
-      if ((horiz && (dir === "left" || dir === "right")) ||
-          (vert && (dir === "up" || dir === "down"))) {
-        this.resolveDecision(dir === cd);
-      }
+      this.resolveDecision(dir === this.activeDecision.correctDir);
     }
 
     // 新しい判断ポイントトリガー
@@ -2252,7 +2256,6 @@ const Dungeon = {
   showClear() {
     this.resultShown = true;
     this.playClearSound();
-    this.changeWill(1);
     // 緑フラッシュ
     this.el.screen.classList.remove("dg-clear-flash");
     void this.el.screen.offsetWidth;
