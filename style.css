@@ -1271,6 +1271,8 @@ body::before {
   cursor: pointer;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
   transition: transform 0.1s;
 }
 .dg-arrow:active {

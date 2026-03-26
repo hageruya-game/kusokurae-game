@@ -1451,13 +1451,13 @@ const DUNGEON_STAGES = [
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 3, 1, 1, 1],
-      [1, 1, 1, 0, 1, 1, 1],
+      [1, 0, 1, 0, 1, 0, 1], // dead-end alcoves at c1, c5
       [1, 0, 0, 0, 0, 2, 1], // trap(5,2)
       [1, 0, 1, 1, 1, 2, 1], // trap(5,3)
       [1, 0, 0, 0, 0, 0, 1],
       [1, 2, 1, 1, 1, 0, 1], // trap(1,5)
       [1, 0, 0, 0, 0, 0, 1],
-      [1, 1, 1, 0, 1, 1, 1],
+      [1, 1, 0, 0, 0, 1, 1], // wider approach
       [1, 1, 1, 0, 1, 1, 1],
     ],
     trapWarps: {
@@ -1480,9 +1480,10 @@ const DUNGEON_STAGES = [
         penaltyPos: { row: 4, col: 5 } },
     ],
     lures: [
-      { row: 6, col: 1, text: "上へ、近道だ", comment: "" },
+      { row: 6, col: 1, text: "上へ、近道だ", comment: "行き止まりじゃない" },
       { row: 4, col: 5, text: "ここから上へ", comment: "急げ" },
-      { row: 2, col: 4, text: "右に出口がある", comment: "" },
+      { row: 1, col: 1, text: "左に隠し通路がある", comment: "" },
+      { row: 1, col: 5, text: "右に出口がある", comment: "" },
     ],
   },
   // ---- Stage 4: 忍耐 ----
@@ -1532,7 +1533,7 @@ const DUNGEON_STAGES = [
     map: [
       [1, 3, 1, 1, 1, 1, 1],
       [1, 0, 2, 1, 1, 0, 1], // trap(2,1)
-      [1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 0, 1, 1, 0, 1], // dead-end fork at c2 (leads to trap above)
       [1, 0, 0, 0, 0, 0, 1],
       [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
       [1, 0, 0, 0, 0, 0, 1],
@@ -1566,6 +1567,7 @@ const DUNGEON_STAGES = [
     lures: [
       { row: 7, col: 5, text: "上に抜けろ", comment: "" },
       { row: 5, col: 1, text: "上だ、近道がある", comment: "急げ" },
+      { row: 2, col: 2, text: "上に抜け道がある", comment: "トラップじゃない" },
       { row: 3, col: 5, text: "右に出口が見える", comment: "" },
     ],
   },
@@ -1575,7 +1577,7 @@ const DUNGEON_STAGES = [
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 1, 1, 3, 1],
-      [1, 1, 1, 0, 1, 0, 1],
+      [1, 0, 1, 0, 1, 0, 1], // dead-end alcove at c1
       [1, 0, 0, 0, 0, 0, 1],
       [1, 2, 1, 1, 1, 0, 1], // trap(1,3)
       [1, 0, 0, 0, 0, 0, 1],
@@ -1602,14 +1604,15 @@ const DUNGEON_STAGES = [
         command: "左だ！急げ！", comment: "…本当に？",
         wrongReaction: "また騙された", rightReaction: "見抜いた",
         penaltyPos: { row: 4, col: 1 } },
-      { row: 1, col: 3, type: "obey", correctDir: "right",
-        command: "右へ、信じろ", comment: "…最後だ",
+      { row: 2, col: 5, type: "obey", correctDir: "up",
+        command: "上だ、信じろ", comment: "…最後だ",
         wrongReaction: "疑って失敗", rightReaction: "信じて正解",
-        penaltyPos: { row: 2, col: 1 } },
+        penaltyPos: { row: 4, col: 1 } },
     ],
     lures: [
       { row: 6, col: 1, text: "上に近道がある", comment: "" },
       { row: 4, col: 1, text: "左を進め", comment: "安全だ" },
+      { row: 1, col: 1, text: "ここが出口だ", comment: "行き止まりじゃない" },
       { row: 2, col: 1, text: "壁沿いが正解", comment: "" },
     ],
   },
@@ -1619,13 +1622,13 @@ const DUNGEON_STAGES = [
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 3, 1, 1, 1],
-      [1, 1, 1, 0, 1, 1, 1],
+      [1, 0, 1, 0, 1, 0, 1], // dead-end alcoves at c1, c5
       [1, 0, 0, 0, 0, 2, 1], // trap(5,2)
       [1, 2, 1, 1, 1, 0, 1], // trap(1,3)
       [1, 0, 0, 0, 0, 0, 1],
       [1, 2, 1, 1, 1, 2, 1], // trap(1,5), trap(5,5)
       [1, 0, 0, 0, 0, 0, 1],
-      [1, 1, 1, 0, 1, 1, 1],
+      [1, 1, 0, 0, 0, 1, 1], // wider approach
       [1, 1, 1, 0, 1, 1, 1],
     ],
     trapWarps: {
@@ -1649,9 +1652,10 @@ const DUNGEON_STAGES = [
         penaltyPos: { row: 4, col: 5 } },
     ],
     lures: [
-      { row: 6, col: 5, text: "上へ急げ", comment: "" },
+      { row: 6, col: 5, text: "上へ急げ", comment: "罠じゃない" },
       { row: 6, col: 1, text: "上に抜けろ", comment: "" },
-      { row: 4, col: 5, text: "もう少し上だ", comment: "急げ" },
+      { row: 1, col: 1, text: "左に隠し出口", comment: "行き止まりじゃない" },
+      { row: 1, col: 5, text: "右に出口がある", comment: "" },
       { row: 4, col: 1, text: "左が近い", comment: "" },
     ],
   },
@@ -1779,7 +1783,7 @@ const DUNGEON_STAGES = [
         command: "走れ！逃げろ！", comment: "…我慢だ",
         wrongReaction: "焦った", rightReaction: "耐え抜いた",
         penaltyPos: { row: 5, col: 5 } },
-      { row: 2, col: 3, type: "normal", correctDir: "left",
+      { row: 1, col: 2, type: "normal", correctDir: "left",
         command: "右だ！右に行け！", comment: "…見抜けるか？",
         wrongReaction: "騙された", rightReaction: "見抜いた",
         penaltyPos: { row: 3, col: 5 } },
@@ -1838,10 +1842,20 @@ const Dungeon = {
       willDisplay: document.getElementById("dg-will"),
     };
 
-    document.getElementById("dg-up").addEventListener("click", () => this.move("up"));
-    document.getElementById("dg-down").addEventListener("click", () => this.move("down"));
-    document.getElementById("dg-left").addEventListener("click", () => this.move("left"));
-    document.getElementById("dg-right").addEventListener("click", () => this.move("right"));
+    const arrowDirs = { "dg-up": "up", "dg-down": "down", "dg-left": "left", "dg-right": "right" };
+    Object.entries(arrowDirs).forEach(([id, dir]) => {
+      const btn = document.getElementById(id);
+      let touchHandled = false;
+      btn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        touchHandled = true;
+        this.move(dir);
+      }, { passive: false });
+      btn.addEventListener("click", () => {
+        if (touchHandled) { touchHandled = false; return; }
+        this.move(dir);
+      });
+    });
 
     document.addEventListener("keydown", (e) => {
       if (!this.el.screen.classList.contains("active")) return;
