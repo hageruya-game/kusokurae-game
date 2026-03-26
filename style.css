@@ -1151,52 +1151,47 @@ body::before {
   50% { color: #ff6080; }
   100% { color: #c0a0e0; transform: scale(1); }
 }
-.dg-pressure-wrap {
+.dg-status-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 80px;
-}
-.dg-pressure-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 4px;
-}
-.dg-pressure-label {
-  font-size: 10px;
-  color: #8070a0;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-.dg-pressure-val {
-  font-size: 13px;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid;
   font-weight: 900;
-  color: #c0a0e0;
+  font-size: 13px;
   letter-spacing: 1px;
-  transition: color 0.3s;
+  transition: all 0.4s ease;
 }
-.dg-pressure-bar {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-  overflow: hidden;
+.dg-status-label {
+  font-size: 10px;
+  opacity: 0.7;
 }
-.dg-pressure-fill {
-  height: 100%;
-  width: 20%;
-  border-radius: 2px;
-  background: #8060c0;
-  transition: width 0.4s ease, background-color 0.4s ease;
+[data-stage="normal"] {
+  border-color: rgba(100, 200, 220, 0.4);
+  color: #60c8dc;
+  background: rgba(100, 200, 220, 0.08);
 }
-.dg-pressure-wrap.dg-pressure-high {
-  animation: pressurePulse 1.5s ease-in-out infinite;
+[data-stage="anxiety"] {
+  border-color: rgba(220, 180, 40, 0.5);
+  color: #dcb428;
+  background: rgba(220, 180, 40, 0.1);
 }
-@keyframes pressurePulse {
+[data-stage="confusion"] {
+  border-color: rgba(220, 100, 40, 0.5);
+  color: #dc6428;
+  background: rgba(220, 100, 40, 0.1);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+[data-stage="dominated"] {
+  border-color: rgba(255, 40, 40, 0.6);
+  color: #ff2828;
+  background: rgba(255, 40, 40, 0.12);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+@keyframes statusPulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-  transition: color 0.3s;
+  50% { opacity: 0.6; }
 }
 
 /* --- 命令テキスト --- */
@@ -1245,34 +1240,145 @@ body::before {
   max-width: 280px;
 }
 
-/* --- グリッド迷路 --- */
+/* --- グリッド迷路（ビジュアル刷新） --- */
 .dg-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 1px;
   width: min(64vw, 280px);
+  background: #0a0014;
+  border: 2px solid rgba(100, 60, 160, 0.5);
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(80, 40, 160, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.5);
+  padding: 1px;
 }
 .dg-cell {
   aspect-ratio: 1;
-  border-radius: 3px;
+  border-radius: 2px;
   transition: background 0.15s;
+  position: relative;
+  overflow: hidden;
 }
-.dg-wall  { background: #1a0a2e; }
-.dg-path  { background: rgba(80, 40, 120, 0.4); }
-.dg-goal  {
-  background: #ffcc00;
-  animation: pulse 1.5s infinite;
-  box-shadow: inset 0 0 6px rgba(255, 200, 0, 0.5);
+/* 壁: ダーク勾配 */
+.dg-wall {
+  background: linear-gradient(135deg, #1a0a30, #0e0620);
+  box-shadow: inset 1px 1px 0 rgba(80, 40, 140, 0.15);
 }
+/* 通路: ダークタイル + 溝線（壁との差を明確に） */
+.dg-path {
+  background: #241640;
+  box-shadow: inset 0 0 0 1px rgba(120, 70, 200, 0.2);
+}
+/* ゴール: ネオングリーンゲート */
+.dg-goal {
+  background: #0a1a10;
+  border: 2px solid #00ff80;
+  box-shadow: 0 0 8px rgba(0, 255, 128, 0.4), inset 0 0 8px rgba(0, 255, 128, 0.15);
+  animation: goalPulse 2s ease-in-out infinite;
+}
+.dg-goal::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(0, 255, 128, 0.5);
+  border-radius: 1px;
+}
+@keyframes goalPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 128, 0.4), inset 0 0 8px rgba(0, 255, 128, 0.15); }
+  50% { box-shadow: 0 0 14px rgba(0, 255, 128, 0.6), inset 0 0 12px rgba(0, 255, 128, 0.25); }
+}
+/* プレイヤー: シアン追跡マーカー（中心ドット + パルスリング） */
 .dg-player {
-  background: #00ff80 !important;
-  box-shadow: 0 0 8px rgba(0, 255, 128, 0.6);
-  border-radius: 50%;
+  background: #241640 !important;
+  box-shadow: inset 0 0 0 1px rgba(120, 70, 200, 0.2);
+  border-radius: 2px;
 }
+.dg-player::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40%;
+  height: 40%;
+  transform: translate(-50%, -50%);
+  background: #00e0ff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 224, 255, 0.8);
+  z-index: 2;
+}
+.dg-player::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 65%;
+  height: 65%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(0, 224, 255, 0.6);
+  border-radius: 50%;
+  animation: playerPulse 1.5s ease-in-out infinite;
+  z-index: 1;
+}
+@keyframes playerPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; }
+}
+/* トラップフラッシュ */
 .dg-trap-flash {
-  background: #ff2020 !important;
-  box-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
+  background: rgba(40, 0, 0, 0.9) !important;
+  box-shadow: inset 0 0 15px rgba(255, 0, 0, 0.7), 0 0 8px rgba(255, 0, 0, 0.4);
   animation: shake 0.4s ease-out;
+}
+.dg-trap-flash::before,
+.dg-trap-flash::after {
+  display: none;
+}
+
+/* 封鎖トラップ: 通路が壁化 */
+.dg-blocked {
+  background: linear-gradient(135deg, #2a0818, #180520) !important;
+  box-shadow: inset 0 0 8px rgba(255, 0, 40, 0.2), inset 0 0 0 1px rgba(255, 0, 40, 0.15) !important;
+  animation: blockCollapse 0.4s ease-out;
+}
+.dg-blocked::before {
+  content: '×';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 60, 60, 0.45);
+  font-size: clamp(10px, 3vw, 16px);
+  font-weight: 900;
+  line-height: 1;
+}
+.dg-blocked::after {
+  display: none;
+}
+@keyframes blockCollapse {
+  0% { transform: scale(1.15); background: rgba(255, 30, 30, 0.5); }
+  100% { transform: scale(1); }
+}
+/* 封鎖時の画面シェイク（軽め） */
+.dg-block-shake { animation: blockShake 0.3s ease-out; }
+@keyframes blockShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+/* 封鎖フィードバック強調 */
+.dg-fb-emphasize {
+  animation: fbEmphasize 0.4s ease-out;
+}
+@keyframes fbEmphasize {
+  0% { transform: scale(1.1); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* --- D-pad（十字キー） --- */
@@ -1369,6 +1475,52 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* --- チュートリアルオーバーレイ --- */
+.dg-tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 0, 12, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.dg-tutorial-overlay.dg-tutorial-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.dg-tutorial-overlay.dg-tutorial-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+.dg-tutorial-text {
+  font-size: clamp(20px, 6vw, 30px);
+  font-weight: 900;
+  color: #ff4080;
+  text-shadow: 0 0 20px rgba(255, 0, 80, 0.5);
+  text-align: center;
+  line-height: 1.6;
+  animation: tutorialIn 0.8s ease-out;
+}
+.dg-tutorial-hint {
+  font-size: 14px;
+  color: rgba(200, 180, 220, 0.6);
+  animation: tutorialHintPulse 2s ease-in-out infinite;
+}
+@keyframes tutorialIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes tutorialHintPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
 /* --- リザルトオーバーレイ --- */
 .dg-result-overlay {
   position: fixed;
@@ -1405,12 +1557,39 @@ body::before {
   padding: 0 16px;
 }
 .dg-result-rank {
-  font-size: clamp(18px, 5vw, 26px);
+  font-size: clamp(28px, 8vw, 42px);
   font-weight: 900;
   text-align: center;
   line-height: 1.4;
   margin-top: 4px;
-  text-shadow: 0 0 8px currentColor;
+  text-shadow: 0 0 12px currentColor;
+  letter-spacing: 3px;
+}
+/* ランク出現アニメーション */
+.dg-rank-reveal {
+  animation: rankReveal 0.6s ease-out;
+}
+@keyframes rankReveal {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+/* Stage10特別: Phase1（一言メッセージ） */
+.dg-final-phase1 .dg-result-msg {
+  font-size: clamp(16px, 4.5vw, 22px);
+  animation: finalMsgIn 1s ease-out;
+}
+@keyframes finalMsgIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+/* Stage10特別: Phase2（本リザルト） */
+.dg-final-phase2 .dg-result-title {
+  animation: finalTitleIn 0.5s ease-out;
+}
+@keyframes finalTitleIn {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* --- ダンジョン レスポンシブ --- */
@@ -1423,8 +1602,8 @@ body::before {
   .dg-command { font-size: clamp(16px, 4.5vw, 22px); min-height: 28px; }
   .dg-feedback { font-size: clamp(13px, 3.5vw, 18px); min-height: 20px; }
   .dg-comment { font-size: 12px; min-height: 16px; }
-  .dg-pressure-val { font-size: 12px; }
-  .dg-pressure-label { font-size: 9px; }
+  .dg-status-wrap { font-size: 12px; }
+  .dg-status-label { font-size: 9px; }
   .dg-stage-label { font-size: 11px; }
   .dg-miss { font-size: 12px; }
   .dg-zone-bottom { gap: 6px; }

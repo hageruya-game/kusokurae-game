@@ -337,6 +337,40 @@ const SoundSystem = {
     osc2.stop(t + 0.2);
   },
 
+  // --- 崩壊音: 短いノイズ + 低い衝撃 ---
+  collapse() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    // ノイズバースト（バッファソース）
+    const bufSize = ctx.sampleRate * 0.15;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const nGain = ctx.createGain();
+    noise.connect(nGain);
+    nGain.connect(ctx.destination);
+    nGain.gain.setValueAtTime(0.12, t);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    noise.start(t);
+    noise.stop(t + 0.15);
+    // 低い衝撃音
+    const osc = ctx.createOscillator();
+    const oGain = ctx.createGain();
+    osc.connect(oGain);
+    oGain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(80, t);
+    osc.frequency.exponentialRampToValueAtTime(30, t + 0.2);
+    oGain.gain.setValueAtTime(0.1, t);
+    oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  },
+
   // --- 焦り音: 低い脈動（心拍のような短パルス） ---
   tick() {
     if (!this.enabled) return;
@@ -1636,7 +1670,7 @@ const DUNGEON_STAGES = [
       [1, 1, 1, 0, 1, 1, 1],
     ],
     trapWarps: {
-      "5,5": { row: 7, col: 3 },
+      "5,5": { row: 7, col: 3, block: true },
       "5,1": { row: 7, col: 3 },
       "3,1": { row: 6, col: 5 },
       "2,5": { row: 4, col: 1 },
@@ -1682,7 +1716,7 @@ const DUNGEON_STAGES = [
       "1,2": { row: 3, col: 5 },
       "2,5": { row: 5, col: 1 },
       "4,5": { row: 7, col: 5 },
-      "6,1": { row: 8, col: 3 },
+      "6,1": { row: 8, col: 3, block: true },
     },
     decisions: [
       { row: 7, col: 3, type: "obey", correctDir: "left",
@@ -1724,7 +1758,7 @@ const DUNGEON_STAGES = [
       [1, 1, 0, 0, 0, 1, 1],
     ],
     trapWarps: {
-      "6,5": { row: 8, col: 3 },
+      "6,5": { row: 8, col: 3, block: true },
       "4,1": { row: 7, col: 1 },
       "2,5": { row: 5, col: 5 },
       "1,2": { row: 3, col: 1 },
@@ -1772,7 +1806,7 @@ const DUNGEON_STAGES = [
     trapWarps: {
       "2,1": { row: 5, col: 3 },
       "2,5": { row: 5, col: 1 },
-      "4,1": { row: 7, col: 5 },
+      "4,1": { row: 7, col: 5, block: true },
       "6,5": { row: 8, col: 3 },
     },
     decisions: [
@@ -1820,6 +1854,8 @@ const Dungeon = {
   waitCountInterval: null,
   resolved: null,
   trappedTiles: null,
+  blockedTiles: null,
+  tutorialShown: false,
   moving: false,
   resultShown: false,
   cells: [],
@@ -1838,9 +1874,8 @@ const Dungeon = {
       command: document.getElementById("dg-command"),
       comment: document.getElementById("dg-comment"),
       feedback: document.getElementById("dg-feedback"),
-      pressureNum: document.getElementById("dg-pressure-num"),
-      pressureFill: document.getElementById("dg-pressure-fill"),
-      pressureWrap: document.getElementById("dg-pressure-num").closest(".dg-pressure-wrap"),
+      statusWrap: document.getElementById("dg-status-wrap"),
+      statusName: document.getElementById("dg-status-name"),
       dpad: document.getElementById("dg-dpad"),
       resultOverlay: document.getElementById("dg-result-overlay"),
       resultTitle: document.getElementById("dg-result-title"),
@@ -1849,6 +1884,7 @@ const Dungeon = {
       btnNext: document.getElementById("dg-btn-next"),
       missDisplay: document.getElementById("dg-miss"),
       resultRank: document.getElementById("dg-result-rank"),
+      tutorialOverlay: document.getElementById("dg-tutorial-overlay"),
     };
 
     const arrowDirs = { "dg-up": "up", "dg-down": "down", "dg-left": "left", "dg-right": "right" };
@@ -1877,6 +1913,14 @@ const Dungeon = {
     document.getElementById("dg-btn-title").addEventListener("click", () => this.goTitle());
     document.getElementById("btn-dungeon").addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
     this.el.btnNext.addEventListener("click", () => this.nextStage());
+    this.el.tutorialOverlay.addEventListener("click", () => this.dismissTutorial());
+  },
+
+  dismissTutorial() {
+    this.el.tutorialOverlay.classList.add("dg-tutorial-hide");
+    setTimeout(() => {
+      this.el.tutorialOverlay.classList.remove("dg-tutorial-show", "dg-tutorial-hide");
+    }, 500);
   },
 
   goTitle() {
@@ -1906,6 +1950,7 @@ const Dungeon = {
     this.resultShown = false;
     this.resolved = new Set();
     this.trappedTiles = new Set();
+    this.blockedTiles = new Set();
     clearTimeout(this.waitTimer);
     clearInterval(this.waitCountInterval);
     clearTimeout(this.feedbackTimer);
@@ -1926,6 +1971,11 @@ const Dungeon = {
     this.updateMissUI();
     this.renderGrid();
     Game.showScreen(this.el.screen);
+    // 初回のみチュートリアル表示
+    if (!this.tutorialShown && this.currentStage === 0) {
+      this.tutorialShown = true;
+      this.el.tutorialOverlay.classList.add("dg-tutorial-show");
+    }
   },
 
   nextStage() {
@@ -1959,24 +2009,14 @@ const Dungeon = {
   },
 
   updatePressureUI() {
-    const p = Math.round(this.pressure);
-    this.el.pressureNum.textContent = p;
-    // バー幅
-    this.el.pressureFill.style.width = p + "%";
-    // 色（数値・バー連動）
-    let color, barColor;
-    if (p >= 85)      { color = "#ff2020"; barColor = "#ff2020"; }
-    else if (p >= 65) { color = "#e04040"; barColor = "#e04040"; }
-    else if (p >= 40) { color = "#d0a020"; barColor = "#d0a020"; }
-    else              { color = "#c0a0e0"; barColor = "#8060c0"; }
-    this.el.pressureNum.parentElement.style.color = color;
-    this.el.pressureFill.style.backgroundColor = barColor;
-    // 高圧時に脈動
-    if (p >= 70) {
-      this.el.pressureWrap.classList.add("dg-pressure-high");
-    } else {
-      this.el.pressureWrap.classList.remove("dg-pressure-high");
-    }
+    const p = this.pressure;
+    let stage, name;
+    if (p >= 80)      { stage = "dominated"; name = "支配寸前"; }
+    else if (p >= 55) { stage = "confusion"; name = "混乱"; }
+    else if (p >= 35) { stage = "anxiety";   name = "焦り"; }
+    else              { stage = "normal";    name = "平常"; }
+    this.el.statusWrap.dataset.stage = stage;
+    this.el.statusName.textContent = name;
   },
 
   updateMissUI() {
@@ -2021,14 +2061,15 @@ const Dungeon = {
     }
   },
 
-  showFeedback(text, isCorrect) {
+  showFeedback(text, isCorrect, emphasize) {
     this.el.feedback.textContent = text;
-    this.el.feedback.className = "dg-feedback " + (isCorrect ? "dg-fb-correct" : "dg-fb-wrong");
+    this.el.feedback.className = "dg-feedback " + (isCorrect ? "dg-fb-correct" : "dg-fb-wrong")
+      + (emphasize ? " dg-fb-emphasize" : "");
     clearTimeout(this.feedbackTimer);
     this.feedbackTimer = setTimeout(() => {
       this.el.feedback.textContent = "";
       this.el.feedback.className = "dg-feedback";
-    }, 2000);
+    }, 2500);
   },
 
   move(dir) {
@@ -2054,6 +2095,7 @@ const Dungeon = {
 
     if (nr < 0 || nr >= DUNGEON_ROWS || nc < 0 || nc >= DUNGEON_COLS) return;
     if (map[nr][nc] === 1) return;
+    if (this.blockedTiles.has(nr + "," + nc)) return;
 
     const oldR = this.playerRow;
     const oldC = this.playerCol;
@@ -2176,9 +2218,18 @@ const Dungeon = {
     const warpTo = trapWarps && trapWarps[key];
     setTimeout(() => {
       this.cells[row][col].classList.remove("dg-trap-flash");
+      if (warpTo && warpTo.block) {
+        this.blockedTiles.add(key);
+        this.cells[row][col].classList.remove("dg-path");
+        this.cells[row][col].classList.add("dg-blocked");
+        SoundSystem.collapse();
+        this.el.screen.classList.remove("dg-block-shake");
+        void this.el.screen.offsetWidth;
+        this.el.screen.classList.add("dg-block-shake");
+      }
       if (warpTo) {
         this.warpPlayer(warpTo.row, warpTo.col);
-        this.showFeedback("飛ばされた！", false);
+        this.showFeedback(warpTo.block ? "通路が崩れた！" : "飛ばされた！", false, warpTo.block);
       } else {
         this.playerRow = prevRow;
         this.playerCol = prevCol;
@@ -2262,34 +2313,50 @@ const Dungeon = {
     this.el.screen.classList.add("dg-clear-flash");
     // リザルト
     const isLastStage = this.currentStage >= DUNGEON_STAGES.length - 1;
+    // リザルトオーバーレイのクラスをリセット
+    this.el.resultOverlay.className = "dg-result-overlay";
+    this.el.resultRank.className = "dg-result-rank";
     if (isLastStage) {
-      const rank = this.getRank(this.totalMisses);
-      const delta = this.totalMisses - TOTAL_MIN_MISSES;
-      this.el.resultTitle.textContent = "全ステージ脱出！";
+      this.showFinalResult();
+      return;
+    }
+    const stageMin = STAGE_MIN_MISSES[this.currentStage] || 0;
+    const stageDelta = this.missCount - stageMin;
+    const stageDeltaStr = stageDelta === 0 ? "±0" : "+" + stageDelta;
+    this.el.resultTitle.textContent = "脱出成功！";
+    this.el.resultTitle.style.color = "#00ff80";
+    this.el.resultRank.textContent = "";
+    this.el.resultMsg.textContent = "ミス: " + this.missCount
+      + "（最小 " + stageMin + "  " + stageDeltaStr + "）"
+      + "\n累計: " + this.totalMisses;
+    this.el.btnNext.classList.add("dg-next-show");
+    this.el.resultOverlay.classList.add("dg-result-show");
+  },
+
+  showFinalResult() {
+    const rank = this.getRank(this.totalMisses);
+    const delta = this.totalMisses - TOTAL_MIN_MISSES;
+    const deltaStr = delta === 0 ? "±0" : "+" + delta;
+    // Phase 1: フェードアウト + 一言メッセージ（1.5秒）
+    this.el.resultTitle.textContent = "";
+    this.el.resultRank.textContent = "";
+    this.el.resultMsg.textContent = "…もう、誰の指示も要らない。";
+    this.el.resultMsg.style.color = "#a090c0";
+    this.el.btnNext.classList.remove("dg-next-show");
+    this.el.resultOverlay.classList.add("dg-result-show", "dg-final-phase1");
+    // Phase 2: 本リザルト表示（2秒後）
+    setTimeout(() => {
+      this.el.resultOverlay.classList.remove("dg-final-phase1");
+      this.el.resultOverlay.classList.add("dg-final-phase2");
+      this.el.resultTitle.textContent = "全ステージ脱出";
       this.el.resultTitle.style.color = "#ffcc00";
-      this.el.resultRank.textContent = "【" + rank.name + "】";
+      this.el.resultRank.textContent = rank.name;
       this.el.resultRank.style.color = rank.color;
-      const deltaStr = delta === 0 ? "±0" : "+" + delta;
+      this.el.resultRank.classList.add("dg-rank-reveal");
       this.el.resultMsg.textContent = rank.msg
         + "\n総ミス: " + this.totalMisses + "（理論最小 " + TOTAL_MIN_MISSES + "  " + deltaStr + "）";
-    } else {
-      const stageMin = STAGE_MIN_MISSES[this.currentStage] || 0;
-      const stageDelta = this.missCount - stageMin;
-      const stageDeltaStr = stageDelta === 0 ? "±0" : "+" + stageDelta;
-      this.el.resultTitle.textContent = "脱出成功！";
-      this.el.resultTitle.style.color = "#00ff80";
-      this.el.resultRank.textContent = "";
-      this.el.resultMsg.textContent = "ミス: " + this.missCount
-        + "（最小 " + stageMin + "  " + stageDeltaStr + "）"
-        + "\n累計: " + this.totalMisses;
-    }
-    // 次のステージボタン（最終ステージでは非表示）
-    if (!isLastStage) {
-      this.el.btnNext.classList.add("dg-next-show");
-    } else {
-      this.el.btnNext.classList.remove("dg-next-show");
-    }
-    this.el.resultOverlay.classList.add("dg-result-show");
+      this.el.resultMsg.style.color = "";
+    }, 2000);
   },
 };
 

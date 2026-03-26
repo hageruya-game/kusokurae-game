@@ -118,14 +118,9 @@
         <button id="dg-back" class="dg-back">← 戻る</button>
         <div class="dg-stage-label" id="dg-stage-label">STAGE 1</div>
         <div class="dg-miss" id="dg-miss">MISS: 0</div>
-        <div class="dg-pressure-wrap">
-          <div class="dg-pressure-top">
-            <span class="dg-pressure-label">支配度</span>
-            <span class="dg-pressure-val"><span id="dg-pressure-num">20</span>%</span>
-          </div>
-          <div class="dg-pressure-bar">
-            <div class="dg-pressure-fill" id="dg-pressure-fill"></div>
-          </div>
+        <div class="dg-status-wrap" id="dg-status-wrap" data-stage="normal">
+          <span class="dg-status-label">状態:</span>
+          <span class="dg-status-name" id="dg-status-name">平常</span>
         </div>
       </div>
       <div class="dg-command" id="dg-command"></div>
@@ -147,6 +142,11 @@
         </div>
         <button class="dg-arrow dg-down" id="dg-down">▼</button>
       </div>
+    </div>
+    <!-- チュートリアルオーバーレイ -->
+    <div class="dg-tutorial-overlay" id="dg-tutorial-overlay">
+      <div class="dg-tutorial-text">命令を信じるな。<br>すべてが罠だ。</div>
+      <div class="dg-tutorial-hint">タップして開始</div>
     </div>
     <!-- クリア/ゲームオーバー オーバーレイ -->
     <div class="dg-result-overlay" id="dg-result-overlay">
