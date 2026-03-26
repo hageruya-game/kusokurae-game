@@ -1415,13 +1415,13 @@ const DUNGEON_STAGES = [
     decisions: [
       {
         row: 7, col: 3, type: "normal", correctDir: "left",
-        command: "右に曲がれ！", comment: "迷うなよ…",
+        command: "右に進め！", comment: "迷うなよ…",
         wrongReaction: "言われた通りだな", rightReaction: "命令に従わなかった",
         penaltyPos: { row: 8, col: 3 },
       },
       {
         row: 5, col: 3, type: "normal", correctDir: "right",
-        command: "左に曲がれ！", comment: "指示に従え…",
+        command: "左に進め！", comment: "指示に従え…",
         wrongReaction: "素直に曲がったな", rightReaction: "逆を行ったか",
         penaltyPos: { row: 7, col: 1 },
       },
@@ -1807,7 +1807,8 @@ const Dungeon = {
   playerRow: 0,
   playerCol: 0,
   pressure: 20,
-  will: 3,
+  missCount: 0,
+  totalMisses: 0,
   activeDecision: null,
   activeDecisionIndex: -1,
   isWaitPhase: false,
@@ -1840,7 +1841,8 @@ const Dungeon = {
       resultMsg: document.getElementById("dg-result-msg"),
       stageLabel: document.getElementById("dg-stage-label"),
       btnNext: document.getElementById("dg-btn-next"),
-      willDisplay: document.getElementById("dg-will"),
+      missDisplay: document.getElementById("dg-miss"),
+      resultRank: document.getElementById("dg-result-rank"),
     };
 
     const arrowDirs = { "dg-up": "up", "dg-down": "down", "dg-left": "left", "dg-right": "right" };
@@ -1865,9 +1867,9 @@ const Dungeon = {
     });
 
     document.getElementById("dg-back").addEventListener("click", () => this.goTitle());
-    document.getElementById("dg-btn-retry").addEventListener("click", () => { this.will = 3; this.start(); });
+    document.getElementById("dg-btn-retry").addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
     document.getElementById("dg-btn-title").addEventListener("click", () => this.goTitle());
-    document.getElementById("btn-dungeon").addEventListener("click", () => { this.currentStage = 0; this.will = 3; this.start(); });
+    document.getElementById("btn-dungeon").addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
     this.el.btnNext.addEventListener("click", () => this.nextStage());
   },
 
@@ -1913,8 +1915,9 @@ const Dungeon = {
     this.el.resultOverlay.classList.remove("dg-result-show");
     this.el.btnNext.classList.remove("dg-next-show");
     this.el.screen.classList.remove("dg-clear-flash", "dg-trap-screen-flash", "dg-warp-flash");
+    this.missCount = 0;
     this.updatePressureUI();
-    this.updateWillUI();
+    this.updateMissUI();
     this.renderGrid();
     Game.showScreen(this.el.screen);
   },
@@ -1959,37 +1962,18 @@ const Dungeon = {
     else el.style.color = "#c0a0e0";
   },
 
-  updateWillUI() {
-    const slots = Math.max(3, this.will);
-    let html = "";
-    for (let i = 0; i < slots; i++) {
-      if (i < this.will) html += '<span class="dg-heart">♥</span>';
-      else html += '<span class="dg-heart dg-heart-lost">♡</span>';
-    }
-    this.el.willDisplay.innerHTML = html;
+  updateMissUI() {
+    this.el.missDisplay.textContent = "MISS: " + this.totalMisses;
   },
 
-  changeWill(delta) {
-    const prev = this.will;
-    this.will = Math.max(0, Math.min(5, this.will + delta));
-    this.updateWillUI();
-    if (delta < 0 && prev > this.will) {
-      const hearts = this.el.willDisplay.querySelectorAll(".dg-heart-lost");
-      if (hearts.length > 0) {
-        const h = hearts[0];
-        h.classList.remove("dg-heart-lost");
-        void h.offsetWidth;
-        h.classList.add("dg-heart-lost");
-      }
-    } else if (delta > 0 && prev < this.will) {
-      const hearts = this.el.willDisplay.querySelectorAll(".dg-heart:not(.dg-heart-lost)");
-      if (hearts.length > 0) {
-        const h = hearts[hearts.length - 1];
-        h.classList.add("dg-heart-gain");
-        setTimeout(() => h.classList.remove("dg-heart-gain"), 400);
-      }
-    }
-    return this.will;
+  addMiss() {
+    this.missCount++;
+    this.totalMisses++;
+    this.updateMissUI();
+    // フラッシュ演出
+    this.el.missDisplay.classList.remove("dg-miss-flash");
+    void this.el.missDisplay.offsetWidth;
+    this.el.missDisplay.classList.add("dg-miss-flash");
   },
 
   changePressure(delta) {
@@ -2146,10 +2130,7 @@ const Dungeon = {
       this.changePressure(5);
       this.showFeedback(d.wrongReaction, false);
       SoundSystem.wrong();
-      if (this.changeWill(-1) <= 0) {
-        setTimeout(() => this.showGameOver("will"), 400);
-        return;
-      }
+      this.addMiss();
       if (d.penaltyPos) {
         this.moving = true;
         setTimeout(() => {
@@ -2168,19 +2149,11 @@ const Dungeon = {
     this.changePressure(15);
     this.showFeedback("罠だ！", false);
     SoundSystem.wrong();
-    this.changeWill(-1);
+    this.addMiss();
     // 赤スクリーンフラッシュ
     this.el.screen.classList.remove("dg-trap-screen-flash");
     void this.el.screen.offsetWidth;
     this.el.screen.classList.add("dg-trap-screen-flash");
-    if (this.will <= 0) {
-      setTimeout(() => this.showGameOver("will"), 500);
-      return;
-    }
-    if (this.pressure >= 100) {
-      setTimeout(() => this.showGameOver("pressure"), 500);
-      return;
-    }
     const trapWarps = this.stage().trapWarps;
     const key = row + "," + col;
     const warpTo = trapWarps && trapWarps[key];
@@ -2253,6 +2226,15 @@ const Dungeon = {
     });
   },
 
+  getRank(totalMisses) {
+    if (totalMisses === 0) return { name: "完全覚醒", color: "#ffd700", msg: "同調圧力を完全に克服した" };
+    if (totalMisses <= 3) return { name: "鉄の意志", color: "#00ff80", msg: "ほとんど流されなかった" };
+    if (totalMisses <= 8) return { name: "抵抗者", color: "#40ccff", msg: "空気を読まずに戦えた" };
+    if (totalMisses <= 15) return { name: "半覚醒", color: "#ffcc00", msg: "まだ流されやすい" };
+    if (totalMisses <= 25) return { name: "流され体質", color: "#ff8040", msg: "空気を読みすぎている" };
+    return { name: "完全同調", color: "#ff3060", msg: "完全に支配されている" };
+  },
+
   showClear() {
     this.resultShown = true;
     this.playClearSound();
@@ -2263,34 +2245,23 @@ const Dungeon = {
     // リザルト
     const isLastStage = this.currentStage >= DUNGEON_STAGES.length - 1;
     if (isLastStage) {
-      this.el.resultTitle.textContent = "完全脱出！";
+      const rank = this.getRank(this.totalMisses);
+      this.el.resultTitle.textContent = "全ステージ脱出！";
       this.el.resultTitle.style.color = "#ffcc00";
-      this.el.resultMsg.textContent = "全ステージクリア！\n同調圧力を完全に打ち破った\n最終圧力: " + Math.round(this.pressure) + "% / 意志: " + this.will;
+      this.el.resultRank.textContent = "【" + rank.name + "】";
+      this.el.resultRank.style.color = rank.color;
+      this.el.resultMsg.textContent = rank.msg + "\n総ミス数: " + this.totalMisses;
     } else {
       this.el.resultTitle.textContent = "脱出成功！";
       this.el.resultTitle.style.color = "#00ff80";
-      this.el.resultMsg.textContent = "同調圧力から逃げ切った\n圧力: " + Math.round(this.pressure) + "% / 意志: " + this.will;
+      this.el.resultRank.textContent = "";
+      this.el.resultMsg.textContent = "ミス: " + this.missCount + "\n累計ミス: " + this.totalMisses;
     }
-    // 次のステージボタン
+    // 次のステージボタン（最終ステージでは非表示）
     if (!isLastStage) {
       this.el.btnNext.classList.add("dg-next-show");
     } else {
       this.el.btnNext.classList.remove("dg-next-show");
-    }
-    this.el.resultOverlay.classList.add("dg-result-show");
-  },
-
-  showGameOver(reason) {
-    this.resultShown = true;
-    this.el.btnNext.classList.remove("dg-next-show");
-    if (reason === "will") {
-      this.el.resultTitle.textContent = "意志が折れた…";
-      this.el.resultTitle.style.color = "#ff4060";
-      this.el.resultMsg.textContent = "心が支配された…\n支配度: " + Math.round(this.pressure) + "%";
-    } else {
-      this.el.resultTitle.textContent = "同調汚染：完了";
-      this.el.resultTitle.style.color = "#ff2020";
-      this.el.resultMsg.textContent = "圧力に屈した…\n支配度: 100%";
     }
     this.el.resultOverlay.classList.add("dg-result-show");
   },
