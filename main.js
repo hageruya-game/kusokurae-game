@@ -1743,49 +1743,50 @@ const DUNGEON_STAGES = [
     ],
   },
   // ---- Stage 9: 混沌 ----
+  // ジグザグ横断型: 右→左と横断しながら上昇。フェイクゴール(5,0)あり。
   {
     name: "STAGE 9",
     startRow: 8, startCol: 3,
     map: [
-      [1, 3, 1, 1, 1, 1, 1], // goal(1,0)
-      [1, 0, 2, 1, 1, 0, 1], // trap(2,1)
-      [1, 0, 1, 1, 1, 2, 1], // trap(5,2)
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 0, 1, 1, 1, 2, 1], // trap(5,6)
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 1, 0, 0, 0, 1, 1],
+      [1, 3, 1, 1, 1, 3, 1], // row0: goal(1,0), fakeGoal(5,0)
+      [1, 0, 0, 1, 0, 2, 1], // row1: trap(5,1)
+      [1, 0, 1, 0, 0, 1, 1], // row2
+      [1, 0, 0, 0, 2, 0, 1], // row3: trap(4,3)
+      [1, 1, 0, 0, 1, 0, 1], // row4
+      [1, 0, 2, 0, 0, 0, 1], // row5: trap(2,5)
+      [1, 2, 0, 1, 1, 0, 1], // row6: trap(1,6)
+      [1, 0, 0, 0, 0, 0, 1], // row7
+      [1, 1, 0, 0, 0, 1, 1], // row8: start(3,8)
     ],
     trapWarps: {
-      "6,5": { row: 8, col: 3, block: true },
-      "4,1": { row: 7, col: 1 },
-      "2,5": { row: 5, col: 5 },
-      "1,2": { row: 3, col: 1 },
+      "1,5": { row: 5, col: 1, block: true },   // T1: フェイクゴール番人→中央左（壁化）
+      "3,4": { row: 6, col: 5 },   // T2: D3右の罠→下部右
+      "5,2": { row: 7, col: 3 },   // T3: 左行きすぎ→スタート付近
+      "6,1": { row: 4, col: 3 },   // T4: 開幕左→中央に放出
     },
     decisions: [
-      { row: 7, col: 3, type: "normal", correctDir: "left",
-        command: "右に行け！", comment: "…従うのか？",
-        wrongReaction: "指示通りだ", rightReaction: "指示を無視した",
+      { row: 7, col: 3, type: "normal", correctDir: "right",
+        command: "左だ！左に逃げろ！", comment: "…信じるのか？",
+        wrongReaction: "騙された", rightReaction: "見抜いた",
         penaltyPos: { row: 8, col: 3 } },
-      { row: 5, col: 3, type: "obey", correctDir: "right",
-        command: "右が安全だ", comment: "…信じるか？",
+      { row: 5, col: 5, type: "obey", correctDir: "left",
+        command: "左が安全だ", comment: "…今度は本当か？",
         wrongReaction: "疑った", rightReaction: "信じて正解",
-        penaltyPos: { row: 7, col: 1 } },
+        penaltyPos: { row: 7, col: 5 } },
       { row: 3, col: 3, type: "wait",
-        command: "急げ！もう時間がない！", comment: "…落ち着け",
+        command: "急げ！罠が閉じる！", comment: "…本当に急ぐべきか？",
         wrongReaction: "焦った", rightReaction: "耐えた",
         penaltyPos: { row: 5, col: 1 } },
       { row: 1, col: 1, type: "normal", correctDir: "up",
-        command: "戻れ！下だ！", comment: "…本当に？",
-        wrongReaction: "言いなりだ", rightReaction: "ゴールを見つけた",
-        penaltyPos: { row: 3, col: 1 } },
+        command: "戻れ！上は行き止まりだ！", comment: "…最後の判断",
+        wrongReaction: "言いなりだ", rightReaction: "自分を信じた",
+        penaltyPos: { row: 3, col: 3 } },
     ],
     lures: [
-      { row: 7, col: 5, text: "上に行け", comment: "" },
-      { row: 5, col: 1, text: "上が近い", comment: "急げ" },
-      { row: 3, col: 5, text: "上がゴールだ", comment: "近道だ" },
-      { row: 2, col: 1, text: "下に逃げろ", comment: "" },
+      { row: 7, col: 1, text: "左だ！上に抜けろ", comment: "" },
+      { row: 5, col: 1, text: "上が近道だ", comment: "急げ" },
+      { row: 3, col: 5, text: "右上がゴールだ", comment: "近道だ" },
+      { row: 2, col: 4, text: "あと少し、右へ", comment: "" },
     ],
   },
   // ---- Stage 10: 脱出 ----
