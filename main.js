@@ -1790,53 +1790,54 @@ const DUNGEON_STAGES = [
     ],
   },
   // ---- Stage 10: 脱出 ----
+  // 列柱の間・漏斗型: 柱壁で3レーン分岐→左レーン直線上昇でゴール。フェイクゴール(3,0)あり。
   {
     name: "STAGE 10",
     startRow: 8, startCol: 3,
     map: [
-      [1, 3, 1, 1, 1, 1, 1],
-      [1, 0, 0, 0, 1, 0, 1],
-      [1, 2, 1, 0, 1, 2, 1], // trap(1,2) trap(5,2) ← c1は錯覚トラップ
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 2, 1, 1, 1, 0, 1], // trap(1,4)
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 0, 1, 1, 1, 2, 1], // trap(5,6)
-      [1, 0, 0, 0, 0, 0, 1],
-      [1, 1, 0, 0, 0, 1, 1],
+      [1, 3, 1, 3, 1, 1, 1], // row0: goal(1,0), fakeGoal(3,0)
+      [1, 0, 0, 2, 0, 0, 1], // row1: trap(3,1)
+      [1, 0, 1, 0, 1, 0, 1], // row2: 柱(2,2)(4,2)
+      [1, 0, 0, 0, 0, 0, 1], // row3: 合流フロア
+      [1, 0, 1, 0, 1, 2, 1], // row4: 柱(2,4)(4,4), trap(5,4)
+      [1, 2, 0, 0, 0, 0, 1], // row5: trap(1,5)
+      [1, 0, 0, 2, 0, 0, 1], // row6: trap(3,6) 中央直進罰
+      [1, 0, 0, 0, 0, 0, 1], // row7
+      [1, 1, 0, 0, 0, 1, 1], // row8: start(3,8)
     ],
     trapWarps: {
-      "2,1": { row: 5, col: 3 },
-      "2,5": { row: 5, col: 1 },
-      "4,1": { row: 7, col: 5, block: true },
-      "6,5": { row: 8, col: 3 },
+      "1,3": { row: 5, col: 3, block: true }, // T1: フェイクゴール番人→中央（壁化）
+      "4,5": { row: 6, col: 1 },              // T2: D2上の罰→下部左
+      "5,1": { row: 7, col: 3 },              // T3: D1左の罰→スタート付近
+      "6,3": { row: 5, col: 5 },              // T4: 開幕中央直進→右側へ放出
     },
     decisions: [
-      { row: 7, col: 3, type: "normal", correctDir: "left",
-        command: "右に行け！", comment: "…最後の戦いだ",
-        wrongReaction: "指示に従った", rightReaction: "最後まで逆らった",
+      { row: 7, col: 3, type: "normal", correctDir: "right",
+        command: "左に行け！最後の戦いだ！", comment: "…信じるのか？",
+        wrongReaction: "最後まで騙された", rightReaction: "最後まで逆らった",
         penaltyPos: { row: 8, col: 3 } },
-      { row: 5, col: 3, type: "obey", correctDir: "right",
-        command: "右が安全だ", comment: "…信じるか？",
+      { row: 5, col: 5, type: "obey", correctDir: "left",
+        command: "左が安全だ", comment: "…最後に信じるか？",
         wrongReaction: "疑った", rightReaction: "信じて正解",
-        penaltyPos: { row: 7, col: 1 } },
+        penaltyPos: { row: 7, col: 5 } },
       { row: 3, col: 3, type: "wait",
-        command: "走れ！逃げろ！", comment: "…我慢だ",
+        command: "走れ！今すぐ逃げろ！", comment: "…最後の我慢だ",
         wrongReaction: "焦った", rightReaction: "耐え抜いた",
-        penaltyPos: { row: 5, col: 5 } },
-      { row: 1, col: 2, type: "normal", correctDir: "left",
-        command: "右だ！右に行け！", comment: "…見抜けるか？",
-        wrongReaction: "騙された", rightReaction: "見抜いた",
-        penaltyPos: { row: 3, col: 5 } },
-      { row: 1, col: 1, type: "obey", correctDir: "up",
-        command: "上だ、信じろ", comment: "…最後の判断",
-        wrongReaction: "最後に疑った", rightReaction: "最後まで信じた",
-        penaltyPos: { row: 2, col: 3 } },
+        penaltyPos: { row: 5, col: 3 } },
+      { row: 2, col: 1, type: "obey", correctDir: "up",
+        command: "上だ、信じろ", comment: "…本当に信じるのか？",
+        wrongReaction: "最後に疑った", rightReaction: "信じ抜いた",
+        penaltyPos: { row: 3, col: 1 } },
+      { row: 1, col: 1, type: "normal", correctDir: "up",
+        command: "下だ！戻れ！上は罠だ！", comment: "…最後の判断",
+        wrongReaction: "言いなりだ", rightReaction: "自分を信じた",
+        penaltyPos: { row: 3, col: 3 } },
     ],
     lures: [
-      { row: 7, col: 5, text: "上に抜けろ", comment: "" },
-      { row: 5, col: 1, text: "上だ、近道だ", comment: "急げ" },
-      { row: 3, col: 5, text: "上に出口がある", comment: "" },
-      { row: 3, col: 1, text: "まっすぐ上だ", comment: "ゴールは近い" },
+      { row: 7, col: 1, text: "左だ！上に抜けろ", comment: "" },
+      { row: 6, col: 1, text: "上が近道だ", comment: "急げ" },
+      { row: 3, col: 5, text: "右上が出口だ", comment: "" },
+      { row: 2, col: 5, text: "ゴールは中央だ", comment: "あと少し" },
     ],
   },
 ];
