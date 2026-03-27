@@ -1616,3 +1616,315 @@ body::before {
   .dg-command { font-size: clamp(14px, 4vw, 20px); min-height: 24px; }
   .dg-zone-bottom { gap: 4px; }
 }
+
+/* ============================================================
+   連続ジャッジルーム
+   ============================================================ */
+
+/* タイトルボタン */
+.btn-judge {
+  background: linear-gradient(180deg, #206080, #104060);
+  color: #80ddff;
+  font-size: clamp(14px, 3.5vw, 18px);
+  padding: 10px 24px;
+  box-shadow: 0 3px 0 #082030, 0 5px 12px rgba(0, 100, 180, 0.3);
+  letter-spacing: 1px;
+  margin-top: 8px;
+}
+.btn-judge:active {
+  box-shadow: 0 1px 0 #082030;
+  transform: translateY(2px) scale(0.98);
+}
+
+/* --- 3段レイアウト --- */
+.jr-zone-top {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+.jr-zone-center {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 6px 0;
+}
+.jr-zone-bottom {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ヘッダー */
+.jr-header {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  margin-bottom: 4px;
+}
+.jr-back {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #a090c0;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.jr-progress {
+  color: #80ddff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.jr-miss {
+  color: #ff6060;
+  font-size: 14px;
+  font-weight: 900;
+}
+.jr-miss-flash {
+  animation: jrMissFlash 0.4s ease-out;
+}
+@keyframes jrMissFlash {
+  0% { color: #ff0000; transform: scale(1.3); }
+  100% { color: #ff6060; transform: scale(1); }
+}
+
+/* タイプラベル（控えめ表示 — 読めるが目立たない） */
+.jr-type-label {
+  font-size: clamp(9px, 2.4vw, 11px);
+  font-weight: 400;
+  letter-spacing: 1px;
+  min-height: 16px;
+  margin-bottom: 2px;
+  opacity: 0.45;
+}
+.jr-type-normal { color: #a090c0; }
+.jr-type-normal::before { content: "[ 判断 ]"; }
+.jr-type-obey { color: #a090c0; }
+.jr-type-obey::before { content: "[ 服従 ]"; }
+.jr-type-wait { color: #a090c0; }
+.jr-type-wait::before { content: "[ 待機 ]"; }
+
+/* 命令文 */
+.jr-command-area {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  padding: 0 16px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.jr-command {
+  font-size: clamp(22px, 6vw, 32px);
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: 2px;
+}
+/* 命令文: type による色区別なし — 統一カラー + 共通アニメーション */
+.jr-cmd-appear {
+  color: #e0d0ff;
+  animation: jrCmdIn 0.35s ease-out;
+}
+@keyframes jrCmdIn {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* キャラ + 吹き出し */
+.jr-character {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.jr-character .character-img {
+  width: min(28vw, 110px);
+  height: auto;
+}
+
+/* 吹き出し（game-speechと同パターン） */
+.jr-speech {
+  position: absolute;
+  right: calc(50% + min(14vw, 55px) + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: min(42vw, 180px);
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffcc00;
+  font-size: clamp(12px, 3.2vw, 15px);
+  font-weight: 700;
+  line-height: 1.5;
+  border-radius: 12px;
+  padding: 8px 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  word-break: break-all;
+  z-index: 10;
+  border: 1px solid rgba(255, 200, 0, 0.3);
+}
+.jr-speech.jr-speech-show {
+  opacity: 1;
+}
+.jr-speech::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 8px solid rgba(0, 0, 0, 0.85);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+/* フィードバック */
+.jr-feedback {
+  font-size: clamp(14px, 3.8vw, 18px);
+  font-weight: 700;
+  min-height: 24px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.jr-fb-correct { color: #00ff80; animation: jrFbIn 0.3s ease-out; }
+.jr-fb-wrong { color: #ff4040; animation: jrFbIn 0.3s ease-out; }
+@keyframes jrFbIn {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* タイマーバー */
+.jr-timer-bar {
+  width: 100%;
+  max-width: 400px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.jr-timer-fill {
+  height: 100%;
+  background: #00dd80;
+  border-radius: 3px;
+  transition: width 0.05s linear;
+}
+.jr-timer-warn { background: #ffcc00; }
+.jr-timer-danger { background: #ff3030; animation: jrTimerPulse 0.5s ease-in-out infinite; }
+@keyframes jrTimerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 選択肢（3ボタン） */
+.jr-choices {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  animation: choicesFadeIn 0.4s ease-out forwards;
+}
+.jr-btn {
+  flex: 1 1 0;
+  font-size: clamp(16px, 4.2vw, 20px);
+  padding: 14px 4px;
+  color: #fff;
+  letter-spacing: 1px;
+  min-height: 50px;
+  font-weight: 700;
+}
+.jr-btn:nth-child(1) {
+  background: linear-gradient(180deg, #6030a0, #402070);
+  box-shadow: 0 3px 0 #2a1050, 0 5px 12px rgba(100, 0, 200, 0.3);
+}
+.jr-btn:nth-child(2) {
+  background: linear-gradient(180deg, #0080ff, #0050cc);
+  box-shadow: 0 3px 0 #003080, 0 5px 12px rgba(0, 80, 255, 0.3);
+}
+.jr-btn-wait {
+  background: linear-gradient(180deg, #505050, #333333) !important;
+  box-shadow: 0 3px 0 #1a1a1a, 0 5px 12px rgba(60, 60, 60, 0.3) !important;
+  color: #cccccc !important;
+}
+.jr-btn:active { transform: translateY(2px) scale(0.97); }
+.jr-btn:disabled { opacity: 0.4; pointer-events: none; }
+.jr-choices-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* リザルトオーバーレイ */
+.jr-result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 20, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.jr-result-overlay.jr-result-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.jr-result-title {
+  font-size: clamp(26px, 7vw, 36px);
+  font-weight: 900;
+  letter-spacing: 3px;
+  animation: popIn 0.5s ease-out;
+}
+.jr-result-miss {
+  font-size: clamp(18px, 5vw, 24px);
+  font-weight: 700;
+  color: #a0a0c0;
+  animation: popIn 0.5s ease-out 0.2s both;
+}
+.jr-result-message {
+  font-size: clamp(14px, 3.5vw, 18px);
+  color: #c0c0e0;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.7;
+  max-width: 320px;
+  animation: popIn 0.5s ease-out 0.4s both;
+}
+.jr-result-overlay .btn {
+  animation: popIn 0.5s ease-out 0.6s both;
+}
+
+/* --- ジャッジルーム レスポンシブ --- */
+@media (max-height: 680px) {
+  .jr-command { font-size: clamp(18px, 5vw, 26px); }
+  .jr-character .character-img { width: min(22vw, 85px); }
+  .jr-btn { min-height: 44px; padding: 10px 4px; font-size: clamp(14px, 3.8vw, 17px); }
+  .jr-speech { font-size: clamp(11px, 3vw, 13px); padding: 6px 10px; max-width: min(40vw, 160px); right: calc(50% + min(11vw, 42px) + 10px); }
+  .jr-type-label { font-size: clamp(8px, 2.2vw, 10px); }
+}
+@media (max-height: 580px) {
+  .jr-command { font-size: clamp(16px, 4.5vw, 22px); }
+  .jr-character .character-img { width: min(18vw, 70px); }
+  .jr-btn { min-height: 40px; padding: 8px 4px; }
+  .jr-speech { font-size: clamp(10px, 2.8vw, 12px); padding: 5px 8px; max-width: min(38vw, 140px); right: calc(50% + min(9vw, 32px) + 8px); }
+}

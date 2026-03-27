@@ -22,6 +22,7 @@
     <div class="comment-bubble" id="title-comment"></div>
     <h1 class="title-main">同調圧力<br><span class="title-accent">くそくらえ</span></h1>
     <button id="btn-start" class="btn btn-start">ゲームスタート</button>
+    <button id="btn-judge" class="btn btn-judge">連続ジャッジルーム</button>
     <button id="btn-dungeon" class="btn btn-dungeon">逆指示ダンジョン（試作）</button>
     <div class="title-footer">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
   </div>
@@ -108,6 +109,49 @@
     <div class="result-message" id="result-message"></div>
     <button id="btn-replay" class="btn btn-start">もう一回やる</button>
     <div class="result-footer" id="result-footer"></div>
+  </div>
+
+  <!-- 連続ジャッジルーム画面 -->
+  <div id="screen-judge" class="screen">
+    <!-- 上段: ヘッダー + 命令文 -->
+    <div class="jr-zone-top">
+      <div class="jr-header">
+        <button id="jr-back" class="jr-back">← 戻る</button>
+        <div class="jr-progress">Q<span id="jr-qnum">1</span> / <span id="jr-qtotal">12</span></div>
+        <div class="jr-miss">MISS: <span id="jr-miss-num">0</span></div>
+      </div>
+      <div class="jr-type-label" id="jr-type-label"></div>
+      <div class="jr-command-area">
+        <div id="jr-command" class="jr-command"></div>
+      </div>
+    </div>
+    <!-- 中央: キャラ + 吹き出し -->
+    <div class="jr-zone-center">
+      <div class="jr-speech" id="jr-speech"></div>
+      <div class="jr-character">
+        <img src="image_0.png" alt="同調圧力の化身" class="character-img" id="jr-char-img">
+      </div>
+    </div>
+    <!-- 下段: フィードバック + タイマー + ボタン -->
+    <div class="jr-zone-bottom">
+      <div id="jr-feedback" class="jr-feedback"></div>
+      <div class="jr-timer-bar" id="jr-timer-bar">
+        <div class="jr-timer-fill" id="jr-timer-fill"></div>
+      </div>
+      <div class="jr-choices" id="jr-choices">
+        <button id="jr-btn-left" class="btn jr-btn">← 左</button>
+        <button id="jr-btn-right" class="btn jr-btn">右 →</button>
+        <button id="jr-btn-wait" class="btn jr-btn jr-btn-wait">待つ</button>
+      </div>
+    </div>
+    <!-- リザルトオーバーレイ -->
+    <div class="jr-result-overlay" id="jr-result-overlay">
+      <div class="jr-result-title" id="jr-result-title"></div>
+      <div class="jr-result-miss" id="jr-result-miss"></div>
+      <div class="jr-result-message" id="jr-result-message"></div>
+      <button id="jr-btn-retry" class="btn btn-start">もう一回</button>
+      <button id="jr-btn-title" class="btn btn-dungeon">タイトルへ</button>
+    </div>
   </div>
 
   <!-- 逆指示ダンジョン画面 -->

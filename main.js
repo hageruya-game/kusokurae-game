@@ -2362,4 +2362,482 @@ const Dungeon = {
   },
 };
 
-document.addEventListener("DOMContentLoaded", () => { Game.init(); Dungeon.init(); });
+// ============================================================
+// 連続ジャッジルーム
+// ============================================================
+
+// ============================================================
+// 問題テンプレートプール
+// ============================================================
+
+// --- 方向命令テンプレート（normal/obey 両対応） ---
+// 同じ command が type 違いでセッション内に出現し、意味が逆転する
+// 命令文は同調圧力表現。読めば方向が分かるが、心理的圧力でミスを誘う
+const JT_DIRECTION = [
+  // #1 同調圧力 — 「みんなやってる」系
+  { command: "みんな右に行ってるよ？",
+    normal: { correct: "left",  wrongR: "多数派に流された",     rightR: "空気を読まなかった" },
+    obey:   { correct: "right", wrongR: "疑いすぎた",           rightR: "流れに乗れた" },
+    luresN: ["そっちでしょ", "一人だけ逆とか恥ずかしくない？", null],
+    luresO: ["…本当にみんなと同じでいいの？", "騙されてない？", null] },
+  // #2 常識圧力 — 「普通こうする」系
+  { command: "普通、左を選ぶでしょ",
+    normal: { correct: "right", wrongR: "常識に負けた",         rightR: "常識を疑えた" },
+    obey:   { correct: "left",  wrongR: "ひねくれすぎた",       rightR: "素直に従えた" },
+    luresN: ["当たり前だろ", "なに考えてるの？", null],
+    luresO: ["…普通って何？", "自分で考えろよ", null] },
+  // #3 権威圧力 — 断言で押す
+  { command: "右以外ありえないでしょ",
+    normal: { correct: "left",  wrongR: "断言に押された",       rightR: "ありえないを疑えた" },
+    obey:   { correct: "right", wrongR: "反抗しすぎた",         rightR: "正しく見極めた" },
+    luresN: ["当然でしょ", "迷う要素ある？", null],
+    luresO: ["…本当にそう？", "押しつけがましくない？", null] },
+  // #4 空気圧力 — 「決まったこと」系
+  { command: "左って決まってるから",
+    normal: { correct: "right", wrongR: "空気に飲まれた",       rightR: "決めつけに抗えた" },
+    obey:   { correct: "left",  wrongR: "逆張りしすぎた",       rightR: "流れに従えた" },
+    luresN: ["もう決まったよ", "一人で逆らうの？", null],
+    luresO: ["…誰が決めたの？", "本当に？", null] },
+  // #5 羞恥圧力 — 「まだ？」系
+  { command: "まだ迷ってるの？右だって",
+    normal: { correct: "left",  wrongR: "焦らされて従った",     rightR: "焦りに負けなかった" },
+    obey:   { correct: "right", wrongR: "意地を張りすぎた",     rightR: "素直に選べた" },
+    luresN: ["遅いよ", "みんな待ってるんだけど", null],
+    luresO: ["…急かされてない？", "落ち着け", null] },
+  // #6 羞恥圧力 — 驚きで揺さぶる
+  { command: "え、左じゃないの？マジで？",
+    normal: { correct: "right", wrongR: "驚きに流された",       rightR: "動揺しなかった" },
+    obey:   { correct: "left",  wrongR: "ひねくれてしまった",   rightR: "冷静に判断できた" },
+    luresN: ["マジで言ってるの？", "おかしくない？", null],
+    luresO: ["…揺さぶりだよ", "気にするな", null] },
+  // #7 権威圧力 — 上から詰める
+  { command: "右って言ったよね？聞いてた？",
+    normal: { correct: "left",  wrongR: "権威に負けた",         rightR: "言いなりにならなかった" },
+    obey:   { correct: "right", wrongR: "反発しすぎた",         rightR: "指示を聞けた" },
+    luresN: ["聞いてなかったの？", "ちゃんとしろよ", null],
+    luresO: ["…偉そうだな", "従う必要ある？", null] },
+  // #8 同調圧力 — 孤立への恐怖
+  { command: "みんな左に行ったけど？",
+    normal: { correct: "right", wrongR: "群れについていった",   rightR: "一人で逆を行けた" },
+    obey:   { correct: "left",  wrongR: "孤立を選んでしまった", rightR: "合流できた" },
+    luresN: ["一人だけ残るの？", "置いていかれるよ", null],
+    luresO: ["…自分の道を行け", "群れるなよ", null] },
+];
+
+// --- wait 専用テンプレート ---
+// type=wait → 「待つ」ボタンが正解。命令がどんなに焦らせても動かない
+const JT_WAIT = [
+  // 同調 — 取り残される恐怖
+  { command: "みんなもう選んだよ？",
+    wrongR: "焦って動いた",           rightR: "周りに流されなかった",
+    lures: ["早くしないと置いていくよ", "一人だけまだなの？", null] },
+  // 羞恥 — 注目される恐怖
+  { command: "早く決めて！見てるんだけど",
+    wrongR: "視線に負けた",           rightR: "見られても動じなかった",
+    lures: ["注目されてるよ", "恥ずかしくないの？", null] },
+  // 常識 — 異常扱い
+  { command: "なんで動かないの？おかしいよ",
+    wrongR: "おかしいと言われて動いた", rightR: "おかしくても動かなかった",
+    lures: ["変だと思われてるよ", "浮いてるって", null] },
+  // 焦燥 — 時間切れの恐怖
+  { command: "急いで！もう時間ないから！",
+    wrongR: "焦りに負けた",           rightR: "急かされても待てた",
+    lures: ["本当にもう終わるよ！", "間に合わないって！", null] },
+  // 羞恥+権威 — バカにされる
+  { command: "考えすぎ。普通すぐ分かるでしょ",
+    wrongR: "バカにされて焦った",     rightR: "煽りに乗らなかった",
+    lures: ["そんなことも分からないの？", "頭使ってる？", null] },
+];
+
+// --- fake-wait テンプレート（表示上は normal / [ 判断 ]） ---
+// 命令文が「動くな」「やめろ」系で wait に見えるが、type=normal なので逆らう＝動くが正解
+// 方向ヒントは命令文内に明記：「右はダメ」→ 逆らう＝右が正解
+const JT_FAKE_WAIT = [
+  // 同調 — みんな避けてる
+  { command: "右はダメだって！みんな避けてるよ？",
+    correct: "right",
+    wrongR: "みんなに合わせてしまった", rightR: "群れに逆らえた",
+    lures: ["近づくなって", "みんな離れてるよ", null] },
+  // 権威 — 言われてるでしょ
+  { command: "左に近づくなって言われてるでしょ",
+    correct: "left",
+    wrongR: "言いつけを守ってしまった", rightR: "言いなりにならなかった",
+    lures: ["聞いてなかったの？", "怒られるよ", null] },
+  // 常識 — ありえない
+  { command: "動くなよ。右は常識的にありえない",
+    correct: "right",
+    wrongR: "常識に縛られた",         rightR: "常識を疑えた",
+    lures: ["じっとしてろって", "ありえないから", null] },
+  // 同調 — みんな止めてる
+  { command: "待って！左はみんな止めてるよ",
+    correct: "left",
+    wrongR: "止められて動けなかった", rightR: "止められても進めた",
+    lures: ["やめとけって", "危ないって言ってるじゃん", null] },
+];
+
+// ============================================================
+// セッションビルダー
+// ============================================================
+
+function jrShuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function jrPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// テンプレート → 出題用オブジェクトに変換
+function resolveDir(tpl, type) {
+  const v = tpl[type];
+  const lures = type === "normal" ? tpl.luresN : tpl.luresO;
+  return {
+    type: type, command: tpl.command, correct: v.correct,
+    lure: jrPick(lures), wrongReaction: v.wrongR, rightReaction: v.rightR,
+  };
+}
+
+function resolveWait(tpl) {
+  return {
+    type: "wait", command: tpl.command, correct: "wait",
+    lure: jrPick(tpl.lures), wrongReaction: tpl.wrongR, rightReaction: tpl.rightR,
+  };
+}
+
+function resolveFakeWait(tpl) {
+  return {
+    type: "normal", command: tpl.command, correct: tpl.correct,
+    lure: jrPick(tpl.lures), wrongReaction: tpl.wrongR, rightReaction: tpl.rightR,
+  };
+}
+
+/**
+ * 12問のセッションを生成する。
+ *
+ * 配分: normal 4-5 / obey 3-4 / wait 2-3 / fake-wait 0-1 (計12)
+ *
+ * ブロック構成:
+ *   A (Q1-4):  導入 — normal中心 + wait1問
+ *   B (Q5-8):  混乱 — obey登場 + 文言逆転 + fake-wait候補
+ *   C (Q9-12): 試練 — 全type混在 + 逆転回収
+ *
+ * 保証: 2つのコマンドテンプレートが normal/obey 両変体で出題される
+ *       （同じ文言が別ブロックで意味が反転する）
+ */
+function buildJudgeSession() {
+  // ---- 1. 配分抽選 [normal, obey, wait, fake] ----
+  const [nN, nO, nW, nF] = jrPick([
+    [5, 4, 3, 0],
+    [5, 3, 3, 1],
+    [4, 4, 3, 1],
+    [5, 4, 2, 1],
+  ]);
+
+  // ---- 2. 方向テンプレート選択 ----
+  const dirs = jrShuffle(JT_DIRECTION);
+  // dual用: 2テンプレート → 各 normal + obey = 4問
+  const d1 = dirs.shift(), d2 = dirs.shift();
+  // single用: 残りから必要数
+  const sN = nN - 2;           // dual で 2 normal 確保済み
+  const sO = nO - 2;           // dual で 2 obey 確保済み
+  const singles = dirs.splice(0, sN + sO);
+
+  // ---- 3. 全問題を解決 ----
+  const dn0 = resolveDir(d1, "normal"); // dual normal #1 → block A
+  const dn1 = resolveDir(d2, "normal"); // dual normal #2
+  const do0 = resolveDir(d1, "obey");   // dual obey #1 → block B (逆転!)
+  const do1 = resolveDir(d2, "obey");   // dual obey #2 → block C (逆転!)
+
+  const singleN = singles.slice(0, sN).map(t => resolveDir(t, "normal"));
+  const singleO = singles.slice(sN).map(t => resolveDir(t, "obey"));
+  const waitQs  = jrShuffle(JT_WAIT).slice(0, nW).map(resolveWait);
+  const fakeQs  = nF > 0 ? [resolveFakeWait(jrPick(JT_FAKE_WAIT))] : [];
+
+  // ---- 4. ブロック配置 ----
+  // Block A (Q1-4): dn0 + normal 2問 + wait 1問
+  const otherN = jrShuffle([dn1, ...singleN]);
+  const blockA = jrShuffle([dn0, otherN.shift(), otherN.shift(), waitQs.shift()]);
+  // otherN の残り = 後半ブロック用 normal
+
+  // Block B (Q5-8): do0(逆転!) + obey/fake/wait/normal
+  const bPool = [do0];
+  const remO = [...singleO];
+  if (remO.length > 0) bPool.push(remO.shift());
+  if (fakeQs.length > 0) bPool.push(fakeQs.shift());
+  if (waitQs.length > 0) bPool.push(waitQs.shift());
+  while (bPool.length < 4) {
+    if (otherN.length > 0) bPool.push(otherN.shift());
+    else if (remO.length > 0) bPool.push(remO.shift());
+    else if (waitQs.length > 0) bPool.push(waitQs.shift());
+  }
+  const blockB = jrShuffle(bPool.slice(0, 4));
+
+  // Block C (Q9-12): do1(逆転!) + 残り全部
+  const cPool = [do1, ...otherN, ...remO, ...waitQs, ...fakeQs];
+  const blockC = jrShuffle(cPool.slice(0, 4));
+
+  return [...blockA, ...blockB, ...blockC];
+}
+
+const JUDGE_RANKS = [
+  { maxMiss: 0,  title: "完全なる判断者", color: "#ffd700",
+    message: "全ての罠を見抜いた。\n同調圧力は通用しない。" },
+  { maxMiss: 2,  title: "鋭い直感",       color: "#00ff80",
+    message: "ほぼ完璧。\nだが油断するな。" },
+  { maxMiss: 4,  title: "まともな判断力", color: "#40ccff",
+    message: "悪くない。\nだがまだ揺れている。" },
+  { maxMiss: 6,  title: "揺らぐ意志",     color: "#ffaa40",
+    message: "判断が甘い。\nパターンに騙されている。" },
+  { maxMiss: 9,  title: "流されやすい",   color: "#ff8040",
+    message: "空気を読みすぎ。\nもっと疑え。" },
+  { maxMiss: 12, title: "判断放棄",       color: "#ff3060",
+    message: "考えることをやめた。\n群れの一部だ。" },
+];
+
+function getJudgeTimeLimit(qIndex) {
+  if (qIndex < 4) return 5;
+  if (qIndex < 8) return 4;
+  return 3;
+}
+
+const JudgeRoom = {
+  questions: [],
+  currentQ: 0,
+  missCount: 0,
+  isWaiting: false,
+  timerInterval: null,
+  timeLeft: 0,
+  timeLimit: 0,
+  lureTimeout: null,
+  el: {},
+
+  init() {
+    this.el = {
+      screen: document.getElementById("screen-judge"),
+      qNum: document.getElementById("jr-qnum"),
+      qTotal: document.getElementById("jr-qtotal"),
+      missNum: document.getElementById("jr-miss-num"),
+      typeLabel: document.getElementById("jr-type-label"),
+      command: document.getElementById("jr-command"),
+      speech: document.getElementById("jr-speech"),
+      charImg: document.getElementById("jr-char-img"),
+      feedback: document.getElementById("jr-feedback"),
+      choices: document.getElementById("jr-choices"),
+      btnLeft: document.getElementById("jr-btn-left"),
+      btnRight: document.getElementById("jr-btn-right"),
+      btnWait: document.getElementById("jr-btn-wait"),
+      timerBar: document.getElementById("jr-timer-bar"),
+      timerFill: document.getElementById("jr-timer-fill"),
+      resultOverlay: document.getElementById("jr-result-overlay"),
+      resultTitle: document.getElementById("jr-result-title"),
+      resultMiss: document.getElementById("jr-result-miss"),
+      resultMessage: document.getElementById("jr-result-message"),
+    };
+
+    this.el.btnLeft.addEventListener("click", () => this.choose("left"));
+    this.el.btnRight.addEventListener("click", () => this.choose("right"));
+    this.el.btnWait.addEventListener("click", () => this.choose("wait"));
+    document.getElementById("btn-judge").addEventListener("click", () => this.start());
+    document.getElementById("jr-back").addEventListener("click", () => this.goTitle());
+    document.getElementById("jr-btn-retry").addEventListener("click", () => this.start());
+    document.getElementById("jr-btn-title").addEventListener("click", () => this.goTitle());
+  },
+
+  goTitle() {
+    this.cleanup();
+    Game.showScreen(document.getElementById("screen-title"));
+  },
+
+  cleanup() {
+    this.stopTimer();
+    clearTimeout(this.lureTimeout);
+    this.isWaiting = false;
+  },
+
+  start() {
+    SoundSystem.init();
+    this.questions = buildJudgeSession();
+    this.currentQ = 0;
+    this.missCount = 0;
+    this.isWaiting = false;
+
+    this.el.missNum.textContent = "0";
+    this.el.qTotal.textContent = this.questions.length;
+    this.el.feedback.textContent = "";
+    this.el.feedback.className = "jr-feedback";
+    this.el.command.textContent = "";
+    this.el.command.className = "jr-command";
+    this.el.typeLabel.className = "jr-type-label";
+    this.el.speech.textContent = "";
+    this.el.speech.className = "jr-speech";
+    this.el.resultOverlay.classList.remove("jr-result-show");
+    this.el.choices.classList.remove("jr-choices-hidden");
+
+    Game.showScreen(this.el.screen);
+    setTimeout(() => this.showQuestion(), 400);
+  },
+
+  showQuestion() {
+    const q = this.questions[this.currentQ];
+    this.el.qNum.textContent = this.currentQ + 1;
+
+    // フィードバッククリア
+    this.el.feedback.textContent = "";
+    this.el.feedback.className = "jr-feedback";
+
+    // 吹き出しクリア
+    this.el.speech.textContent = "";
+    this.el.speech.className = "jr-speech";
+
+    // タイプラベル
+    this.el.typeLabel.className = "jr-type-label jr-type-" + q.type;
+
+    // 命令文表示（色はtype非依存 — 統一スタイル）
+    this.el.command.textContent = q.command;
+    this.el.command.className = "jr-command jr-cmd-appear";
+
+    // ボタン有効化
+    this.el.choices.classList.remove("jr-choices-hidden");
+    this.el.btnLeft.disabled = false;
+    this.el.btnRight.disabled = false;
+    this.el.btnWait.disabled = false;
+
+    // 誘導テキスト（遅延表示）
+    clearTimeout(this.lureTimeout);
+    if (q.lure) {
+      this.lureTimeout = setTimeout(() => {
+        this.el.speech.textContent = q.lure;
+        this.el.speech.className = "jr-speech jr-speech-show";
+      }, 500);
+    }
+
+    this.isWaiting = false;
+    this.startTimer();
+  },
+
+  choose(answer) {
+    if (this.isWaiting) return;
+    this.isWaiting = true;
+    this.stopTimer();
+    clearTimeout(this.lureTimeout);
+
+    const q = this.questions[this.currentQ];
+    const isCorrect = answer === q.correct;
+
+    // ボタン無効化
+    this.el.btnLeft.disabled = true;
+    this.el.btnRight.disabled = true;
+    this.el.btnWait.disabled = true;
+
+    // 吹き出し消去
+    this.el.speech.textContent = "";
+    this.el.speech.className = "jr-speech";
+
+    // ○×フィードバック
+    this.showOX(isCorrect);
+
+    if (isCorrect) {
+      this.el.feedback.textContent = q.rightReaction;
+      this.el.feedback.className = "jr-feedback jr-fb-correct";
+    } else {
+      this.missCount++;
+      this.el.missNum.textContent = this.missCount;
+      // ミスフラッシュ
+      this.el.missNum.parentElement.classList.remove("jr-miss-flash");
+      void this.el.missNum.parentElement.offsetWidth;
+      this.el.missNum.parentElement.classList.add("jr-miss-flash");
+      this.el.feedback.textContent = q.wrongReaction;
+      this.el.feedback.className = "jr-feedback jr-fb-wrong";
+    }
+
+    setTimeout(() => this.advance(), 1200);
+  },
+
+  showOX(isCorrect) {
+    const overlay = document.getElementById("ox-overlay");
+    const symbol = document.getElementById("ox-symbol");
+    clearTimeout(Game.oxTimeout);
+    symbol.className = "ox-symbol";
+    overlay.classList.remove("ox-show");
+    void symbol.offsetWidth;
+    symbol.textContent = isCorrect ? "○" : "✕";
+    symbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
+    overlay.classList.add("ox-show");
+    if (isCorrect) SoundSystem.correct();
+    else SoundSystem.wrong();
+    Game.oxTimeout = setTimeout(() => overlay.classList.remove("ox-show"), 600);
+  },
+
+  advance() {
+    this.currentQ++;
+    if (this.currentQ < this.questions.length) {
+      this.showQuestion();
+    } else {
+      this.showResult();
+    }
+  },
+
+  startTimer() {
+    this.timeLimit = getJudgeTimeLimit(this.currentQ);
+    this.timeLeft = this.timeLimit;
+    this.el.timerFill.style.width = "100%";
+    this.el.timerFill.className = "jr-timer-fill";
+
+    this.timerInterval = setInterval(() => {
+      this.timeLeft -= 0.05;
+      if (this.timeLeft <= 0) {
+        this.timeLeft = 0;
+        this.onTimeout();
+        return;
+      }
+      const pct = (this.timeLeft / this.timeLimit) * 100;
+      this.el.timerFill.style.width = pct + "%";
+      if (pct <= 30) this.el.timerFill.className = "jr-timer-fill jr-timer-danger";
+      else if (pct <= 60) this.el.timerFill.className = "jr-timer-fill jr-timer-warn";
+      else this.el.timerFill.className = "jr-timer-fill";
+    }, 50);
+  },
+
+  stopTimer() {
+    clearInterval(this.timerInterval);
+    this.timerInterval = null;
+  },
+
+  onTimeout() {
+    this.stopTimer();
+    if (this.isWaiting) return;
+    this.isWaiting = true;
+    clearTimeout(this.lureTimeout);
+
+    this.missCount++;
+    this.el.missNum.textContent = this.missCount;
+    this.el.missNum.parentElement.classList.remove("jr-miss-flash");
+    void this.el.missNum.parentElement.offsetWidth;
+    this.el.missNum.parentElement.classList.add("jr-miss-flash");
+    this.el.btnLeft.disabled = true;
+    this.el.btnRight.disabled = true;
+    this.el.btnWait.disabled = true;
+    this.el.feedback.textContent = "時間切れ";
+    this.el.feedback.className = "jr-feedback jr-fb-wrong";
+    this.showOX(false);
+
+    setTimeout(() => this.advance(), 1200);
+  },
+
+  showResult() {
+    this.stopTimer();
+    const rank = JUDGE_RANKS.find(r => this.missCount <= r.maxMiss)
+      || JUDGE_RANKS[JUDGE_RANKS.length - 1];
+
+    this.el.resultTitle.textContent = rank.title;
+    this.el.resultTitle.style.color = rank.color;
+    this.el.resultMiss.textContent = "MISS: " + this.missCount + " / " + this.questions.length;
+    this.el.resultMessage.textContent = rank.message;
+    this.el.resultOverlay.classList.add("jr-result-show");
+  },
+};
+
+document.addEventListener("DOMContentLoaded", () => { Game.init(); Dungeon.init(); JudgeRoom.init(); });
