@@ -1621,19 +1621,34 @@ body::before {
    連続ジャッジルーム
    ============================================================ */
 
-/* タイトルボタン */
+/* タイトルボタン（本命モード — 大きく目立たせる） */
 .btn-judge {
   background: linear-gradient(180deg, #206080, #104060);
   color: #80ddff;
-  font-size: clamp(14px, 3.5vw, 18px);
-  padding: 10px 24px;
-  box-shadow: 0 3px 0 #082030, 0 5px 12px rgba(0, 100, 180, 0.3);
-  letter-spacing: 1px;
-  margin-top: 8px;
+  font-size: clamp(18px, 4.5vw, 24px);
+  padding: 14px 40px;
+  box-shadow: 0 4px 0 #082030, 0 5px 16px rgba(0, 100, 180, 0.4);
+  letter-spacing: 2px;
+  margin-top: 10px;
 }
 .btn-judge:active {
-  box-shadow: 0 1px 0 #082030;
+  box-shadow: 0 2px 0 #082030;
   transform: translateY(2px) scale(0.98);
+}
+/* サブモードボタン（控えめ） */
+.btn-sub {
+  background: transparent;
+  color: #8070a0;
+  font-size: clamp(12px, 3vw, 14px);
+  padding: 8px 20px;
+  border: 1px solid #3a3060;
+  box-shadow: none;
+  letter-spacing: 1px;
+  margin-top: 10px;
+}
+.btn-sub:active {
+  background: #1a1030;
+  transform: scale(0.97);
 }
 
 /* --- 3段レイアウト --- */
