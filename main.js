@@ -2511,6 +2511,7 @@ function resolveFakeWait(tpl) {
   return {
     type: "normal", command: tpl.command, correct: tpl.correct,
     lure: jrPick(tpl.lures), wrongReaction: tpl.wrongR, rightReaction: tpl.rightR,
+    fakeWait: true,
   };
 }
 
@@ -2607,6 +2608,10 @@ const JudgeRoom = {
   questions: [],
   currentQ: 0,
   missCount: 0,
+  rawScore: 0,
+  maxScore: 0,
+  waitBonus: 0,
+  fakeWaitBonus: 0,
   isWaiting: false,
   timerInterval: null,
   timeLeft: 0,
@@ -2633,8 +2638,10 @@ const JudgeRoom = {
       timerFill: document.getElementById("jr-timer-fill"),
       resultOverlay: document.getElementById("jr-result-overlay"),
       resultTitle: document.getElementById("jr-result-title"),
+      resultScoreNum: document.getElementById("jr-result-score-num"),
       resultMiss: document.getElementById("jr-result-miss"),
       resultMessage: document.getElementById("jr-result-message"),
+      resultDetail: document.getElementById("jr-result-detail"),
     };
 
     this.el.btnLeft.addEventListener("click", () => this.choose("left"));
@@ -2662,6 +2669,14 @@ const JudgeRoom = {
     this.questions = buildJudgeSession();
     this.currentQ = 0;
     this.missCount = 0;
+    this.rawScore = 0;
+    this.waitBonus = 0;
+    this.fakeWaitBonus = 0;
+    this.maxScore = this.questions.reduce((sum, q) => {
+      if (q.type === "wait") return sum + 10;
+      if (q.fakeWait) return sum + 10;
+      return sum + 8;
+    }, 0);
     this.isWaiting = false;
 
     this.el.missNum.textContent = "0";
@@ -2740,6 +2755,12 @@ const JudgeRoom = {
     this.showOX(isCorrect);
 
     if (isCorrect) {
+      // スコア加算
+      let pts = 8;
+      if (q.type === "wait") { pts = 10; this.waitBonus += 2; }
+      else if (q.fakeWait) { pts = 10; this.fakeWaitBonus += 2; }
+      this.rawScore += pts;
+
       this.el.feedback.textContent = q.rightReaction;
       this.el.feedback.className = "jr-feedback jr-fb-correct";
     } else {
@@ -2832,12 +2853,494 @@ const JudgeRoom = {
     const rank = JUDGE_RANKS.find(r => this.missCount <= r.maxMiss)
       || JUDGE_RANKS[JUDGE_RANKS.length - 1];
 
+    const kouatsu = this.maxScore > 0
+      ? Math.round(this.rawScore / this.maxScore * 100) : 0;
+
     this.el.resultTitle.textContent = rank.title;
     this.el.resultTitle.style.color = rank.color;
+    this.el.resultScoreNum.textContent = kouatsu;
     this.el.resultMiss.textContent = "MISS: " + this.missCount + " / " + this.questions.length;
     this.el.resultMessage.textContent = rank.message;
+
+    // 内訳（小さく表示）
+    const details = [];
+    if (this.waitBonus > 0) details.push("耐圧 +" + this.waitBonus);
+    if (this.fakeWaitBonus > 0) details.push("看破 +" + this.fakeWaitBonus);
+    this.el.resultDetail.textContent = details.length > 0 ? details.join("  ") : "";
+
     this.el.resultOverlay.classList.add("jr-result-show");
   },
 };
 
-document.addEventListener("DOMContentLoaded", () => { Game.init(); Dungeon.init(); JudgeRoom.init(); });
+// ============================================================
+// 圧力回廊（ダンジョン v2 試作）
+// ============================================================
+
+// ステージ定義: 4分岐、7×9グリッド
+// 各セルの意味: 0=空, 1=通路, 2=スタート, 3=ゴール, 4=分岐, 5=迂回路
+const CR_STAGE = {
+  cols: 7, rows: 9,
+  // グリッドは行0が下（START）、行8が上（GOAL）
+  // プレイヤーは下から上へ進む
+  startPos: { r: 0, c: 3 },
+  goalPos: { r: 8, c: 3 },
+  // 分岐ポイント（行, 左の列, 右の列, 本線列）
+  forks: [
+    { row: 1, type: "normal", command: "みんな右に行ってるよ？",
+      correct: "left", timer: 3.0, detourCost: 2,
+      lures: ["そっちでしょ"] },
+    { row: 3, type: "wait",   command: "急いで！もう時間ないから！",
+      correct: "wait", timer: 3.0, detourCost: 3,
+      lures: ["間に合わないって！", "早くしろ！"] },
+    { row: 5, type: "obey",   command: "右って言ったよね？聞いてた？",
+      correct: "right", timer: 2.5, detourCost: 3,
+      lures: ["聞いてなかったの？", "ちゃんとしろよ"] },
+    { row: 7, type: "normal", command: "みんな左に行ったけど？",
+      correct: "right", timer: 2.0, detourCost: 4,
+      lures: ["一人だけ残るの？", "置いていかれるよ", "こっちだって"] },
+  ],
+  // グリッドマップ生成（init時に構築）
+  grid: null,
+  // 各分岐の正解ルート/迂回ルートのパスセグメント
+  // left=列1-2, right=列4-5, center=列3
+  paths: null,
+};
+
+const Corridor = {
+  stage: CR_STAGE,
+  playerPos: { r: 0, c: 3 },
+  currentFork: -1,     // 現在の分岐インデックス (-1=移動中)
+  atFork: false,
+  missCount: 0,
+  totalDetour: 0,
+  isMoving: false,
+  moveInterval: null,
+  timerInterval: null,
+  timeLeft: 0,
+  inputLocked: false,
+  el: {},
+  gridCells: [],       // DOM要素の2D配列
+
+  init() {
+    this.el = {
+      screen: document.getElementById("screen-corridor"),
+      grid: document.getElementById("cr-grid"),
+      typeLabel: document.getElementById("cr-type-label"),
+      command: document.getElementById("cr-command"),
+      miss: document.getElementById("cr-miss"),
+      feedback: document.getElementById("cr-feedback"),
+      timerBar: document.getElementById("cr-timer-bar"),
+      timerFill: document.getElementById("cr-timer-fill"),
+      lureArea: document.getElementById("cr-lure-area"),
+      dpad: document.getElementById("cr-dpad"),
+      tutorial: document.getElementById("cr-tutorial-overlay"),
+      resultOverlay: document.getElementById("cr-result-overlay"),
+      resultTitle: document.getElementById("cr-result-title"),
+      resultScore: document.getElementById("cr-result-score"),
+      resultMsg: document.getElementById("cr-result-msg"),
+    };
+
+    document.getElementById("btn-corridor").addEventListener("click", () => this.startScreen());
+    document.getElementById("cr-back").addEventListener("click", () => this.goTitle());
+    document.getElementById("cr-btn-retry").addEventListener("click", () => this.startGame());
+    document.getElementById("cr-btn-title").addEventListener("click", () => this.goTitle());
+
+    document.getElementById("cr-up").addEventListener("click", () => this.input("up"));
+    document.getElementById("cr-down").addEventListener("click", () => this.input("down"));
+    document.getElementById("cr-left").addEventListener("click", () => this.input("left"));
+    document.getElementById("cr-right").addEventListener("click", () => this.input("right"));
+
+    this.el.tutorial.addEventListener("click", () => this.startGame());
+
+    this.buildGrid();
+  },
+
+  goTitle() {
+    this.cleanup();
+    Game.showScreen(document.getElementById("screen-title"));
+  },
+
+  cleanup() {
+    clearInterval(this.moveInterval);
+    clearInterval(this.timerInterval);
+    this.isMoving = false;
+    this.atFork = false;
+    this.inputLocked = false;
+  },
+
+  // --- グリッド構築 ---
+  buildGrid() {
+    const { cols, rows } = this.stage;
+    this.stage.grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+    const g = this.stage.grid;
+
+    // 本線: 列3を縦に全行通す
+    for (let r = 0; r < rows; r++) g[r][3] = 1;
+    g[0][3] = 2; // start
+    g[rows - 1][3] = 3; // goal
+
+    // 分岐ポイントと迂回路を配置
+    this.stage.forks.forEach(f => {
+      g[f.row][3] = 4; // 分岐セル
+
+      if (f.correct === "wait") {
+        // wait分岐: 左右両方が迂回路
+        g[f.row][2] = 5; g[f.row][1] = 5;
+        g[f.row][4] = 5; g[f.row][5] = 5;
+        // 迂回路は1行上で本線に戻る
+        if (f.row + 1 < rows) {
+          g[f.row + 1][1] = 5; g[f.row + 1][2] = 1;
+          g[f.row + 1][4] = 1; g[f.row + 1][5] = 5;
+        }
+      } else {
+        // 方向分岐: 正解側=通路、不正解側=迂回路
+        const leftIsCorrect = f.correct === "left";
+        // 左ルート
+        g[f.row][2] = leftIsCorrect ? 1 : 5;
+        g[f.row][1] = leftIsCorrect ? 1 : 5;
+        // 右ルート
+        g[f.row][4] = leftIsCorrect ? 5 : 1;
+        g[f.row][5] = leftIsCorrect ? 5 : 1;
+        // 1行上で合流
+        if (f.row + 1 < rows) {
+          g[f.row + 1][1] = leftIsCorrect ? 1 : 5;
+          g[f.row + 1][5] = leftIsCorrect ? 5 : 1;
+        }
+      }
+    });
+  },
+
+  // --- DOM描画 ---
+  renderGrid() {
+    const { cols, rows, grid } = this.stage;
+    this.el.grid.innerHTML = "";
+    this.gridCells = [];
+    // 描画は行8(top)から行0(bottom)の順
+    for (let r = rows - 1; r >= 0; r--) {
+      this.gridCells[r] = [];
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement("div");
+        cell.className = "cr-cell " + this.cellClass(grid[r][c]);
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        this.el.grid.appendChild(cell);
+        this.gridCells[r][c] = cell;
+      }
+    }
+    this.drawPlayer();
+  },
+
+  cellClass(val) {
+    switch (val) {
+      case 0: return "cr-cell-empty";
+      case 1: return "cr-cell-path";
+      case 2: return "cr-cell-start";
+      case 3: return "cr-cell-goal";
+      case 4: return "cr-cell-fork";
+      case 5: return "cr-cell-detour";
+      default: return "cr-cell-empty";
+    }
+  },
+
+  drawPlayer() {
+    // 全セルからプレイヤー表示を除去
+    this.el.grid.querySelectorAll(".cr-cell-player").forEach(c => {
+      c.classList.remove("cr-cell-player");
+    });
+    const { r, c } = this.playerPos;
+    if (this.gridCells[r] && this.gridCells[r][c]) {
+      this.gridCells[r][c].classList.add("cr-cell-player");
+    }
+  },
+
+  // --- ゲーム開始 ---
+  startScreen() {
+    SoundSystem.init();
+    Game.showScreen(this.el.screen);
+    this.el.tutorial.classList.remove("cr-hidden");
+    this.el.resultOverlay.classList.remove("cr-result-show");
+  },
+
+  startGame() {
+    this.el.tutorial.classList.add("cr-hidden");
+    this.el.resultOverlay.classList.remove("cr-result-show");
+    this.playerPos = { ...this.stage.startPos };
+    this.currentFork = -1;
+    this.atFork = false;
+    this.missCount = 0;
+    this.totalDetour = 0;
+    this.inputLocked = false;
+    this.el.miss.textContent = "MISS: 0";
+    this.el.feedback.textContent = "";
+    this.el.feedback.className = "cr-feedback";
+    this.el.command.textContent = "";
+    this.el.typeLabel.className = "cr-type-label";
+    this.el.lureArea.innerHTML = "";
+    this.el.screen.classList.remove("cr-pressure-high");
+
+    this.renderGrid();
+    // 自動前進開始
+    setTimeout(() => this.startAutoMove(), 600);
+  },
+
+  // --- 自動前進 ---
+  startAutoMove() {
+    this.isMoving = true;
+    this.moveInterval = setInterval(() => {
+      if (this.atFork || this.inputLocked) return;
+      this.moveForward();
+    }, 600);
+  },
+
+  moveForward() {
+    const { r, c } = this.playerPos;
+    const nextR = r + 1;
+    if (nextR >= this.stage.rows) {
+      // ゴール到達
+      this.reachGoal();
+      return;
+    }
+
+    // 分岐チェック
+    const fork = this.stage.forks.find(f => f.row === nextR);
+    if (fork && this.stage.grid[nextR][3] === 4) {
+      // 分岐セルに到着
+      this.playerPos = { r: nextR, c: 3 };
+      this.drawPlayer();
+      this.enterFork(fork);
+      return;
+    }
+
+    // 通常前進（本線=列3）
+    if (this.stage.grid[nextR][c] !== 0) {
+      this.playerPos = { r: nextR, c };
+    } else {
+      // 列3が空の場合、本線に戻る
+      this.playerPos = { r: nextR, c: 3 };
+    }
+    this.drawPlayer();
+
+    // ゴールチェック
+    if (this.stage.grid[this.playerPos.r][this.playerPos.c] === 3) {
+      this.reachGoal();
+    }
+  },
+
+  // --- 分岐処理 ---
+  enterFork(fork) {
+    this.atFork = true;
+    this.currentFork = this.stage.forks.indexOf(fork);
+
+    // 圧力演出
+    const forkIdx = this.currentFork;
+    if (forkIdx >= 2) {
+      this.el.screen.classList.add("cr-pressure-high");
+    }
+
+    // type ラベル
+    this.el.typeLabel.className = "cr-type-label cr-type-" + fork.type;
+
+    // 命令文
+    this.el.command.textContent = fork.command;
+
+    // 群衆吹き出し（遅延表示）
+    this.el.lureArea.innerHTML = "";
+    fork.lures.forEach((lure, i) => {
+      setTimeout(() => {
+        if (!this.atFork) return;
+        const bubble = document.createElement("div");
+        bubble.className = "cr-lure-bubble";
+        bubble.textContent = lure;
+        bubble.style.animationDelay = (i * 0.15) + "s";
+        this.el.lureArea.appendChild(bubble);
+      }, 400 + i * 300);
+    });
+
+    // 振動演出（後半）
+    if (forkIdx >= 3) {
+      this.el.grid.classList.add("cr-shake");
+      setTimeout(() => this.el.grid.classList.remove("cr-shake"), 500);
+    }
+
+    // タイマー開始（wait以外）
+    if (fork.type !== "wait") {
+      this.startForkTimer(fork.timer);
+    } else {
+      // wait: 一定時間何も押さなければ正解
+      this.startWaitTimer(2.0);
+    }
+
+    // D-pad有効化
+    this.enableDpad(true);
+  },
+
+  startForkTimer(duration) {
+    this.timeLeft = duration;
+    this.el.timerFill.style.width = "100%";
+    this.el.timerFill.className = "cr-timer-fill";
+
+    this.timerInterval = setInterval(() => {
+      this.timeLeft -= 0.05;
+      if (this.timeLeft <= 0) {
+        this.timeLeft = 0;
+        clearInterval(this.timerInterval);
+        this.forkTimeout();
+        return;
+      }
+      const pct = (this.timeLeft / duration) * 100;
+      this.el.timerFill.style.width = pct + "%";
+      if (pct <= 30) this.el.timerFill.className = "cr-timer-fill cr-timer-danger";
+      else if (pct <= 60) this.el.timerFill.className = "cr-timer-fill cr-timer-warn";
+    }, 50);
+  },
+
+  startWaitTimer(duration) {
+    this.timeLeft = duration;
+    this.el.timerFill.style.width = "100%";
+    this.el.timerFill.className = "cr-timer-fill";
+
+    this.timerInterval = setInterval(() => {
+      this.timeLeft -= 0.05;
+      if (this.timeLeft <= 0) {
+        this.timeLeft = 0;
+        clearInterval(this.timerInterval);
+        // wait正解: 何も押さなかった
+        this.forkResult(true);
+        return;
+      }
+      const pct = (this.timeLeft / duration) * 100;
+      this.el.timerFill.style.width = pct + "%";
+    }, 50);
+  },
+
+  forkTimeout() {
+    // 時間切れ = ミス
+    this.forkResult(false);
+  },
+
+  // --- プレイヤー入力 ---
+  input(dir) {
+    if (this.inputLocked) return;
+    if (!this.atFork) return;
+
+    const fork = this.stage.forks[this.currentFork];
+    if (!fork) return;
+
+    clearInterval(this.timerInterval);
+
+    if (fork.type === "wait") {
+      // wait中に方向を押した = ミス
+      this.forkResult(false);
+      return;
+    }
+
+    // 方向判定（上下は無効）
+    if (dir === "up" || dir === "down") return;
+
+    const isCorrect = dir === fork.correct;
+    this.forkResult(isCorrect, dir);
+  },
+
+  enableDpad(enabled) {
+    ["cr-up", "cr-down", "cr-left", "cr-right"].forEach(id => {
+      document.getElementById(id).disabled = !enabled;
+    });
+  },
+
+  // --- 分岐結果 ---
+  forkResult(isCorrect, chosenDir) {
+    this.atFork = false;
+    this.inputLocked = true;
+    this.enableDpad(false);
+    clearInterval(this.timerInterval);
+
+    const fork = this.stage.forks[this.currentFork];
+
+    // ○×
+    const overlay = document.getElementById("ox-overlay");
+    const symbol = document.getElementById("ox-symbol");
+    clearTimeout(Game.oxTimeout);
+    symbol.className = "ox-symbol";
+    overlay.classList.remove("ox-show");
+    void symbol.offsetWidth;
+    symbol.textContent = isCorrect ? "○" : "✕";
+    symbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
+    overlay.classList.add("ox-show");
+    if (isCorrect) SoundSystem.correct(); else SoundSystem.wrong();
+    Game.oxTimeout = setTimeout(() => overlay.classList.remove("ox-show"), 600);
+
+    if (isCorrect) {
+      this.el.feedback.textContent = "圧力に負けなかった";
+      this.el.feedback.className = "cr-feedback cr-fb-correct";
+    } else {
+      this.missCount++;
+      this.totalDetour += fork.detourCost;
+      this.el.miss.textContent = "MISS: " + this.missCount;
+      this.el.feedback.textContent = fork.type === "wait" ? "焦って動いた" : "流された";
+      this.el.feedback.className = "cr-feedback cr-fb-wrong";
+    }
+
+    // 命令文・吹き出しクリア
+    setTimeout(() => {
+      this.el.command.textContent = "";
+      this.el.typeLabel.className = "cr-type-label";
+      this.el.lureArea.innerHTML = "";
+      this.el.feedback.textContent = "";
+      this.el.feedback.className = "cr-feedback";
+      this.el.screen.classList.remove("cr-pressure-high");
+
+      // 迂回アニメーション（ミス時は少し遅延）
+      if (!isCorrect) {
+        // 迂回方向にプレイヤーを一瞬動かして本線に戻す
+        const detourDir = chosenDir || (Math.random() < 0.5 ? "left" : "right");
+        const detourC = detourDir === "left" ? 1 : 5;
+        this.playerPos = { r: fork.row, c: detourC };
+        this.drawPlayer();
+        setTimeout(() => {
+          // 本線に戻す（1行上）
+          this.playerPos = { r: Math.min(fork.row + 1, this.stage.rows - 1), c: 3 };
+          this.drawPlayer();
+          this.inputLocked = false;
+        }, 500);
+      } else {
+        // 正解: 1行上に進む
+        this.playerPos = { r: Math.min(fork.row + 1, this.stage.rows - 1), c: 3 };
+        this.drawPlayer();
+        this.inputLocked = false;
+      }
+    }, 800);
+  },
+
+  // --- ゴール ---
+  reachGoal() {
+    clearInterval(this.moveInterval);
+    this.isMoving = false;
+    this.cleanup();
+
+    const totalForks = this.stage.forks.length;
+    const correct = totalForks - this.missCount;
+
+    let rankTitle, rankColor, msg;
+    if (this.missCount === 0) {
+      rankTitle = "完全突破"; rankColor = "#ffd700";
+      msg = "最短ルートで突破した。\n誰にも流されなかった。";
+    } else if (this.missCount === 1) {
+      rankTitle = "ほぼ最短"; rankColor = "#00ff80";
+      msg = "一度だけ流された。\nだが、すぐ立て直した。";
+    } else if (this.missCount === 2) {
+      rankTitle = "迂回突破"; rankColor = "#40ccff";
+      msg = "遠回りしたが、\nゴールにはたどり着いた。";
+    } else {
+      rankTitle = "漂流"; rankColor = "#ff8040";
+      msg = "群れに流されすぎた。\nもう一度、自分の足で歩け。";
+    }
+
+    this.el.resultTitle.textContent = rankTitle;
+    this.el.resultTitle.style.color = rankColor;
+    this.el.resultScore.textContent = "迂回: +" + this.totalDetour + "セル / MISS: " + this.missCount + "/" + totalForks;
+    this.el.resultMsg.textContent = msg;
+    this.el.resultOverlay.classList.add("cr-result-show");
+  },
+};
+
+document.addEventListener("DOMContentLoaded", () => { Game.init(); Dungeon.init(); JudgeRoom.init(); Corridor.init(); });

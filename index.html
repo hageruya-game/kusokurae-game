@@ -24,6 +24,7 @@
     <button id="btn-start" class="btn btn-start">ゲームスタート</button>
     <button id="btn-judge" class="btn btn-judge">連続ジャッジルーム</button>
     <button id="btn-dungeon" class="btn btn-dungeon">逆指示ダンジョン（試作）</button>
+    <button id="btn-corridor" class="btn btn-dungeon">圧力回廊（試作）</button>
     <div class="title-footer">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
   </div>
 
@@ -147,8 +148,13 @@
     <!-- リザルトオーバーレイ -->
     <div class="jr-result-overlay" id="jr-result-overlay">
       <div class="jr-result-title" id="jr-result-title"></div>
+      <div class="jr-result-score-wrap">
+        <div class="jr-result-score-label">抗圧指数</div>
+        <div class="jr-result-score"><span id="jr-result-score-num">0</span> <span class="jr-result-score-unit">/ 100</span></div>
+      </div>
       <div class="jr-result-miss" id="jr-result-miss"></div>
       <div class="jr-result-message" id="jr-result-message"></div>
+      <div class="jr-result-detail" id="jr-result-detail"></div>
       <button id="jr-btn-retry" class="btn btn-start">もう一回</button>
       <button id="jr-btn-title" class="btn btn-dungeon">タイトルへ</button>
     </div>
@@ -200,6 +206,51 @@
       <button id="dg-btn-next" class="btn btn-start dg-btn-next">次のステージ →</button>
       <button id="dg-btn-retry" class="btn btn-start">最初からやり直す</button>
       <button id="dg-btn-title" class="btn btn-dungeon">タイトルへ</button>
+    </div>
+  </div>
+
+  <!-- 圧力回廊（ダンジョンv2 試作） -->
+  <div id="screen-corridor" class="screen">
+    <div class="cr-zone-top">
+      <div class="cr-header">
+        <button id="cr-back" class="cr-back">← 戻る</button>
+        <div class="cr-stage-label">圧力回廊</div>
+        <div class="cr-miss" id="cr-miss">MISS: 0</div>
+      </div>
+      <div class="cr-type-label" id="cr-type-label"></div>
+      <div class="cr-command" id="cr-command"></div>
+    </div>
+    <div class="cr-zone-center">
+      <div class="cr-grid" id="cr-grid"></div>
+      <div class="cr-lure-area" id="cr-lure-area"></div>
+    </div>
+    <div class="cr-zone-bottom">
+      <div class="cr-feedback" id="cr-feedback"></div>
+      <div class="cr-timer-bar" id="cr-timer-bar">
+        <div class="cr-timer-fill" id="cr-timer-fill"></div>
+      </div>
+      <div class="cr-dpad" id="cr-dpad">
+        <button class="cr-arrow cr-up" id="cr-up">▲</button>
+        <div class="cr-dpad-row">
+          <button class="cr-arrow cr-left" id="cr-left">◀</button>
+          <div class="cr-dpad-center"></div>
+          <button class="cr-arrow cr-right" id="cr-right">▶</button>
+        </div>
+        <button class="cr-arrow cr-down" id="cr-down">▼</button>
+      </div>
+    </div>
+    <!-- チュートリアルオーバーレイ -->
+    <div class="cr-tutorial-overlay" id="cr-tutorial-overlay">
+      <div class="cr-tutorial-text">分岐では命令に惑わされるな。<br>ルールはジャッジルームと同じだ。</div>
+      <div class="cr-tutorial-hint">タップして開始</div>
+    </div>
+    <!-- リザルトオーバーレイ -->
+    <div class="cr-result-overlay" id="cr-result-overlay">
+      <div class="cr-result-title" id="cr-result-title"></div>
+      <div class="cr-result-score" id="cr-result-score"></div>
+      <div class="cr-result-msg" id="cr-result-msg"></div>
+      <button id="cr-btn-retry" class="btn btn-start">もう一回</button>
+      <button id="cr-btn-title" class="btn btn-dungeon">タイトルへ</button>
     </div>
   </div>
 

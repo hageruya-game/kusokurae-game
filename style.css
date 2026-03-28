@@ -1895,11 +1895,28 @@ body::before {
   letter-spacing: 3px;
   animation: popIn 0.5s ease-out;
 }
+.jr-result-score-wrap {
+  animation: popIn 0.5s ease-out 0.15s both;
+}
+.jr-result-score-label {
+  font-size: clamp(10px, 2.8vw, 13px);
+  color: #8080a0;
+  letter-spacing: 2px;
+}
+.jr-result-score {
+  font-size: clamp(20px, 5.5vw, 28px);
+  font-weight: 700;
+  color: #e0d0ff;
+}
+.jr-result-score-unit {
+  font-size: 0.6em;
+  color: #8080a0;
+}
 .jr-result-miss {
-  font-size: clamp(18px, 5vw, 24px);
+  font-size: clamp(14px, 3.8vw, 18px);
   font-weight: 700;
   color: #a0a0c0;
-  animation: popIn 0.5s ease-out 0.2s both;
+  animation: popIn 0.5s ease-out 0.3s both;
 }
 .jr-result-message {
   font-size: clamp(14px, 3.5vw, 18px);
@@ -1908,10 +1925,17 @@ body::before {
   white-space: pre-line;
   line-height: 1.7;
   max-width: 320px;
-  animation: popIn 0.5s ease-out 0.4s both;
+  animation: popIn 0.5s ease-out 0.45s both;
+}
+.jr-result-detail {
+  font-size: clamp(10px, 2.5vw, 12px);
+  color: #7070a0;
+  text-align: center;
+  line-height: 1.6;
+  animation: popIn 0.5s ease-out 0.55s both;
 }
 .jr-result-overlay .btn {
-  animation: popIn 0.5s ease-out 0.6s both;
+  animation: popIn 0.5s ease-out 0.7s both;
 }
 
 /* --- ジャッジルーム レスポンシブ --- */
@@ -1927,4 +1951,279 @@ body::before {
   .jr-character .character-img { width: min(18vw, 70px); }
   .jr-btn { min-height: 40px; padding: 8px 4px; }
   .jr-speech { font-size: clamp(10px, 2.8vw, 12px); padding: 5px 8px; max-width: min(38vw, 140px); right: calc(50% + min(9vw, 32px) + 8px); }
+}
+
+/* ============================================================
+   圧力回廊（ダンジョン v2 試作）
+   ============================================================ */
+#screen-corridor {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: linear-gradient(180deg, #0a0a18 0%, #14142a 100%);
+}
+
+/* --- 上段 --- */
+.cr-zone-top {
+  flex: 0 0 auto;
+  padding: 8px 12px 4px;
+}
+.cr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cr-back {
+  background: none;
+  border: none;
+  color: #8080b0;
+  font-size: 14px;
+  cursor: pointer;
+}
+.cr-stage-label {
+  font-size: clamp(13px, 3.5vw, 16px);
+  font-weight: 700;
+  color: #c0b0e0;
+  letter-spacing: 2px;
+}
+.cr-miss {
+  font-size: 14px;
+  color: #ff6060;
+  font-weight: 700;
+}
+.cr-type-label {
+  text-align: center;
+  font-size: clamp(11px, 2.8vw, 13px);
+  font-weight: 400;
+  letter-spacing: 1px;
+  min-height: 18px;
+  margin: 4px 0;
+  opacity: 0.65;
+  color: #a090c0;
+}
+.cr-type-normal::before { content: "[ 判断 ]"; }
+.cr-type-obey::before { content: "[ 服従 ]"; }
+.cr-type-wait::before { content: "[ 待機 ]"; }
+.cr-command {
+  text-align: center;
+  font-size: clamp(16px, 4.5vw, 22px);
+  font-weight: 700;
+  color: #e0d0ff;
+  min-height: 30px;
+  line-height: 1.4;
+}
+
+/* --- 中段: グリッド --- */
+.cr-zone-center {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.cr-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  gap: 2px;
+  width: min(85vw, 320px);
+  aspect-ratio: 7 / 9;
+}
+.cr-cell {
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+.cr-cell-empty { background: transparent; }
+.cr-cell-path { background: #1a1a3a; }
+.cr-cell-path-lit { background: #2a2a5a; }
+.cr-cell-detour { background: #1a1020; }
+.cr-cell-start { background: #204060; }
+.cr-cell-goal { background: #406020; }
+.cr-cell-player {
+  background: #6040ff;
+  box-shadow: 0 0 8px #6040ff80;
+  border-radius: 50%;
+}
+.cr-cell-fork {
+  background: #3a2060;
+  box-shadow: 0 0 4px #8040ff40;
+}
+.cr-cell-visited { background: #202040; }
+
+/* 群衆吹き出し */
+.cr-lure-area {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+.cr-lure-bubble {
+  background: #20102080;
+  border: 1px solid #ff406040;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: clamp(10px, 2.5vw, 12px);
+  color: #ff8080;
+  opacity: 0;
+  animation: crLureIn 0.3s ease-out forwards;
+}
+@keyframes crLureIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 下段 --- */
+.cr-zone-bottom {
+  flex: 0 0 auto;
+  padding: 4px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cr-feedback {
+  font-size: clamp(13px, 3.5vw, 16px);
+  font-weight: 700;
+  min-height: 22px;
+  text-align: center;
+}
+.cr-fb-correct { color: #40ff80; }
+.cr-fb-wrong { color: #ff4060; }
+.cr-timer-bar {
+  width: 80%;
+  max-width: 280px;
+  height: 6px;
+  background: #1a1a3a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cr-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: #6040ff;
+  border-radius: 3px;
+  transition: width 0.05s linear;
+}
+.cr-timer-warn { background: #ffaa40; }
+.cr-timer-danger { background: #ff3060; }
+
+/* D-pad */
+.cr-dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cr-dpad-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cr-arrow {
+  width: 52px;
+  height: 52px;
+  border: 2px solid #4040a0;
+  border-radius: 10px;
+  background: #1a1a3a;
+  color: #c0b0e0;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.1s;
+}
+.cr-arrow:active { background: #3030a0; }
+.cr-arrow:disabled { opacity: 0.3; }
+.cr-dpad-center { width: 52px; height: 52px; }
+
+/* 圧力演出: 背景赤み */
+.cr-pressure-high .cr-zone-center {
+  background: radial-gradient(ellipse at center, #30101a40, transparent 70%);
+}
+
+/* 圧力演出: 振動 */
+@keyframes crShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+.cr-shake { animation: crShake 0.15s ease-in-out 3; }
+
+/* チュートリアル */
+.cr-tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0a0a18e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+  cursor: pointer;
+}
+.cr-tutorial-overlay.cr-hidden { display: none; }
+.cr-tutorial-text {
+  font-size: clamp(16px, 4.5vw, 22px);
+  color: #e0d0ff;
+  text-align: center;
+  line-height: 1.8;
+  font-weight: 700;
+}
+.cr-tutorial-hint {
+  font-size: 14px;
+  color: #8080b0;
+}
+
+/* リザルト */
+.cr-result-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0a0a18f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+  z-index: 100;
+}
+.cr-result-overlay.cr-result-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cr-result-title {
+  font-size: clamp(24px, 6.5vw, 34px);
+  font-weight: 900;
+  letter-spacing: 3px;
+  animation: popIn 0.5s ease-out;
+}
+.cr-result-score {
+  font-size: clamp(16px, 4vw, 20px);
+  color: #c0b0e0;
+  animation: popIn 0.5s ease-out 0.2s both;
+}
+.cr-result-msg {
+  font-size: clamp(14px, 3.5vw, 18px);
+  color: #c0c0e0;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.7;
+  max-width: 300px;
+  animation: popIn 0.5s ease-out 0.4s both;
+}
+.cr-result-overlay .btn {
+  animation: popIn 0.5s ease-out 0.6s both;
 }
