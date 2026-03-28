@@ -1913,7 +1913,8 @@ const Dungeon = {
     document.getElementById("dg-back").addEventListener("click", () => this.goTitle());
     document.getElementById("dg-btn-retry").addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
     document.getElementById("dg-btn-title").addEventListener("click", () => this.goTitle());
-    document.getElementById("btn-dungeon").addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
+    const btnDungeon = document.getElementById("btn-dungeon");
+    if (btnDungeon) btnDungeon.addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
     this.el.btnNext.addEventListener("click", () => this.nextStage());
     this.el.tutorialOverlay.addEventListener("click", () => this.dismissTutorial());
   },
