@@ -2613,11 +2613,14 @@ const JudgeRoom = {
   maxScore: 0,
   waitBonus: 0,
   fakeWaitBonus: 0,
-  isWaiting: false,
+  answered: false,       // 1問につき1回の判定を保証するフラグ
   timerInterval: null,
   timeLeft: 0,
   timeLimit: 0,
   lureTimeout: null,
+  advanceTimeout: null,  // advance 遅延の追跡用
+  showQTimeout: null,    // showQuestion 遅延の追跡用
+  gameId: 0,             // ゲームセッション識別用（古いタイマー無効化）
   el: {},
 
   init() {
@@ -2662,11 +2665,20 @@ const JudgeRoom = {
   cleanup() {
     this.stopTimer();
     clearTimeout(this.lureTimeout);
-    this.isWaiting = false;
+    clearTimeout(this.advanceTimeout);
+    clearTimeout(this.showQTimeout);
+    this.lureTimeout = null;
+    this.advanceTimeout = null;
+    this.showQTimeout = null;
+    this.answered = true;  // 残存イベントをブロック
   },
 
   start() {
+    // 前ゲームのタイマー・遅延を全て破棄
+    this.cleanup();
+
     SoundSystem.init();
+    this.gameId++;
     this.questions = buildJudgeSession();
     this.currentQ = 0;
     this.missCount = 0;
@@ -2678,7 +2690,7 @@ const JudgeRoom = {
       if (q.fakeWait) return sum + 10;
       return sum + 8;
     }, 0);
-    this.isWaiting = false;
+    this.answered = true;  // showQuestion で解除するまで入力ブロック
 
     this.el.missNum.textContent = "0";
     this.el.qTotal.textContent = this.questions.length;
@@ -2693,10 +2705,19 @@ const JudgeRoom = {
     this.el.choices.classList.remove("jr-choices-hidden");
 
     Game.showScreen(this.el.screen);
-    setTimeout(() => this.showQuestion(), 400);
+    const gid = this.gameId;
+    this.showQTimeout = setTimeout(() => {
+      if (this.gameId !== gid) return;  // 古いセッションなら無視
+      this.showQuestion();
+    }, 400);
   },
 
   showQuestion() {
+    // 前問のタイマー・遅延を防御的にクリア
+    this.stopTimer();
+    clearTimeout(this.lureTimeout);
+    clearTimeout(this.advanceTimeout);
+
     const q = this.questions[this.currentQ];
     this.el.qNum.textContent = this.currentQ + 1;
 
@@ -2722,7 +2743,6 @@ const JudgeRoom = {
     this.el.btnWait.disabled = false;
 
     // 誘導テキスト（遅延表示）
-    clearTimeout(this.lureTimeout);
     if (q.lure) {
       this.lureTimeout = setTimeout(() => {
         this.el.speech.textContent = q.lure;
@@ -2730,13 +2750,15 @@ const JudgeRoom = {
       }, 500);
     }
 
-    this.isWaiting = false;
+    // ★ 判定解禁（この瞬間から入力を受け付ける）
+    this.answered = false;
     this.startTimer();
   },
 
   choose(answer) {
-    if (this.isWaiting) return;
-    this.isWaiting = true;
+    // ★ 1問1回の判定を保証
+    if (this.answered) return;
+    this.answered = true;
     this.stopTimer();
     clearTimeout(this.lureTimeout);
 
@@ -2775,7 +2797,11 @@ const JudgeRoom = {
       this.el.feedback.className = "jr-feedback jr-fb-wrong";
     }
 
-    setTimeout(() => this.advance(), 1200);
+    const gid = this.gameId;
+    this.advanceTimeout = setTimeout(() => {
+      if (this.gameId !== gid) return;  // 古いセッションなら無視
+      this.advance();
+    }, 1200);
   },
 
   showOX(isCorrect) {
@@ -2803,6 +2829,8 @@ const JudgeRoom = {
   },
 
   startTimer() {
+    // 防御: 前のタイマーが残っていたらクリア
+    this.stopTimer();
     this.timeLimit = getJudgeTimeLimit(this.currentQ);
     this.timeLeft = this.timeLimit;
     this.el.timerFill.style.width = "100%";
@@ -2830,8 +2858,9 @@ const JudgeRoom = {
 
   onTimeout() {
     this.stopTimer();
-    if (this.isWaiting) return;
-    this.isWaiting = true;
+    // ★ 既に判定済みなら無視
+    if (this.answered) return;
+    this.answered = true;
     clearTimeout(this.lureTimeout);
 
     this.missCount++;
@@ -2846,7 +2875,11 @@ const JudgeRoom = {
     this.el.feedback.className = "jr-feedback jr-fb-wrong";
     this.showOX(false);
 
-    setTimeout(() => this.advance(), 1200);
+    const gid = this.gameId;
+    this.advanceTimeout = setTimeout(() => {
+      if (this.gameId !== gid) return;
+      this.advance();
+    }, 1200);
   },
 
   showResult() {
