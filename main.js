@@ -587,6 +587,8 @@ const Game = {
   score: 0,
   pressureLevel: 0,
   roundCommands: [],
+  sessionId: 0,  // セッション識別（全非同期処理のガード用）
+  answered: true, // 1問1判定保証フラグ（true=入力拒否, false=入力受付中）
   isWaiting: false,
   contaminated: false,
   inPhase2: false,
@@ -666,6 +668,23 @@ const Game = {
       s.classList.remove("active", "fade-in");
     });
     screenEl.classList.add("active", "fade-in");
+
+    // ★ 全セッション無効化: sessionIdを進めて古い全callbackを死滅させる
+    this.sessionId++;
+    this.answered = true;  // 入力拒否
+    this.stopTimer();
+    clearTimeout(this.oxTimeout);
+    clearTimeout(this.hintTimeout);
+    clearTimeout(this.mockeryTimeout);
+    clearTimeout(this.tauntTimeout);
+    this.el.oxOverlay.classList.remove("ox-show");
+    this.el.oxSymbol.className = "ox-symbol";
+    this.el.tauntOverlay.classList.remove("taunt-show");
+    this.mockeryActive = false;
+    this.tauntActive = false;
+    // ★ チュートリアルオーバーレイを確実に閉じる
+    const crTut = document.getElementById("cr-tutorial-overlay");
+    if (crTut) crTut.classList.remove("cr-tutorial-show");
   },
 
   // テストモード: Phase1=5 normal, Phase2=obey/tap/wait混合
@@ -709,6 +728,14 @@ const Game = {
   },
 
   startGame() {
+    this.sessionId++;
+    this.answered = true;
+    this.stopTimer();
+    clearTimeout(this.oxTimeout);
+    clearTimeout(this.hintTimeout);
+    clearTimeout(this.mockeryTimeout);
+    clearTimeout(this.tauntTimeout);
+
     SoundSystem.init();
     SoundSystem.startAmbient(false);
     this.currentRound = 0;
@@ -751,14 +778,17 @@ const Game = {
 
     let i = 0;
     this.showPhaseMsg(PHASE_CHANGE_MESSAGES[0]);
+    const sid = this.sessionId;
 
     const next = () => {
+      if (this.sessionId !== sid) return;
       i++;
       if (i < PHASE_CHANGE_MESSAGES.length) {
         this.showPhaseMsg(PHASE_CHANGE_MESSAGES[i]);
         setTimeout(next, TIMING.phaseMsg);
       } else {
         setTimeout(() => {
+          if (this.sessionId !== sid) return;
           this.el.phaseOverlay.classList.remove("active");
           this.inPhase2 = true;
           this.el.screenGame.classList.add("phase2");
@@ -768,7 +798,7 @@ const Game = {
       }
     };
 
-    setTimeout(next, TIMING.phaseMsg);
+    setTimeout(() => { if (this.sessionId !== sid) return; next(); }, TIMING.phaseMsg);
   },
 
   showPhaseMsg(text) {
@@ -814,7 +844,9 @@ const Game = {
     this.el.hintMessage.classList.add("hint-visible");
 
     clearTimeout(this.hintTimeout);
+    const sid = this.sessionId;
     this.hintTimeout = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       this.el.hintMessage.classList.remove("hint-visible");
     }, 1200);
   },
@@ -858,7 +890,9 @@ const Game = {
 
   showMockery(delay) {
     clearTimeout(this.mockeryTimeout);
+    const sid = this.sessionId;
     this.mockeryTimeout = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       const category = this.inPhase2 ? "mockeryP2" : "mockery";
       let text = CommentSystem.pick(category);
       if (text === this.lastMockery) {
@@ -866,18 +900,17 @@ const Game = {
       }
       this.lastMockery = text;
 
-      // まず吹き出しを完全に消してからmockeryを表示（二重表示防止）
       this.clearSpeech();
       this.mockeryActive = true;
 
-      // 1フレーム待ってからmockeryを表示（opacity遷移で自然にフェードイン）
       requestAnimationFrame(() => {
+        if (this.sessionId !== sid) return;
         this.showSpeech(text, this.inPhase2 ? "speech-mockery-p2" : "speech-mockery");
       });
 
       this.mockeryTimeout = setTimeout(() => {
+        if (this.sessionId !== sid) return;
         this.mockeryActive = false;
-        // mockery消去後にcommentを復帰
         if (this.speechCommentText) {
           this.showSpeech(this.speechCommentText, this.speechCommentClass);
         } else {
@@ -898,7 +931,9 @@ const Game = {
     clearTimeout(this.tauntTimeout);
     this.clearMockery();
     this.tauntActive = true;
+    const sid = this.sessionId;
     this.tauntTimeout = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       const category = this.inPhase2 ? "tauntP2" : "taunt";
       const text = CommentSystem.pick(category);
       this.el.tauntText.textContent = text;
@@ -909,6 +944,7 @@ const Game = {
       this.el.tauntText.classList.add("taunt-anim");
 
       this.tauntTimeout = setTimeout(() => {
+        if (this.sessionId !== sid) return;
         this.el.tauntOverlay.classList.remove("taunt-show");
         this.tauntActive = false;
       }, 750);
@@ -927,7 +963,7 @@ const Game = {
     this.el.oxSymbol.className = "ox-symbol";
     this.el.oxOverlay.classList.remove("ox-show");
 
-    void this.el.oxSymbol.offsetWidth; // reflow
+    void this.el.oxSymbol.offsetWidth;
     this.el.oxSymbol.textContent = isCorrect ? "○" : "✕";
     this.el.oxSymbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
     this.el.oxOverlay.classList.add("ox-show");
@@ -935,7 +971,9 @@ const Game = {
     if (isCorrect) SoundSystem.correct();
     else SoundSystem.wrong();
 
+    const sid = this.sessionId;
     this.oxTimeout = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       this.el.oxOverlay.classList.remove("ox-show");
     }, 600);
   },
@@ -1058,7 +1096,8 @@ const Game = {
     }
 
     this.isWaiting = true;
-    setTimeout(() => this.showChoices(), TIMING.pressurePhase);
+    const gid = this.sessionId;
+    setTimeout(() => { if (this.sessionId !== gid) return; this.showChoices(); }, TIMING.pressurePhase);
   },
 
   // === Phase 2: 選択肢表示 ===
@@ -1099,6 +1138,7 @@ const Game = {
     this.el.choicesArea.classList.add("choices-appear");
 
     this.isWaiting = false;
+    this.answered = false;  // ★ 入力受付開始
     this.startTimer();
   },
 
@@ -1118,7 +1158,9 @@ const Game = {
     let lastTickTime = 0;
     const isWaitStage = cmd.ruleType === "wait" || (cmd.ruleType === "tap" && cmd.correctType === "wait");
 
+    const sid = this.sessionId;
     this.timerInterval = setInterval(() => {
+      if (this.sessionId !== sid) { clearInterval(this.timerInterval); return; }
       this.timeLeft -= tickMs / 1000;
       if (this.timeLeft <= 0) { this.timeLeft = 0; this.onTimeout(); return; }
 
@@ -1170,6 +1212,8 @@ const Game = {
   },
 
   onWaitSuccess() {
+    if (this.answered) return;
+    this.answered = true;
     this.stopTimer();
     this.clearHint();
     this.isWaiting = true;
@@ -1198,6 +1242,8 @@ const Game = {
 
   onTimeout() {
     if (!this.timerActive) return;
+    if (this.answered) return;
+    this.answered = true;  // ★ 判定消費
     this.stopTimer();
 
     const cmd = this.roundCommands[this.currentRound];
@@ -1236,7 +1282,9 @@ const Game = {
   },
 
   choose(index) {
+    if (this.answered) return;
     if (this.isWaiting) return;
+    this.answered = true;
     this.isWaiting = true;
     this.stopTimer();
     this.clearHint();
@@ -1255,12 +1303,14 @@ const Game = {
     this.el.tapGuide.classList.remove("active");
 
     // tap不正解 & 正解ボタンあり → 正解フラッシュ（0.5秒間）
+    const gid = this.sessionId;
     if (!isCorrect && cmd.ruleType === "tap" && cmd.correctIndex >= 0) {
       const correctBtn = cmd.correctIndex === 0 ? this.el.btnChoice0 : this.el.btnChoice1;
       const wrongBtn = cmd.correctIndex === 0 ? this.el.btnChoice1 : this.el.btnChoice0;
       correctBtn.classList.add("flash-correct");
       wrongBtn.classList.add("flash-wrong");
       setTimeout(() => {
+        if (this.sessionId !== gid) return;
         this.el.choicesArea.classList.add("choices-hidden");
         correctBtn.classList.remove("flash-correct");
         wrongBtn.classList.remove("flash-wrong");
@@ -1295,11 +1345,14 @@ const Game = {
   },
 
   advanceAfterResult() {
+    const gid = this.sessionId;
     setTimeout(() => {
+      if (this.sessionId !== gid) return;
       this.el.feedback.classList.add("feedback-fade");
       this.clearGameComment();
 
       setTimeout(() => {
+        if (this.sessionId !== gid) return;
         if (this.contaminated) {
           this.showResult();
           return;
@@ -2614,13 +2667,14 @@ const JudgeRoom = {
   waitBonus: 0,
   fakeWaitBonus: 0,
   answered: false,       // 1問につき1回の判定を保証するフラグ
+  oxTimeout: null,       // JR専用のOXタイマー（Game.oxTimeoutと分離）
   timerInterval: null,
   timeLeft: 0,
   timeLimit: 0,
   lureTimeout: null,
   advanceTimeout: null,  // advance 遅延の追跡用
   showQTimeout: null,    // showQuestion 遅延の追跡用
-  gameId: 0,             // ゲームセッション識別用（古いタイマー無効化）
+  sessionId: 0,          // セッション識別用（古いタイマー無効化）
   el: {},
 
   init() {
@@ -2667,18 +2721,19 @@ const JudgeRoom = {
     clearTimeout(this.lureTimeout);
     clearTimeout(this.advanceTimeout);
     clearTimeout(this.showQTimeout);
+    clearTimeout(this.oxTimeout);
     this.lureTimeout = null;
     this.advanceTimeout = null;
     this.showQTimeout = null;
+    this.oxTimeout = null;
     this.answered = true;  // 残存イベントをブロック
   },
 
   start() {
-    // 前ゲームのタイマー・遅延を全て破棄
     this.cleanup();
 
     SoundSystem.init();
-    this.gameId++;
+    this.sessionId++;
     this.questions = buildJudgeSession();
     this.currentQ = 0;
     this.missCount = 0;
@@ -2705,9 +2760,9 @@ const JudgeRoom = {
     this.el.choices.classList.remove("jr-choices-hidden");
 
     Game.showScreen(this.el.screen);
-    const gid = this.gameId;
+    const gid = this.sessionId;
     this.showQTimeout = setTimeout(() => {
-      if (this.gameId !== gid) return;  // 古いセッションなら無視
+      if (this.sessionId !== gid) return;  // 古いセッションなら無視
       this.showQuestion();
     }, 400);
   },
@@ -2744,7 +2799,9 @@ const JudgeRoom = {
 
     // 誘導テキスト（遅延表示）
     if (q.lure) {
+      const sid = this.sessionId;
       this.lureTimeout = setTimeout(() => {
+        if (this.sessionId !== sid) return;
         this.el.speech.textContent = q.lure;
         this.el.speech.className = "jr-speech jr-speech-show";
       }, 500);
@@ -2757,7 +2814,9 @@ const JudgeRoom = {
 
   choose(answer) {
     // ★ 1問1回の判定を保証
-    if (this.answered) return;
+    if (this.answered) {
+      return;
+    }
     this.answered = true;
     this.stopTimer();
     clearTimeout(this.lureTimeout);
@@ -2797,9 +2856,9 @@ const JudgeRoom = {
       this.el.feedback.className = "jr-feedback jr-fb-wrong";
     }
 
-    const gid = this.gameId;
+    const gid = this.sessionId;
     this.advanceTimeout = setTimeout(() => {
-      if (this.gameId !== gid) return;  // 古いセッションなら無視
+      if (this.sessionId !== gid) return;  // 古いセッションなら無視
       this.advance();
     }, 1200);
   },
@@ -2807,7 +2866,8 @@ const JudgeRoom = {
   showOX(isCorrect) {
     const overlay = document.getElementById("ox-overlay");
     const symbol = document.getElementById("ox-symbol");
-    clearTimeout(Game.oxTimeout);
+    // ★ JR専用の oxTimeout を使う（Game.oxTimeout と分離）
+    clearTimeout(this.oxTimeout);
     symbol.className = "ox-symbol";
     overlay.classList.remove("ox-show");
     void symbol.offsetWidth;
@@ -2816,7 +2876,8 @@ const JudgeRoom = {
     overlay.classList.add("ox-show");
     if (isCorrect) SoundSystem.correct();
     else SoundSystem.wrong();
-    Game.oxTimeout = setTimeout(() => overlay.classList.remove("ox-show"), 600);
+    const sid = this.sessionId;
+    this.oxTimeout = setTimeout(() => { if (this.sessionId !== sid) return; overlay.classList.remove("ox-show"); }, 600);
   },
 
   advance() {
@@ -2836,7 +2897,9 @@ const JudgeRoom = {
     this.el.timerFill.style.width = "100%";
     this.el.timerFill.className = "jr-timer-fill";
 
+    const sid = this.sessionId;
     this.timerInterval = setInterval(() => {
+      if (this.sessionId !== sid) { clearInterval(this.timerInterval); return; }
       this.timeLeft -= 0.05;
       if (this.timeLeft <= 0) {
         this.timeLeft = 0;
@@ -2859,7 +2922,9 @@ const JudgeRoom = {
   onTimeout() {
     this.stopTimer();
     // ★ 既に判定済みなら無視
-    if (this.answered) return;
+    if (this.answered) {
+      return;
+    }
     this.answered = true;
     clearTimeout(this.lureTimeout);
 
@@ -2875,9 +2940,9 @@ const JudgeRoom = {
     this.el.feedback.className = "jr-feedback jr-fb-wrong";
     this.showOX(false);
 
-    const gid = this.gameId;
+    const gid = this.sessionId;
     this.advanceTimeout = setTimeout(() => {
-      if (this.gameId !== gid) return;
+      if (this.sessionId !== gid) return;
       this.advance();
     }, 1200);
   },
@@ -2943,17 +3008,25 @@ const CR_STAGE = {
 const Corridor = {
   stage: CR_STAGE,
   playerPos: { r: 0, c: 3 },
-  currentFork: -1,     // 現在の分岐インデックス (-1=移動中)
-  atFork: false,
+  currentFork: -1,
+  // state: "idle" | "moving" | "at_fork" | "animating"
+  // "moving"   = 自動前進中、分岐到達で at_fork に遷移
+  // "at_fork"  = 分岐で入力待ち（input/timeout 受付中）
+  // "animating"= 分岐結果アニメ中（入力も自動前進もブロック）
+  // "idle"     = ゲーム未開始 or 終了後
+  state: "idle",
   missCount: 0,
   totalDetour: 0,
-  isMoving: false,
   moveInterval: null,
   timerInterval: null,
   timeLeft: 0,
-  inputLocked: false,
+  autoMoveTimeout: null,
+  forkResultTimeout: null,
+  detourTimeout: null,
+  oxTimeout: null,       // CR専用のOXタイマー（Game.oxTimeoutと分離）
+  sessionId: 0,
   el: {},
-  gridCells: [],       // DOM要素の2D配列
+  gridCells: [],
 
   init() {
     this.el = {
@@ -2997,9 +3070,17 @@ const Corridor = {
   cleanup() {
     clearInterval(this.moveInterval);
     clearInterval(this.timerInterval);
-    this.isMoving = false;
-    this.atFork = false;
-    this.inputLocked = false;
+    clearTimeout(this.autoMoveTimeout);
+    clearTimeout(this.forkResultTimeout);
+    clearTimeout(this.detourTimeout);
+    clearTimeout(this.oxTimeout);
+    this.moveInterval = null;
+    this.timerInterval = null;
+    this.autoMoveTimeout = null;
+    this.forkResultTimeout = null;
+    this.detourTimeout = null;
+    this.oxTimeout = null;
+    this.state = "idle";  // 全入力・自動前進をブロック
   },
 
   // --- グリッド構築 ---
@@ -3091,19 +3172,22 @@ const Corridor = {
   startScreen() {
     SoundSystem.init();
     Game.showScreen(this.el.screen);
-    this.el.tutorial.classList.remove("cr-hidden");
+    this.el.tutorial.classList.add("cr-tutorial-show");
     this.el.resultOverlay.classList.remove("cr-result-show");
   },
 
   startGame() {
-    this.el.tutorial.classList.add("cr-hidden");
+    // ★ 前ゲームの全タイマー・遅延を確実に破棄
+    this.cleanup();
+
+    this.sessionId++;
+    this.el.tutorial.classList.remove("cr-tutorial-show");
     this.el.resultOverlay.classList.remove("cr-result-show");
     this.playerPos = { ...this.stage.startPos };
     this.currentFork = -1;
-    this.atFork = false;
+    this.state = "idle";  // startAutoMove で "moving" に遷移
     this.missCount = 0;
     this.totalDetour = 0;
-    this.inputLocked = false;
     this.el.miss.textContent = "MISS: 0";
     this.el.feedback.textContent = "";
     this.el.feedback.className = "cr-feedback";
@@ -3111,26 +3195,35 @@ const Corridor = {
     this.el.typeLabel.className = "cr-type-label";
     this.el.lureArea.innerHTML = "";
     this.el.screen.classList.remove("cr-pressure-high");
+    this.enableDpad(false);
 
     this.renderGrid();
-    // 自動前進開始
-    setTimeout(() => this.startAutoMove(), 600);
+    // 自動前進開始（追跡付き）
+    const gid = this.sessionId;
+    this.autoMoveTimeout = setTimeout(() => {
+      if (this.sessionId !== gid) return;
+      this.startAutoMove();
+    }, 600);
   },
 
   // --- 自動前進 ---
   startAutoMove() {
-    this.isMoving = true;
+    clearInterval(this.moveInterval);
+    this.state = "moving";
+    const gid = this.sessionId;
     this.moveInterval = setInterval(() => {
-      if (this.atFork || this.inputLocked) return;
+      if (this.sessionId !== gid) { clearInterval(this.moveInterval); return; }
+      if (this.state !== "moving") return;
       this.moveForward();
     }, 600);
   },
 
   moveForward() {
+    if (this.state !== "moving") return;
+
     const { r, c } = this.playerPos;
     const nextR = r + 1;
     if (nextR >= this.stage.rows) {
-      // ゴール到達
       this.reachGoal();
       return;
     }
@@ -3138,7 +3231,6 @@ const Corridor = {
     // 分岐チェック
     const fork = this.stage.forks.find(f => f.row === nextR);
     if (fork && this.stage.grid[nextR][3] === 4) {
-      // 分岐セルに到着
       this.playerPos = { r: nextR, c: 3 };
       this.drawPlayer();
       this.enterFork(fork);
@@ -3149,7 +3241,6 @@ const Corridor = {
     if (this.stage.grid[nextR][c] !== 0) {
       this.playerPos = { r: nextR, c };
     } else {
-      // 列3が空の場合、本線に戻る
       this.playerPos = { r: nextR, c: 3 };
     }
     this.drawPlayer();
@@ -3162,7 +3253,7 @@ const Corridor = {
 
   // --- 分岐処理 ---
   enterFork(fork) {
-    this.atFork = true;
+    this.state = "at_fork";
     this.currentFork = this.stage.forks.indexOf(fork);
 
     // 圧力演出
@@ -3177,11 +3268,12 @@ const Corridor = {
     // 命令文
     this.el.command.textContent = fork.command;
 
-    // 群衆吹き出し（遅延表示）
+    // 群衆吹き出し（遅延表示）— gameId で古いセッションを無視
     this.el.lureArea.innerHTML = "";
+    const gid = this.sessionId;
     fork.lures.forEach((lure, i) => {
       setTimeout(() => {
-        if (!this.atFork) return;
+        if (this.sessionId !== gid || this.state !== "at_fork") return;
         const bubble = document.createElement("div");
         bubble.className = "cr-lure-bubble";
         bubble.textContent = lure;
@@ -3197,10 +3289,10 @@ const Corridor = {
     }
 
     // タイマー開始（wait以外）
+    clearInterval(this.timerInterval);  // 防御的クリア
     if (fork.type !== "wait") {
       this.startForkTimer(fork.timer);
     } else {
-      // wait: 一定時間何も押さなければ正解
       this.startWaitTimer(2.0);
     }
 
@@ -3209,16 +3301,22 @@ const Corridor = {
   },
 
   startForkTimer(duration) {
+    clearInterval(this.timerInterval);  // 防御的クリア
     this.timeLeft = duration;
     this.el.timerFill.style.width = "100%";
     this.el.timerFill.className = "cr-timer-fill";
 
+    const sid = this.sessionId;
     this.timerInterval = setInterval(() => {
+      if (this.sessionId !== sid) { clearInterval(this.timerInterval); return; }
       this.timeLeft -= 0.05;
       if (this.timeLeft <= 0) {
         this.timeLeft = 0;
         clearInterval(this.timerInterval);
-        this.forkTimeout();
+        this.timerInterval = null;
+        // ★ 判定済みなら無視（state が at_fork 以外なら既に判定済み）
+        if (this.state !== "at_fork") return;
+        this.forkResult(false);
         return;
       }
       const pct = (this.timeLeft / duration) * 100;
@@ -3229,16 +3327,21 @@ const Corridor = {
   },
 
   startWaitTimer(duration) {
+    clearInterval(this.timerInterval);  // 防御的クリア
     this.timeLeft = duration;
     this.el.timerFill.style.width = "100%";
     this.el.timerFill.className = "cr-timer-fill";
 
+    const sid = this.sessionId;
     this.timerInterval = setInterval(() => {
+      if (this.sessionId !== sid) { clearInterval(this.timerInterval); return; }
       this.timeLeft -= 0.05;
       if (this.timeLeft <= 0) {
         this.timeLeft = 0;
         clearInterval(this.timerInterval);
-        // wait正解: 何も押さなかった
+        this.timerInterval = null;
+        // ★ 判定済みなら無視（state が at_fork 以外なら既に判定済み）
+        if (this.state !== "at_fork") return;
         this.forkResult(true);
         return;
       }
@@ -3247,20 +3350,18 @@ const Corridor = {
     }, 50);
   },
 
-  forkTimeout() {
-    // 時間切れ = ミス
-    this.forkResult(false);
-  },
-
   // --- プレイヤー入力 ---
   input(dir) {
-    if (this.inputLocked) return;
-    if (!this.atFork) return;
+    // ★ 1分岐1判定を保証（at_fork 以外なら入力拒否）
+    if (this.state !== "at_fork") {
+      return;
+    }
 
     const fork = this.stage.forks[this.currentFork];
     if (!fork) return;
 
     clearInterval(this.timerInterval);
+    this.timerInterval = null;
 
     if (fork.type === "wait") {
       // wait中に方向を押した = ミス
@@ -3283,17 +3384,21 @@ const Corridor = {
 
   // --- 分岐結果 ---
   forkResult(isCorrect, chosenDir) {
-    this.atFork = false;
-    this.inputLocked = true;
+    // ★ 1分岐1判定を保証（at_fork 以外なら無視）
+    if (this.state !== "at_fork") {
+      return;
+    }
+    this.state = "animating";  // 入力も自動前進もブロック
     this.enableDpad(false);
     clearInterval(this.timerInterval);
+    this.timerInterval = null;
 
     const fork = this.stage.forks[this.currentFork];
 
-    // ○×
+    // ○× — CR専用の oxTimeout を使う（Game.oxTimeout と分離）
     const overlay = document.getElementById("ox-overlay");
     const symbol = document.getElementById("ox-symbol");
-    clearTimeout(Game.oxTimeout);
+    clearTimeout(this.oxTimeout);
     symbol.className = "ox-symbol";
     overlay.classList.remove("ox-show");
     void symbol.offsetWidth;
@@ -3301,7 +3406,8 @@ const Corridor = {
     symbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
     overlay.classList.add("ox-show");
     if (isCorrect) SoundSystem.correct(); else SoundSystem.wrong();
-    Game.oxTimeout = setTimeout(() => overlay.classList.remove("ox-show"), 600);
+    const sid2 = this.sessionId;
+    this.oxTimeout = setTimeout(() => { if (this.sessionId !== sid2) return; overlay.classList.remove("ox-show"); }, 600);
 
     if (isCorrect) {
       this.el.feedback.textContent = "圧力に負けなかった";
@@ -3314,8 +3420,11 @@ const Corridor = {
       this.el.feedback.className = "cr-feedback cr-fb-wrong";
     }
 
-    // 命令文・吹き出しクリア
-    setTimeout(() => {
+    // 命令文・吹き出しクリア → プレイヤー移動 → 自動前進再開
+    const gid = this.sessionId;
+    this.forkResultTimeout = setTimeout(() => {
+      if (this.sessionId !== gid) return;
+
       this.el.command.textContent = "";
       this.el.typeLabel.className = "cr-type-label";
       this.el.lureArea.innerHTML = "";
@@ -3323,32 +3432,32 @@ const Corridor = {
       this.el.feedback.className = "cr-feedback";
       this.el.screen.classList.remove("cr-pressure-high");
 
-      // 迂回アニメーション（ミス時は少し遅延）
+      const nextRow = Math.min(fork.row + 1, this.stage.rows - 1);
+
       if (!isCorrect) {
         // 迂回方向にプレイヤーを一瞬動かして本線に戻す
         const detourDir = chosenDir || (Math.random() < 0.5 ? "left" : "right");
         const detourC = detourDir === "left" ? 1 : 5;
         this.playerPos = { r: fork.row, c: detourC };
         this.drawPlayer();
-        setTimeout(() => {
-          // 本線に戻す（1行上）
-          this.playerPos = { r: Math.min(fork.row + 1, this.stage.rows - 1), c: 3 };
+        this.detourTimeout = setTimeout(() => {
+          if (this.sessionId !== gid) return;
+          this.playerPos = { r: nextRow, c: 3 };
           this.drawPlayer();
-          this.inputLocked = false;
+          // ★ 自動前進を再開
+          this.state = "moving";
         }, 500);
       } else {
-        // 正解: 1行上に進む
-        this.playerPos = { r: Math.min(fork.row + 1, this.stage.rows - 1), c: 3 };
+        this.playerPos = { r: nextRow, c: 3 };
         this.drawPlayer();
-        this.inputLocked = false;
+        // ★ 自動前進を再開
+        this.state = "moving";
       }
     }, 800);
   },
 
   // --- ゴール ---
   reachGoal() {
-    clearInterval(this.moveInterval);
-    this.isMoving = false;
     this.cleanup();
 
     const totalForks = this.stage.forks.length;
@@ -3377,4 +3486,9 @@ const Corridor = {
   },
 };
 
-document.addEventListener("DOMContentLoaded", () => { Game.init(); Dungeon.init(); JudgeRoom.init(); Corridor.init(); });
+document.addEventListener("DOMContentLoaded", () => {
+  Game.init();
+  Dungeon.init();
+  JudgeRoom.init();
+  /* Corridor.init(); -- 隔離中 */
+});

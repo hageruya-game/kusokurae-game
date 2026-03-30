@@ -2179,7 +2179,7 @@ body::before {
   position: fixed;
   inset: 0;
   background: #0a0a18e0;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -2187,6 +2187,7 @@ body::before {
   z-index: 100;
   cursor: pointer;
 }
+.cr-tutorial-overlay.cr-tutorial-show { display: flex; }
 .cr-tutorial-overlay.cr-hidden { display: none; }
 .cr-tutorial-text {
   font-size: clamp(16px, 4.5vw, 22px);
