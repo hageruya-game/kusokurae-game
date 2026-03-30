@@ -25,7 +25,7 @@ const STAGES_NORMAL = [
   { theme: "sns", command: "「いいね」を押せ", choices: ["いいね！", "無視する"], correctIndex: 1, ruleType: "normal", wrongReaction: "承認欲求の奴隷", rightReaction: "支配されてない" },
   { theme: "sns", command: "リツイートしろ", choices: ["拡散する", "しない"], correctIndex: 1, ruleType: "normal", wrongReaction: "拡声器になった", rightReaction: "自分の声で話せ" },
   { theme: "sns", command: "フォローしろ", choices: ["フォロー", "しない"], correctIndex: 1, ruleType: "normal", wrongReaction: "数字の奴隷", rightReaction: "群れなくていい" },
-  { theme: "sns", command: "炎上に参加しろ", choices: ["叩く", "閉じる"], correctIndex: 1, ruleType: "normal", wrongReaction: "石を投げた", rightReaction: "スマホを置け" },
+  { theme: "sns", command: "炎上に参加しろ", choices: ["参加する", "無視する"], correctIndex: 1, ruleType: "normal", wrongReaction: "石を投げた", rightReaction: "スマホを置け" },
   { theme: "sns", command: "ストーリーに上げろ", choices: ["投稿する", "しない"], correctIndex: 1, ruleType: "normal", wrongReaction: "見せたがり", rightReaction: "体験は自分のもの" },
   { theme: "sns", command: "バズに乗れ", choices: ["乗る", "乗らない"], correctIndex: 1, ruleType: "normal", wrongReaction: "流行の部品", rightReaction: "流されない" },
   { theme: "group", command: "みんな右に行ってるぞ", choices: ["右に行く", "左に行く"], correctIndex: 1, ruleType: "normal", wrongReaction: "群れたな", rightReaction: "それでいい" },
@@ -128,7 +128,7 @@ const TIMING = {
   pressurePhase: 1400,
   resultPhase: 1800,
   pausePhase: 600,
-  phaseMsg: 1400,      // フェーズ変更メッセージ1つあたりの表示時間
+  phaseMsg: 1200,      // フェーズ変更メッセージ1つあたりの表示時間
   phaseEndPause: 1200,  // 最後のメッセージ後の余韻
 };
 
@@ -755,7 +755,7 @@ const Game = {
 
     document.getElementById("screen-game").className = "screen";
     if (this.el.phaseOverlay) this.el.phaseOverlay.classList.remove("active");
-    this.updateStateUI("normal");
+    this.updateStateUI({ ruleType: "normal" });
     this.updatePressureUI();
 
     this.showScreen(this.el.screenGame);
@@ -810,18 +810,24 @@ const Game = {
   },
 
   // === ステート表示 ===
-  updateStateUI(ruleType) {
+  updateStateUI(cmd) {
     this.el.pressureMeter.classList.remove("state-normal", "state-obey", "state-wait", "state-tap");
     this.el.stateLine.classList.remove("state-active");
-    if (ruleType === "obey") {
+
+    // tap は correctType で表示ラベルを分岐
+    let displayType = cmd.ruleType;
+    if (cmd.ruleType === "tap" && cmd.correctType === "obey") displayType = "obey";
+    else if (cmd.ruleType === "tap" && cmd.correctType === "wait") displayType = "wait";
+
+    if (displayType === "obey") {
       this.el.pressureMeter.classList.add("state-obey");
       this.el.stateLine.textContent = "状態：服従";
       this.el.stateLine.classList.add("state-active");
-    } else if (ruleType === "wait") {
+    } else if (displayType === "wait") {
       this.el.pressureMeter.classList.add("state-wait");
       this.el.stateLine.textContent = "状態：待機";
       this.el.stateLine.classList.add("state-active");
-    } else if (ruleType === "tap") {
+    } else if (displayType === "tap") {
       this.el.pressureMeter.classList.add("state-tap");
       this.el.stateLine.textContent = "状態：アクション";
       this.el.stateLine.classList.add("state-active");
@@ -1059,7 +1065,7 @@ const Game = {
     this.updateDebugLabel(phase + cmd.ruleType.toUpperCase() + tapSuffix, cmd.ruleType);
 
     // ステート表示（圧力メーター統合）
-    this.updateStateUI(cmd.ruleType);
+    this.updateStateUI(cmd);
 
     // 選択肢・タイマー隠す
     this.el.choicesArea.classList.remove("choices-appear", "wait-mode", "obey-mode", "tap-mode");
@@ -1243,17 +1249,19 @@ const Game = {
   onTimeout() {
     if (!this.timerActive) return;
     if (this.answered) return;
-    this.answered = true;  // ★ 判定消費
+    // ★ answered は onWaitSuccess / 後続処理 内で設定するため、ここでは設定しない
     this.stopTimer();
 
     const cmd = this.roundCommands[this.currentRound];
     const isWaitStage = cmd.ruleType === "wait" || (cmd.ruleType === "tap" && cmd.correctType === "wait");
 
-    // waitステージ: タイマー0到達 = 正解
+    // waitステージ: タイマー0到達 = 正解（onWaitSuccess内でanswered=trueになる）
     if (isWaitStage) {
       this.onWaitSuccess();
       return;
     }
+
+    this.answered = true;  // ★ 判定消費（非waitの場合のみここで設定）
 
     this.clearHint();
     this.isWaiting = true;
