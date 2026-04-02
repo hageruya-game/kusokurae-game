@@ -826,15 +826,15 @@ const Game = {
 
     if (displayType === "obey") {
       this.el.pressureMeter.classList.add("state-obey");
-      this.el.stateLine.textContent = "圧力レベル：服従";
+      this.el.stateLine.textContent = "圧力レベル：上昇中";
       this.el.stateLine.classList.add("state-active");
     } else if (displayType === "wait") {
       this.el.pressureMeter.classList.add("state-wait");
-      this.el.stateLine.textContent = "圧力レベル：待機";
+      this.el.stateLine.textContent = "圧力レベル：危険";
       this.el.stateLine.classList.add("state-active");
     } else if (displayType === "tap") {
       this.el.pressureMeter.classList.add("state-tap");
-      this.el.stateLine.textContent = "圧力レベル：アクション";
+      this.el.stateLine.textContent = "圧力レベル：支配";
       this.el.stateLine.classList.add("state-active");
     } else {
       this.el.pressureMeter.classList.add("state-normal");

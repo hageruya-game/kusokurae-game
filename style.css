@@ -274,29 +274,46 @@ body {
 .pressure-meter.state-normal .pressure-meter-label { color: #a090c0; }
 .pressure-meter.state-normal .state-line { color: #b0a0d0; }
 
-/* --- ステート: 服従 --- */
+/* --- ステート: 服従（ゆっくり発光） --- */
 .pressure-meter.state-obey {
-  border-color: rgba(255, 170, 60, 0.35);
-  background: rgba(255, 170, 60, 0.08);
+  border-color: rgba(230, 140, 30, 0.4);
+  background: rgba(230, 140, 30, 0.08);
+  animation: stateGlowObey 2.4s ease-in-out infinite;
 }
-.pressure-meter.state-obey .pressure-meter-label { color: #f0a830; }
-.pressure-meter.state-obey .state-line { color: #f0a830; }
+.pressure-meter.state-obey .pressure-meter-label { color: #e8a020; }
+.pressure-meter.state-obey .state-line { color: #e8a020; }
+@keyframes stateGlowObey {
+  0%, 100% { box-shadow: 0 0 8px rgba(230, 140, 30, 0.15); }
+  50%      { box-shadow: 0 0 16px rgba(230, 140, 30, 0.35); }
+}
 
-/* --- ステート: 待機 --- */
+/* --- ステート: 待機（不安定な点滅） --- */
 .pressure-meter.state-wait {
-  border-color: rgba(220, 50, 80, 0.35);
-  background: rgba(220, 50, 80, 0.08);
+  border-color: rgba(200, 40, 70, 0.45);
+  background: rgba(200, 40, 70, 0.10);
+  animation: stateFlickerWait 1.6s ease-in-out infinite;
 }
-.pressure-meter.state-wait .pressure-meter-label { color: #e04060; }
-.pressure-meter.state-wait .state-line { color: #e04060; }
+.pressure-meter.state-wait .pressure-meter-label { color: #d83858; }
+.pressure-meter.state-wait .state-line { color: #d83858; }
+@keyframes stateFlickerWait {
+  0%, 100% { opacity: 1; }
+  30%      { opacity: 0.65; }
+  50%      { opacity: 1; }
+  70%      { opacity: 0.7; }
+}
 
-/* --- ステート: アクション（tap） --- */
+/* --- ステート: アクション（強めの発光+軽い拡大） --- */
 .pressure-meter.state-tap {
-  border-color: rgba(80, 180, 220, 0.35);
-  background: rgba(80, 180, 220, 0.08);
+  border-color: rgba(60, 160, 220, 0.45);
+  background: rgba(60, 160, 220, 0.10);
+  animation: stateGlowTap 1.8s ease-in-out infinite;
 }
-.pressure-meter.state-tap .pressure-meter-label { color: #50b8e0; }
-.pressure-meter.state-tap .state-line { color: #50b8e0; }
+.pressure-meter.state-tap .pressure-meter-label { color: #40a8e0; }
+.pressure-meter.state-tap .state-line { color: #40a8e0; }
+@keyframes stateGlowTap {
+  0%, 100% { box-shadow: 0 0 8px rgba(60, 160, 220, 0.2); transform: scale(1); }
+  50%      { box-shadow: 0 0 20px rgba(60, 160, 220, 0.45); transform: scale(1.015); }
+}
 
 @keyframes pressurePulse {
   0%, 100% { opacity: 1; }
