@@ -2536,3 +2536,22 @@ body::before {
   border-radius: 8px;
   box-shadow: none;
 }
+
+/* ===== 共通画像表示 ===== */
+.image-container {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.image-common {
+  width: 220px;
+  max-width: 70%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 12px rgba(180, 100, 255, 0.6))
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
