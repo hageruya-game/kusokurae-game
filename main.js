@@ -61,7 +61,7 @@ const STAGES_EXCEPTION = [
 
   // --- deny/fly: 基本パターン確立（命令の逆＝ハエが正解） ---
   { theme: "trap", command: "豚を叩け！", correctIndex: 1, ruleType: "tap", correctType: "deny",
-    images: ["assets/enemy_rat.png", "assets/enemy_fly.png"], alts: ["豚", "ハエ"],
+    images: ["assets/enemy_pig.png", "assets/enemy_fly.png"], alts: ["豚", "ハエ"],
     imgClass: ["tap-decoy", "tap-correct"],
     misdirect: "デカい方だ、迷うな！",
     wrongReaction: "言われた通り動いたな", rightReaction: "命令を疑った" },
@@ -83,7 +83,7 @@ const STAGES_EXCEPTION = [
     misdirect: "お宝だぞ？見逃すのか！",
     wrongReaction: "偽物の宝に飛びついた", rightReaction: "蜘蛛が正解とはな" },
   { theme: "trap", command: "犬を選べ！", correctIndex: 1, ruleType: "tap", correctType: "deny",
-    images: ["assets/item_mushroom.png", "assets/item_bomb.png"], alts: ["犬", "爆弾"],
+    images: ["assets/item_dog.png", "assets/item_bomb.png"], alts: ["犬", "爆弾"],
     imgClass: ["tap-decoy", "tap-correct"],
     misdirect: "安心しろ、犬は味方だ！",
     wrongReaction: "見た目の安全に騙された", rightReaction: "爆弾が正解だ" },
@@ -102,19 +102,19 @@ const STAGES_EXCEPTION = [
 
   // --- wait: どちらも罠（押さないが正解、ハエなし） ---
   { theme: "trap", command: "金の箱を取れ！", correctIndex: -1, ruleType: "tap", correctType: "wait",
-    images: ["assets/item_cursed_key.png", "assets/item_treasure.png"], alts: ["金の箱", "宝箱"],
+    images: ["assets/item_golden_box.png", "assets/item_treasure.png"], alts: ["金の箱", "宝箱"],
     imgClass: ["tap-decoy", "tap-decoy"],
     misdirect: "早く取れ！なくなるぞ！",
     wrongReaction: "両方罠だった", rightReaction: "どちらも触らなかった" },
   { theme: "trap", command: "光る玉を掴め！", correctIndex: -1, ruleType: "tap", correctType: "wait",
-    images: ["assets/item_potion.png", "assets/item_burger.png"], alts: ["光る玉", "ハンバーガー"],
+    images: ["assets/item_energy_orb.png", "assets/item_burger.png"], alts: ["光る玉", "ハンバーガー"],
     imgClass: ["tap-decoy", "tap-decoy"],
     misdirect: "どっちか選べ！早く！",
     wrongReaction: "誘惑に負けた", rightReaction: "何も触らない勇気" },
 
   // --- deny/position-reversed: 位置逆転 ---
   { theme: "trap", command: "豚が逃げる！捕まえろ！", correctIndex: 0, ruleType: "tap", correctType: "deny",
-    images: ["assets/enemy_fly.png", "assets/enemy_rat.png"], alts: ["ハエ", "豚"],
+    images: ["assets/enemy_fly.png", "assets/enemy_pig.png"], alts: ["ハエ", "豚"],
     imgClass: ["tap-correct", "tap-decoy"],
     misdirect: "逃がすな！捕まえろ！",
     wrongReaction: "焦りで飛びついた", rightReaction: "逃がすのが正解だ" },

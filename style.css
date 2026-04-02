@@ -558,25 +558,17 @@ body {
   min-height: 72px;
 }
 
-/* tapターゲット画像 共通 */
+/* tapターゲット画像 共通（統一サイズ） */
 .tap-target-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
   display: block;
   margin: 0 auto;
   pointer-events: none;
-}
-
-/* 豚（デコイ）: 大きく目立つ */
-.tap-decoy {
-  width: 80px;
-  height: auto;
-  filter: drop-shadow(0 0 10px rgba(255, 150, 180, 0.7));
-}
-
-/* 正解候補: デコイより小さいが候補として認識できるサイズ */
-.tap-correct {
-  width: 40px;
-  height: auto;
-  opacity: 0.85;
+  filter:
+    drop-shadow(0 0 12px rgba(180, 100, 255, 0.45))
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
 }
 
 /* === obeyモード: ボタンが黄色に（「注意」感） === */
@@ -1057,8 +1049,7 @@ body::before {
   .progress-row { margin-top: 2px; }
   .btn-choice { min-height: 44px; padding: 10px 6px; font-size: clamp(14px, 3.8vw, 17px); }
   .tap-mode .btn-choice { min-height: 60px !important; padding: 6px !important; }
-  .tap-decoy { width: 60px; }
-  .tap-correct { width: 32px; }
+  .tap-target-img { width: 80px; height: 80px; }
   .tap-guide-img { width: 20px; }
   .game-speech { font-size: clamp(11px, 3vw, 13px); padding: 6px 10px; max-width: min(40vw, 160px); right: calc(50% + min(11vw, 42px) + 10px); }
   .comment-bubble { font-size: clamp(11px, 3vw, 14px); padding: 4px 10px; min-height: 24px; }
@@ -1087,8 +1078,7 @@ body::before {
   .feedback { min-height: 28px; font-size: clamp(13px, 3.5vw, 18px); }
   .btn-choice { min-height: 40px; padding: 8px 4px; }
   .tap-mode .btn-choice { min-height: 52px !important; }
-  .tap-decoy { width: 48px; }
-  .tap-correct { width: 26px; }
+  .tap-target-img { width: 64px; height: 64px; }
   .tap-guide-img { width: 18px; }
   .game-speech { font-size: clamp(10px, 2.8vw, 12px); padding: 5px 8px; max-width: min(38vw, 140px); right: calc(50% + min(9vw, 32px) + 8px); }
   .pressure-meter { padding: 3px 6px; }
@@ -2539,19 +2529,18 @@ body::before {
 
 /* ===== 共通画像表示 ===== */
 .image-container {
-  min-height: 240px;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .image-common {
-  width: 220px;
-  max-width: 70%;
-  height: auto;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
   display: block;
   margin: 0 auto;
-  object-fit: contain;
   filter:
-    drop-shadow(0 0 12px rgba(180, 100, 255, 0.6))
-    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+    drop-shadow(0 0 12px rgba(180, 100, 255, 0.45))
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
 }
