@@ -59,11 +59,11 @@ body {
   font-weight: 900;
   text-align: center;
   line-height: 1.3;
-  color: #e8deff;
+  color: #ffffff;
   letter-spacing: 0.15em;
   text-shadow:
-    0 0 10px rgba(180, 0, 255, 0.6),
-    0 0 30px rgba(140, 0, 200, 0.3);
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(180, 120, 255, 0.3);
 }
 .title-accent {
   color: #ff2060;
@@ -2364,12 +2364,13 @@ body::before {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(10, 4, 20, 0.92) 0%,
-    rgba(10, 4, 20, 0.85) 18%,
-    rgba(10, 4, 20, 0.70) 35%,
-    rgba(10, 4, 20, 0.50) 50%,
-    rgba(10, 4, 20, 0.30) 65%,
-    transparent 80%
+    rgba(10, 4, 20, 0.95) 0%,
+    rgba(10, 4, 20, 0.90) 20%,
+    rgba(10, 4, 20, 0.80) 40%,
+    rgba(10, 4, 20, 0.70) 55%,
+    rgba(10, 4, 20, 0.55) 70%,
+    rgba(10, 4, 20, 0.40) 85%,
+    rgba(10, 4, 20, 0.30) 100%
   );
   pointer-events: none;
 }
@@ -2380,12 +2381,13 @@ body::before {
 /* 導入文 */
 .title-intro {
   font-size: 15px;
-  color: #c8a8e8;
+  color: #d8c8ee;
   text-align: center;
   line-height: 1.8;
   font-weight: 700;
   padding-top: max(24px, 6vh);
   padding-bottom: 4vh;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 
 /* サブコピー */
@@ -2419,4 +2421,22 @@ body::before {
 .btn-rule-style:active {
   color: #a090d0;
   transform: scale(0.97);
+}
+
+/* タイトル画面フェードインアニメーション */
+@keyframes titleFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.title-intro {
+  animation: titleFadeIn 1.2s ease-out both;
+}
+.title-main {
+  animation: titleFadeIn 1.2s ease-out 0.4s both;
+}
+#screen-title .btn-start {
+  animation: titleFadeIn 0.8s ease-out 1.0s both;
+}
+#screen-title .btn-rule-style {
+  animation: titleFadeIn 0.8s ease-out 1.2s both;
 }
