@@ -2,7 +2,7 @@
 // 同調圧力くそくらえ - main.js
 // ====================================================
 
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 // ============================================================
 // ステージデータ
@@ -826,19 +826,20 @@ const Game = {
 
     if (displayType === "obey") {
       this.el.pressureMeter.classList.add("state-obey");
-      this.el.stateLine.textContent = "状態：服従";
+      this.el.stateLine.textContent = "圧力レベル：服従";
       this.el.stateLine.classList.add("state-active");
     } else if (displayType === "wait") {
       this.el.pressureMeter.classList.add("state-wait");
-      this.el.stateLine.textContent = "状態：待機";
+      this.el.stateLine.textContent = "圧力レベル：待機";
       this.el.stateLine.classList.add("state-active");
     } else if (displayType === "tap") {
       this.el.pressureMeter.classList.add("state-tap");
-      this.el.stateLine.textContent = "状態：アクション";
+      this.el.stateLine.textContent = "圧力レベル：アクション";
       this.el.stateLine.classList.add("state-active");
     } else {
       this.el.pressureMeter.classList.add("state-normal");
-      this.el.stateLine.textContent = "";
+      this.el.stateLine.textContent = "圧力レベル：通常";
+      this.el.stateLine.classList.add("state-active");
     }
   },
 

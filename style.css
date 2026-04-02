@@ -266,29 +266,37 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- ステート: 通常 --- */
+.pressure-meter.state-normal {
+  border-color: rgba(160, 130, 200, 0.3);
+  background: rgba(160, 130, 200, 0.06);
+}
+.pressure-meter.state-normal .pressure-meter-label { color: #a090c0; }
+.pressure-meter.state-normal .state-line { color: #b0a0d0; }
+
 /* --- ステート: 服従 --- */
 .pressure-meter.state-obey {
-  border-color: rgba(255, 170, 0, 0.35);
-  background: rgba(255, 170, 0, 0.08);
+  border-color: rgba(255, 170, 60, 0.35);
+  background: rgba(255, 170, 60, 0.08);
 }
-.pressure-meter.state-obey .pressure-meter-label { color: #ffaa00; }
-.pressure-meter.state-obey .state-line { color: #ffaa00; }
+.pressure-meter.state-obey .pressure-meter-label { color: #f0a830; }
+.pressure-meter.state-obey .state-line { color: #f0a830; }
 
 /* --- ステート: 待機 --- */
 .pressure-meter.state-wait {
-  border-color: rgba(255, 40, 40, 0.35);
-  background: rgba(255, 40, 40, 0.08);
+  border-color: rgba(220, 50, 80, 0.35);
+  background: rgba(220, 50, 80, 0.08);
 }
-.pressure-meter.state-wait .pressure-meter-label { color: #ff4040; }
-.pressure-meter.state-wait .state-line { color: #ff4040; }
+.pressure-meter.state-wait .pressure-meter-label { color: #e04060; }
+.pressure-meter.state-wait .state-line { color: #e04060; }
 
 /* --- ステート: アクション（tap） --- */
 .pressure-meter.state-tap {
-  border-color: rgba(0, 221, 128, 0.35);
-  background: rgba(0, 221, 128, 0.08);
+  border-color: rgba(80, 180, 220, 0.35);
+  background: rgba(80, 180, 220, 0.08);
 }
-.pressure-meter.state-tap .pressure-meter-label { color: #00dd80; }
-.pressure-meter.state-tap .state-line { color: #00dd80; }
+.pressure-meter.state-tap .pressure-meter-label { color: #50b8e0; }
+.pressure-meter.state-tap .state-line { color: #50b8e0; }
 
 @keyframes pressurePulse {
   0%, 100% { opacity: 1; }
