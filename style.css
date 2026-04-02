@@ -1983,7 +1983,6 @@ body::before {
    圧力回廊（ダンジョン v2 試作）
    ============================================================ */
 #screen-corridor {
-  display: flex;
   flex-direction: column;
   height: 100dvh;
   background: linear-gradient(180deg, #0a0a18 0%, #14142a 100%);
