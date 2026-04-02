@@ -1454,7 +1454,7 @@ const TOTAL_MIN_MISSES = STAGE_MIN_MISSES.reduce((a, b) => a + b, 0); // = 3
 
 const DUNGEON_STAGES = [
   {
-    name: "STAGE 1",
+    name: "第一層：覚醒",
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 3, 1, 1, 1], // row0: ゴール (3,0)
@@ -1499,7 +1499,7 @@ const DUNGEON_STAGES = [
     ],
   },
   {
-    name: "STAGE 2",
+    name: "第二層：疑念",
     startRow: 8, startCol: 3,
     map: [
       [1, 3, 1, 1, 1, 1, 1], // row0: goal(1,0)
@@ -1553,7 +1553,7 @@ const DUNGEON_STAGES = [
   },
   // ---- Stage 3: 方向転換 ----
   {
-    name: "STAGE 3",
+    name: "第三層：分岐",
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 3, 1, 1, 1],
@@ -1594,7 +1594,7 @@ const DUNGEON_STAGES = [
   },
   // ---- Stage 4: 忍耐 ----
   {
-    name: "STAGE 4",
+    name: "第四層：忍耐",
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 3, 1, 1, 1],
@@ -1634,7 +1634,7 @@ const DUNGEON_STAGES = [
   },
   // ---- Stage 5: 甘言 ----
   {
-    name: "STAGE 5",
+    name: "第五層：甘言",
     startRow: 8, startCol: 3,
     map: [
       [1, 3, 1, 1, 1, 1, 1],
@@ -1679,7 +1679,7 @@ const DUNGEON_STAGES = [
   },
   // ---- Stage 6: 疑心 ----
   {
-    name: "STAGE 6",
+    name: "第六層：疑心",
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 1, 1, 3, 1],
@@ -1724,7 +1724,7 @@ const DUNGEON_STAGES = [
   },
   // ---- Stage 7: 焦燥 ----
   {
-    name: "STAGE 7",
+    name: "第七層：焦燥",
     startRow: 8, startCol: 3,
     map: [
       [1, 1, 1, 3, 1, 1, 1],
@@ -1767,7 +1767,7 @@ const DUNGEON_STAGES = [
   },
   // ---- Stage 8: 欺瞞 ----
   {
-    name: "STAGE 8",
+    name: "第八層：欺瞞",
     startRow: 8, startCol: 3,
     map: [
       [1, 3, 1, 1, 1, 1, 1],
@@ -1813,7 +1813,7 @@ const DUNGEON_STAGES = [
   // ---- Stage 9: 混沌 ----
   // ジグザグ横断型: 右→左と横断しながら上昇。フェイクゴール(5,0)あり。
   {
-    name: "STAGE 9",
+    name: "第九層：混沌",
     startRow: 8, startCol: 3,
     map: [
       [1, 3, 1, 1, 1, 3, 1], // row0: goal(1,0), fakeGoal(5,0)
@@ -1860,7 +1860,7 @@ const DUNGEON_STAGES = [
   // ---- Stage 10: 脱出 ----
   // 列柱の間・漏斗型: 柱壁で3レーン分岐→左レーン直線上昇でゴール。フェイクゴール(3,0)あり。
   {
-    name: "STAGE 10",
+    name: "最深層：脱出",
     startRow: 8, startCol: 3,
     map: [
       [1, 3, 1, 3, 1, 1, 1], // row0: goal(1,0), fakeGoal(3,0)
@@ -2041,7 +2041,13 @@ const Dungeon = {
     this.el.dpad.classList.remove("dg-wait-mode");
     this.el.resultOverlay.classList.remove("dg-result-show");
     this.el.btnNext.classList.remove("dg-next-show");
-    this.el.screen.classList.remove("dg-clear-flash", "dg-trap-screen-flash", "dg-warp-flash", "dg-gameover-flash");
+    this.el.screen.classList.remove("dg-clear-flash", "dg-trap-screen-flash", "dg-warp-flash", "dg-gameover-flash", "dg-miss-screen-flash");
+    // ステージ段階クラス
+    this.el.screen.classList.remove("dg-tier-early", "dg-tier-mid", "dg-tier-late");
+    const tier = this.currentStage < 3 ? "dg-tier-early"
+               : this.currentStage < 7 ? "dg-tier-mid"
+               : "dg-tier-late";
+    this.el.screen.classList.add(tier);
     this.missCount = 0;
     this.updatePressureUI();
     this.updateMissUI();
@@ -2081,6 +2087,8 @@ const Dungeon = {
 
   updatePlayerCell(oldR, oldC) {
     this.cells[oldR][oldC].classList.remove("dg-player");
+    this.cells[oldR][oldC].classList.add("dg-trail");
+    setTimeout(() => this.cells[oldR][oldC].classList.remove("dg-trail"), 300);
     this.cells[this.playerRow][this.playerCol].classList.add("dg-player");
   },
 
@@ -2274,6 +2282,10 @@ const Dungeon = {
       this.showFeedback(d.wrongReaction, false);
       SoundSystem.wrong();
       this.addMiss();
+      // 判断ミス時の赤フラッシュ
+      this.el.screen.classList.remove("dg-miss-screen-flash");
+      void this.el.screen.offsetWidth;
+      this.el.screen.classList.add("dg-miss-screen-flash");
       if (d.penaltyPos) {
         this.moving = true;
         const sid = this.sessionId;
@@ -2306,6 +2318,7 @@ const Dungeon = {
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.cells[row][col].classList.remove("dg-trap-flash");
+      this.cells[row][col].classList.add("dg-trap-spent");
       if (warpTo && warpTo.block) {
         this.blockedTiles.add(key);
         this.cells[row][col].classList.remove("dg-path");
@@ -2431,23 +2444,19 @@ const Dungeon = {
       this.showFinalResult();
       return;
     }
-    const stageMin = STAGE_MIN_MISSES[this.currentStage] || 0;
-    const stageDelta = this.missCount - stageMin;
-    const stageDeltaStr = stageDelta === 0 ? "±0" : "+" + stageDelta;
-    this.el.resultTitle.textContent = "脱出成功！";
+    this.el.resultTitle.textContent = "脱出成功";
     this.el.resultTitle.style.color = "#00ff80";
     this.el.resultRank.textContent = "";
-    this.el.resultMsg.textContent = "ミス: " + this.missCount
-      + "（最小 " + stageMin + "  " + stageDeltaStr + "）"
-      + "\n累計: " + this.totalMisses;
+    const stageMin = STAGE_MIN_MISSES[this.currentStage] || 0;
+    let msg = "今回のミス：" + this.missCount + "\n累計ミス：" + this.totalMisses;
+    if (stageMin > 0) msg += "\n\nこの階層では、無傷では通れない";
+    this.el.resultMsg.textContent = msg;
     this.el.btnNext.classList.add("dg-next-show");
     this.el.resultOverlay.classList.add("dg-result-show");
   },
 
   showFinalResult() {
     const rank = this.getRank(this.totalMisses);
-    const delta = this.totalMisses - TOTAL_MIN_MISSES;
-    const deltaStr = delta === 0 ? "±0" : "+" + delta;
     // Phase 1: フェードアウト + 一言メッセージ（1.5秒）
     this.el.resultTitle.textContent = "";
     this.el.resultRank.textContent = "";
@@ -2467,7 +2476,7 @@ const Dungeon = {
       this.el.resultRank.style.color = rank.color;
       this.el.resultRank.classList.add("dg-rank-reveal");
       this.el.resultMsg.textContent = rank.msg
-        + "\n総ミス: " + this.totalMisses + "（理論最小 " + TOTAL_MIN_MISSES + "  " + deltaStr + "）";
+        + "\n総ミス：" + this.totalMisses;
       this.el.resultMsg.style.color = "";
     }, 2000);
   },
