@@ -1502,6 +1502,15 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* --- ゲームオーバーフラッシュ（赤→暗転） --- */
+.dg-gameover-flash { animation: dgGameoverFlash 0.8s ease-out; }
+@keyframes dgGameoverFlash {
+  0%   { box-shadow: none; filter: brightness(1); }
+  15%  { box-shadow: inset 0 0 120px rgba(255, 0, 0, 0.6); filter: brightness(0.3); }
+  40%  { box-shadow: inset 0 0 80px rgba(255, 0, 0, 0.4); filter: brightness(1.2); }
+  100% { box-shadow: none; filter: brightness(1); }
+}
+
 /* --- チュートリアルオーバーレイ --- */
 .dg-tutorial-overlay {
   position: fixed;

@@ -1927,9 +1927,11 @@ const Dungeon = {
   blockedTiles: null,
   tutorialShown: false,
   moving: false,
+  dominated: false,
   resultShown: false,
   cells: [],
   el: {},
+  sessionId: 0,
   feedbackTimer: null,
   lureTimer: null,
 
@@ -1995,6 +1997,7 @@ const Dungeon = {
   },
 
   goTitle() {
+    this.sessionId++;
     this.cleanup();
     Game.showScreen(document.getElementById("screen-title"));
   },
@@ -2009,6 +2012,7 @@ const Dungeon = {
   },
 
   start() {
+    this.sessionId++;
     SoundSystem.init();
     const s = this.stage();
     this.playerRow = s.startRow;
@@ -2018,6 +2022,7 @@ const Dungeon = {
     this.activeDecisionIndex = -1;
     this.isWaitPhase = false;
     this.moving = false;
+    this.dominated = false;
     this.resultShown = false;
     this.resolved = new Set();
     this.trappedTiles = new Set();
@@ -2036,7 +2041,7 @@ const Dungeon = {
     this.el.dpad.classList.remove("dg-wait-mode");
     this.el.resultOverlay.classList.remove("dg-result-show");
     this.el.btnNext.classList.remove("dg-next-show");
-    this.el.screen.classList.remove("dg-clear-flash", "dg-trap-screen-flash", "dg-warp-flash");
+    this.el.screen.classList.remove("dg-clear-flash", "dg-trap-screen-flash", "dg-warp-flash", "dg-gameover-flash");
     this.missCount = 0;
     this.updatePressureUI();
     this.updateMissUI();
@@ -2107,6 +2112,10 @@ const Dungeon = {
   changePressure(delta) {
     this.pressure = Math.max(0, Math.min(100, this.pressure + delta));
     this.updatePressureUI();
+    if (this.pressure >= 100 && !this.dominated) {
+      this.dominated = true;
+      this.showGameOver();
+    }
   },
 
   showLure(lure) {
@@ -2114,7 +2123,9 @@ const Dungeon = {
     this.el.command.className = "dg-command dg-cmd-lure";
     this.el.comment.textContent = lure.comment || "";
     clearTimeout(this.lureTimer);
+    const sid = this.sessionId;
     this.lureTimer = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       if (this.activeDecision === null) {
         this.el.command.textContent = "";
         this.el.command.className = "dg-command";
@@ -2137,7 +2148,9 @@ const Dungeon = {
     this.el.feedback.className = "dg-feedback " + (isCorrect ? "dg-fb-correct" : "dg-fb-wrong")
       + (emphasize ? " dg-fb-emphasize" : "");
     clearTimeout(this.feedbackTimer);
+    const sid = this.sessionId;
     this.feedbackTimer = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       this.el.feedback.textContent = "";
       this.el.feedback.className = "dg-feedback";
     }, 2500);
@@ -2263,7 +2276,9 @@ const Dungeon = {
       this.addMiss();
       if (d.penaltyPos) {
         this.moving = true;
+        const sid = this.sessionId;
         setTimeout(() => {
+          if (this.sessionId !== sid) return;
           this.warpPlayer(d.penaltyPos.row, d.penaltyPos.col);
           this.showFeedback("遠回りだ…", false);
           this.moving = false;
@@ -2287,7 +2302,9 @@ const Dungeon = {
     const trapWarps = this.stage().trapWarps;
     const key = row + "," + col;
     const warpTo = trapWarps && trapWarps[key];
+    const sid = this.sessionId;
     setTimeout(() => {
+      if (this.sessionId !== sid) return;
       this.cells[row][col].classList.remove("dg-trap-flash");
       if (warpTo && warpTo.block) {
         this.blockedTiles.add(key);
@@ -2331,12 +2348,15 @@ const Dungeon = {
     let count = 3;
     this.el.feedback.textContent = "…" + count;
     this.el.feedback.className = "dg-feedback";
+    const sid = this.sessionId;
     this.waitCountInterval = setInterval(() => {
+      if (this.sessionId !== sid) { clearInterval(this.waitCountInterval); return; }
       count--;
       if (count > 0) this.el.feedback.textContent = "…" + count;
       else this.el.feedback.textContent = "";
     }, 1000);
     this.waitTimer = setTimeout(() => {
+      if (this.sessionId !== sid) return;
       clearInterval(this.waitCountInterval);
       this.isWaitPhase = false;
       this.el.dpad.classList.remove("dg-wait-mode");
@@ -2373,6 +2393,26 @@ const Dungeon = {
     if (delta <= 14) return { name: "半覚醒", color: "#ffcc00", msg: "徐々に見抜き始めた" };
     if (delta <= 21) return { name: "流され体質", color: "#ff8040", msg: "まだ空気を読みすぎている" };
     return { name: "完全同調", color: "#ff3060", msg: "完全に支配された" };
+  },
+
+  showGameOver() {
+    this.resultShown = true;
+    this.cleanup();
+    // 赤フラッシュ演出
+    this.el.screen.classList.remove("dg-gameover-flash");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("dg-gameover-flash");
+    SoundSystem.wrong();
+    // リザルトオーバーレイ
+    this.el.resultOverlay.className = "dg-result-overlay";
+    this.el.resultRank.className = "dg-result-rank";
+    this.el.resultTitle.textContent = "同調汚染:完了";
+    this.el.resultTitle.style.color = "#ff0000";
+    this.el.resultRank.textContent = "";
+    this.el.resultMsg.textContent = "支配度が100%に達した。\nお前はもう群れの一部だ。"
+      + "\n\n" + this.stage().name + " / MISS: " + this.totalMisses;
+    this.el.btnNext.classList.remove("dg-next-show");
+    this.el.resultOverlay.classList.add("dg-result-show");
   },
 
   showClear() {
@@ -2416,7 +2456,9 @@ const Dungeon = {
     this.el.btnNext.classList.remove("dg-next-show");
     this.el.resultOverlay.classList.add("dg-result-show", "dg-final-phase1");
     // Phase 2: 本リザルト表示（2秒後）
+    const sid = this.sessionId;
     setTimeout(() => {
+      if (this.sessionId !== sid) return;
       this.el.resultOverlay.classList.remove("dg-final-phase1");
       this.el.resultOverlay.classList.add("dg-final-phase2");
       this.el.resultTitle.textContent = "全ステージ脱出";
@@ -2428,6 +2470,17 @@ const Dungeon = {
         + "\n総ミス: " + this.totalMisses + "（理論最小 " + TOTAL_MIN_MISSES + "  " + deltaStr + "）";
       this.el.resultMsg.style.color = "";
     }, 2000);
+  },
+
+  // デバッグ用: 任意ステージから開始（コンソールで Dungeon.debugStartStage(5) 等）
+  debugStartStage(stageNum) {
+    if (stageNum < 1 || stageNum > DUNGEON_STAGES.length) {
+      console.log("ステージは 1〜" + DUNGEON_STAGES.length + " の範囲で指定");
+      return;
+    }
+    this.currentStage = stageNum - 1;
+    this.totalMisses = 0;
+    this.start();
   },
 };
 
