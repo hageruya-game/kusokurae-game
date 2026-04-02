@@ -2355,7 +2355,7 @@ body::before {
 /* タイトル画面レイアウト */
 #screen-title {
   justify-content: flex-start;
-  background: url('assets/title-bg.png') center / cover no-repeat;
+  background: url('assets/title-bg-clean.png') center / cover no-repeat;
   position: relative;
 }
 #screen-title::before {
@@ -2364,18 +2364,18 @@ body::before {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(10, 4, 20, 0.95) 0%,
-    rgba(10, 4, 20, 0.90) 20%,
-    rgba(10, 4, 20, 0.80) 40%,
-    rgba(10, 4, 20, 0.70) 55%,
-    rgba(10, 4, 20, 0.55) 70%,
-    rgba(10, 4, 20, 0.40) 85%,
-    rgba(10, 4, 20, 0.30) 100%
+    rgba(15, 2, 30, 0.55) 0%,
+    rgba(10, 0, 25, 0.45) 30%,
+    rgba(5, 0, 15, 0.30) 55%,
+    rgba(0, 0, 10, 0.40) 75%,
+    rgba(0, 0, 0, 0.55) 100%
   );
   pointer-events: none;
+  z-index: 1;
 }
 #screen-title > * {
   position: relative;
+  z-index: 2;
 }
 
 /* 導入文 */
@@ -2388,15 +2388,6 @@ body::before {
   padding-top: max(24px, 6vh);
   padding-bottom: 4vh;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
-}
-
-/* サブコピー */
-.title-sub-copy {
-  font-size: 14px;
-  color: #8070a0;
-  text-align: center;
-  letter-spacing: 0.1em;
-  margin-top: 8px;
 }
 
 /* ボタンを下寄せ（bottom余白で張り付き防止） */
