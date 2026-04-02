@@ -132,6 +132,8 @@ const TIMING = {
   phaseEndPause: 1200,  // 最後のメッセージ後の余韻
 };
 
+var TUTORIAL_DONE_KEY = "kusokurae_tutorial_done";
+
 function getTimeLimit(roundIndex) {
   if (roundIndex < 3) return 5;
   if (roundIndex < 7) return 4;
@@ -655,7 +657,10 @@ const Game = {
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
 
-    this.el.btnStart.addEventListener("click", () => this.startGame());
+    this.el.btnStart.addEventListener("click", () => {
+      if (Tutorial.shouldShow()) Tutorial.start();
+      else this.startGame();
+    });
     this.el.btnReplay.addEventListener("click", () => this.startGame());
     this.el.btnChoice0.addEventListener("click", () => this.choose(0));
     this.el.btnChoice1.addEventListener("click", () => this.choose(1));
@@ -1290,6 +1295,7 @@ const Game = {
   },
 
   choose(index) {
+    if (Tutorial.active) { Tutorial.choose(index); return; }
     if (this.answered) return;
     if (this.isWaiting) return;
     this.answered = true;
@@ -3494,8 +3500,403 @@ const Corridor = {
   },
 };
 
+// ============================================================
+// チュートリアル
+// ============================================================
+const Tutorial = {
+  active: false,
+  sessionId: 0,
+  answered: true,
+  timerInterval: null,
+  timeLeft: 0,
+  timeLimit: 6,
+  overlayTimeout: null,
+
+  questions: [
+    {
+      command: "右を選べ",
+      choices: ["左", "右"],
+      correctIndex: 1,
+      ruleType: "obey",
+      successMsg: "そのままでいい",
+      failMsg: "「状態」を見ろ。",
+    },
+    {
+      command: "爆弾を止めろ",
+      correctIndex: 1,
+      ruleType: "tap",
+      images: ["bomb_trap.png", "correct_fly.png"],
+      alts: ["爆弾", "ハエ"],
+      imgClass: ["tap-decoy", "tap-correct"],
+      successMsg: "命令を信じるな",
+      failMsg: "今の命令、本当に正しいか？",
+    },
+  ],
+
+  el: {},
+
+  init: function () {
+    this.el.overlay = document.getElementById("tutorial-overlay");
+    this.el.overlayText = document.getElementById("tutorial-text");
+    this.el.skipBtn = document.getElementById("tutorial-skip-btn");
+    this.el.replayBtn = document.getElementById("btn-tutorial");
+
+    this.el.skipBtn.addEventListener("click", () => this.skip());
+    if (this.el.replayBtn) {
+      this.el.replayBtn.addEventListener("click", () => this.start());
+    }
+    this.updateReplayBtn();
+  },
+
+  shouldShow: function () {
+    return localStorage.getItem(TUTORIAL_DONE_KEY) !== "1";
+  },
+
+  markDone: function () {
+    localStorage.setItem(TUTORIAL_DONE_KEY, "1");
+    this.updateReplayBtn();
+  },
+
+  updateReplayBtn: function () {
+    // 「ルール説明」は常時表示のため display 制御不要
+  },
+
+  start: function () {
+    this.sessionId++;
+    this.active = true;
+    this.answered = true;
+    this.stopTimer();
+
+    SoundSystem.init();
+    Game.showScreen(Game.el.screenGame);
+    document.getElementById("screen-game").classList.add("tutorial-mode");
+
+    // 支配度メーターは表示するが state-line だけ使うので pressureMeter自体は visible のまま
+    Game.el.pressureMeter.style.visibility = "hidden";
+
+    this.el.skipBtn.style.display = "block";
+
+    this.showTextStep(
+      ["このゲームには法則がある。", "命令は、必ずしも正しくない。\n「状態」を見ろ。"],
+      () => this.startQuestion(0)
+    );
+  },
+
+  showTextStep: function (texts, callback) {
+    var sid = this.sessionId;
+    var self = this;
+    var i = 0;
+
+    function showNext() {
+      if (self.sessionId !== sid) return;
+      if (i >= texts.length) {
+        self.el.overlay.classList.remove("tutorial-text-show");
+        setTimeout(function () {
+          if (self.sessionId !== sid) return;
+          callback();
+        }, 300);
+        return;
+      }
+
+      self.el.overlayText.textContent = texts[i];
+      self.el.overlay.classList.add("tutorial-text-show");
+      // アニメーションリセット
+      self.el.overlayText.classList.remove("tutorial-text-anim");
+      void self.el.overlayText.offsetWidth;
+      self.el.overlayText.classList.add("tutorial-text-anim");
+      i++;
+
+      var advanced = false;
+      function advance() {
+        if (advanced) return;
+        advanced = true;
+        clearTimeout(self.overlayTimeout);
+        self.el.overlay.removeEventListener("click", advance);
+        setTimeout(function () {
+          if (self.sessionId !== sid) return;
+          showNext();
+        }, 200);
+      }
+
+      self.overlayTimeout = setTimeout(advance, 1500);
+      self.el.overlay.addEventListener("click", advance);
+    }
+
+    showNext();
+  },
+
+  startQuestion: function (qi) {
+    var sid = this.sessionId;
+    var q = this.questions[qi];
+    this.stopTimer();
+
+    // UI リセット
+    Game.el.feedback.textContent = "";
+    Game.el.feedback.className = "feedback";
+    Game.el.btnChoice0.innerHTML = "";
+    Game.el.btnChoice1.innerHTML = "";
+    Game.el.gameCharImg.src = "image_0.png";
+    Game.el.gameCharImg.className = "character-img char-enter";
+    Game.el.tapGuide.classList.remove("active");
+    Game.el.speech.textContent = "";
+
+    // 状態ラベル表示（pressureMeterを一時的にvisibleに）
+    Game.el.pressureMeter.style.visibility = "visible";
+    Game.updateStateUI(q);
+
+    // 選択肢を隠す
+    Game.el.choicesArea.classList.remove("choices-appear", "wait-mode", "obey-mode", "tap-mode");
+    Game.el.choicesArea.classList.add("choices-hidden");
+    Game.el.btnChoice0.disabled = true;
+    Game.el.btnChoice1.disabled = true;
+    Game.el.timerBar.classList.add("timer-hidden");
+
+    // 命令テキスト
+    Game.el.commandText.textContent = q.command;
+    if (q.ruleType === "obey") {
+      Game.el.commandText.className = "command-text command-obey";
+    } else if (q.ruleType === "tap") {
+      Game.el.commandText.className = "command-text command-tap";
+    } else {
+      Game.el.commandText.className = "command-text command-appear";
+    }
+
+    // 遅延で選択肢表示
+    var self = this;
+    setTimeout(function () {
+      if (self.sessionId !== sid) return;
+      self.showChoices(qi);
+    }, TIMING.pressurePhase);
+  },
+
+  showChoices: function (qi) {
+    var q = this.questions[qi];
+
+    if (q.images) {
+      Game.el.btnChoice0.innerHTML = '<img src="' + q.images[0] + '" alt="' + q.alts[0] + '" class="tap-target-img ' + q.imgClass[0] + '">';
+      Game.el.btnChoice1.innerHTML = '<img src="' + q.images[1] + '" alt="' + q.alts[1] + '" class="tap-target-img ' + q.imgClass[1] + '">';
+      Game.el.choicesArea.classList.add("tap-mode");
+    } else {
+      Game.el.btnChoice0.textContent = q.choices[0];
+      Game.el.btnChoice1.textContent = q.choices[1];
+    }
+
+    if (q.ruleType === "obey") {
+      Game.el.choicesArea.classList.add("obey-mode");
+    }
+
+    Game.el.btnChoice0.disabled = false;
+    Game.el.btnChoice1.disabled = false;
+    Game.el.choicesArea.classList.remove("choices-hidden");
+    Game.el.choicesArea.classList.add("choices-appear");
+
+    this.answered = false;
+    this.currentQ = qi;
+    this.startTimer(qi);
+  },
+
+  startTimer: function (qi) {
+    this.timeLimit = 6;
+    this.timeLeft = this.timeLimit;
+
+    Game.el.timerBar.classList.remove("timer-hidden");
+    Game.el.timerFill.style.width = "100%";
+    Game.el.timerFill.className = "timer-fill";
+
+    var tickMs = 50;
+    var sid = this.sessionId;
+    var self = this;
+    this.timerInterval = setInterval(function () {
+      if (self.sessionId !== sid) { clearInterval(self.timerInterval); return; }
+      self.timeLeft -= tickMs / 1000;
+      if (self.timeLeft <= 0) {
+        self.timeLeft = 0;
+        self.onTimeout(qi);
+        return;
+      }
+      var pct = (self.timeLeft / self.timeLimit) * 100;
+      Game.el.timerFill.style.width = pct + "%";
+      if (pct > 60) Game.el.timerFill.className = "timer-fill";
+      else if (pct > 30) Game.el.timerFill.className = "timer-fill timer-warn";
+      else Game.el.timerFill.className = "timer-fill timer-danger";
+    }, tickMs);
+  },
+
+  stopTimer: function () {
+    clearInterval(this.timerInterval);
+    this.timerInterval = null;
+  },
+
+  onTimeout: function (qi) {
+    if (this.answered) return;
+    this.answered = true;
+    this.stopTimer();
+
+    Game.el.btnChoice0.disabled = true;
+    Game.el.btnChoice1.disabled = true;
+    Game.el.choicesArea.classList.remove("choices-appear");
+    Game.el.choicesArea.classList.add("choices-hidden");
+    Game.el.timerFill.style.width = "0%";
+
+    this.onWrong(qi);
+  },
+
+  choose: function (index) {
+    if (this.answered) return;
+    this.answered = true;
+    this.stopTimer();
+
+    var qi = this.currentQ;
+    var q = this.questions[qi];
+    var isCorrect = index === q.correctIndex;
+
+    Game.el.btnChoice0.disabled = true;
+    Game.el.btnChoice1.disabled = true;
+    Game.el.choicesArea.classList.remove("choices-appear");
+    Game.el.choicesArea.classList.add("choices-hidden");
+    Game.el.timerBar.classList.add("timer-hidden");
+
+    if (isCorrect) this.onCorrect(qi);
+    else this.onWrong(qi);
+  },
+
+  onCorrect: function (qi) {
+    var q = this.questions[qi];
+    Game.showOX(true);
+
+    Game.el.commandText.textContent = "";
+    Game.el.feedback.textContent = q.successMsg;
+    Game.el.feedback.className = "feedback feedback-big correct";
+
+    var sid = this.sessionId;
+    var self = this;
+    setTimeout(function () {
+      if (self.sessionId !== sid) return;
+      Game.el.feedback.textContent = "";
+      Game.el.feedback.className = "feedback";
+
+      setTimeout(function () {
+        if (self.sessionId !== sid) return;
+        if (qi + 1 < self.questions.length) {
+          self.startQuestion(qi + 1);
+        } else {
+          self.showEndSequence();
+        }
+      }, TIMING.pausePhase);
+    }, TIMING.resultPhase);
+  },
+
+  onWrong: function (qi) {
+    var q = this.questions[qi];
+    Game.showOX(false);
+
+    Game.el.commandText.textContent = "";
+    Game.el.feedback.textContent = q.failMsg;
+    Game.el.feedback.className = "feedback feedback-big wrong";
+
+    var sid = this.sessionId;
+    var self = this;
+    setTimeout(function () {
+      if (self.sessionId !== sid) return;
+      Game.el.feedback.textContent = "";
+      Game.el.feedback.className = "feedback";
+
+      setTimeout(function () {
+        if (self.sessionId !== sid) return;
+        self.startQuestion(qi);
+      }, TIMING.pausePhase);
+    }, TIMING.resultPhase + 400);
+  },
+
+  showEndSequence: function () {
+    Game.el.choicesArea.classList.add("choices-hidden");
+    Game.el.timerBar.classList.add("timer-hidden");
+    Game.el.commandText.textContent = "";
+    Game.el.feedback.textContent = "";
+    Game.el.feedback.className = "feedback";
+    Game.el.pressureMeter.style.visibility = "hidden";
+    Game.el.stateLine.classList.remove("state-active");
+
+    var self = this;
+    this.showTextStep(
+      ["分かったか？", "「状態」がすべてだ。"],
+      function () {
+        self.showStartButton();
+      }
+    );
+  },
+
+  showStartButton: function () {
+    var sid = this.sessionId;
+    this.el.overlay.classList.add("tutorial-text-show");
+    this.el.overlayText.textContent = "";
+
+    // ボタンをオーバーレイ内に生成
+    var btn = document.createElement("button");
+    btn.textContent = "ゲームスタート";
+    btn.className = "btn btn-start tutorial-start-btn";
+    this.el.overlayText.appendChild(btn);
+
+    // タップヒント非表示
+    var hint = this.el.overlay.querySelector(".tutorial-tap-hint");
+    if (hint) hint.style.display = "none";
+
+    var self = this;
+    btn.addEventListener("click", function () {
+      if (self.sessionId !== sid) return;
+      if (hint) hint.style.display = "";
+      self.markDone();
+      self.cleanup();
+      Game.startGame();
+    });
+  },
+
+  skip: function () {
+    this.markDone();
+    this.cleanup();
+    Game.startGame();
+  },
+
+  cleanup: function () {
+    this.sessionId++;
+    this.active = false;
+    this.answered = true;
+    this.stopTimer();
+    clearTimeout(this.overlayTimeout);
+
+    // オーバーレイ非表示
+    this.el.overlay.classList.remove("tutorial-text-show");
+    this.el.skipBtn.style.display = "none";
+
+    // ゲーム画面UI復元
+    var gameScreen = document.getElementById("screen-game");
+    gameScreen.classList.remove("tutorial-mode");
+    Game.el.pressureMeter.style.visibility = "";
+    Game.el.stateLine.classList.remove("state-active");
+    Game.el.pressureMeter.classList.remove("state-normal", "state-obey", "state-wait", "state-tap");
+
+    // 選択肢・コマンド・フィードバックをクリーン
+    Game.el.commandText.textContent = "";
+    Game.el.commandText.className = "command-text";
+    Game.el.feedback.textContent = "";
+    Game.el.feedback.className = "feedback";
+    Game.el.choicesArea.classList.remove("choices-appear", "wait-mode", "obey-mode", "tap-mode");
+    Game.el.choicesArea.classList.add("choices-hidden");
+    Game.el.btnChoice0.disabled = true;
+    Game.el.btnChoice1.disabled = true;
+    Game.el.timerBar.classList.add("timer-hidden");
+    Game.el.speech.textContent = "";
+    Game.el.tapGuide.classList.remove("active");
+
+    // OX 非表示
+    Game.el.oxOverlay.classList.remove("ox-show");
+    Game.el.oxSymbol.className = "ox-symbol";
+  },
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   Game.init();
+  Tutorial.init();
   Dungeon.init();
   JudgeRoom.init();
   /* Corridor.init(); -- 隔離中 */
