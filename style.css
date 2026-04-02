@@ -52,7 +52,8 @@ body {
   width: min(40vw, 160px);
   height: auto;
   display: block;
-  filter: drop-shadow(0 0 20px rgba(160, 0, 255, 0.6));
+  filter: drop-shadow(0 0 15px rgba(140, 0, 220, 0.5))
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
 .title-main {
   font-size: clamp(30px, 9vw, 48px);
