@@ -3543,8 +3543,18 @@ const Tutorial = {
     this.el.replayBtn = document.getElementById("btn-tutorial");
 
     this.el.skipBtn.addEventListener("click", () => this.skip());
+    // 「ルール説明」ボタン → ルール説明オーバーレイを開く
     if (this.el.replayBtn) {
-      this.el.replayBtn.addEventListener("click", () => this.start());
+      const ruleOverlay = document.getElementById("rule-overlay");
+      const ruleClose = document.getElementById("rule-close");
+      this.el.replayBtn.addEventListener("click", () => {
+        ruleOverlay.classList.add("active");
+      });
+      if (ruleClose) {
+        ruleClose.addEventListener("click", () => {
+          ruleOverlay.classList.remove("active");
+        });
+      }
     }
     this.updateReplayBtn();
   },

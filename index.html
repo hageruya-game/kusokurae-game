@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>圧力回廊</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <!-- デバッグラベル（テストモード用） -->
@@ -112,6 +112,25 @@
     <div class="tutorial-tap-hint">タップで次へ</div>
   </div>
   <button id="tutorial-skip-btn" class="tutorial-skip-btn" style="display:none">スキップ ▶</button>
+
+  <!-- ルール説明オーバーレイ -->
+  <div id="rule-overlay" class="rule-overlay">
+    <div class="rule-content">
+      <div class="rule-title">ルール説明</div>
+      <div class="rule-body">
+        <p>命令が表示されるが、すべてが正しいとは限らない。</p>
+        <p>「圧力レベル」を見て判断しろ。</p>
+        <ul>
+          <li><span class="rule-label rule-normal">通常</span>命令に逆らえ</li>
+          <li><span class="rule-label rule-obey">上昇中</span>命令に従え</li>
+          <li><span class="rule-label rule-wait">危険</span>何もするな（待て）</li>
+          <li><span class="rule-label rule-tap">支配</span>正しいものをタップしろ</li>
+        </ul>
+        <p class="rule-note">支配度が100%になるとゲームオーバー。</p>
+      </div>
+      <button id="rule-close" class="btn btn-rule-close">閉じる</button>
+    </div>
+  </div>
 
   <!-- リザルト画面 -->
   <div id="screen-result" class="screen">

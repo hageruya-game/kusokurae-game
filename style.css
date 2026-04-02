@@ -2378,7 +2378,7 @@ body::before {
 
 /* タイトル画面レイアウト */
 #screen-title {
-  justify-content: flex-start;
+  justify-content: center;
   background: url('assets/title-bg-clean.png') center / cover no-repeat;
   position: relative;
 }
@@ -2414,9 +2414,9 @@ body::before {
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 
-/* ボタンを下寄せ（bottom余白で張り付き防止） */
+/* ボタン配置（タイトルから適度な距離、画面下部寄り） */
 #screen-title .btn-start {
-  margin-top: auto;
+  margin-top: max(6vh, 32px);
   box-shadow: 0 4px 0 #900030, 0 6px 20px rgba(255, 0, 80, 0.4), 0 0 24px rgba(200, 0, 100, 0.2);
 }
 #screen-title {
@@ -2457,4 +2457,81 @@ body::before {
 }
 #screen-title .btn-rule-style {
   animation: titleFadeIn 0.8s ease-out 1.2s both;
+}
+
+/* ===== ルール説明オーバーレイ ===== */
+.rule-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 0, 15, 0.92);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.rule-overlay.active {
+  display: flex;
+}
+.rule-content {
+  max-width: 360px;
+  width: 100%;
+  text-align: left;
+}
+.rule-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #e0d0ff;
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+.rule-body {
+  font-size: 14px;
+  color: #c0b0d8;
+  line-height: 1.8;
+}
+.rule-body p {
+  margin: 0 0 12px;
+}
+.rule-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.rule-body li {
+  padding: 8px 0;
+  font-size: 14px;
+  color: #d0c0e0;
+  border-bottom: 1px solid rgba(140, 100, 200, 0.15);
+}
+.rule-label {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 2px 10px;
+  border-radius: 4px;
+  margin-right: 8px;
+  min-width: 56px;
+  text-align: center;
+}
+.rule-normal { background: rgba(160, 130, 200, 0.2); color: #b0a0d0; }
+.rule-obey   { background: rgba(230, 140, 30, 0.2); color: #e8a020; }
+.rule-wait   { background: rgba(200, 40, 70, 0.2); color: #d83858; }
+.rule-tap    { background: rgba(60, 160, 220, 0.2); color: #40a8e0; }
+.rule-note {
+  font-size: 13px;
+  color: #9080a8;
+  margin-top: 16px;
+}
+.btn-rule-close {
+  display: block;
+  margin: 24px auto 0;
+  background: rgba(80, 50, 120, 0.3);
+  color: #b8a0d8;
+  font-size: 14px;
+  padding: 10px 32px;
+  border: 1px solid rgba(140, 100, 200, 0.35);
+  border-radius: 8px;
+  box-shadow: none;
 }
