@@ -2040,7 +2040,7 @@ const Dungeon = {
     const s = this.stage();
     this.playerRow = s.startRow;
     this.playerCol = s.startCol;
-    this.pressure = 20;
+    if (this.currentStage === 0) this.pressure = 20;
     this.activeDecision = null;
     this.activeDecisionIndex = -1;
     this.isWaitPhase = false;
@@ -2280,11 +2280,17 @@ const Dungeon = {
     setTimeout(() => { this.moving = false; }, 280);
     if (d.type === "wait") {
       this.el.command.className = "dg-command dg-cmd-wait";
+      this.el.statusWrap.dataset.stage = "decision-wait";
+      this.el.statusName.textContent = "動くな";
       this.startWait();
     } else if (d.type === "obey") {
       this.el.command.className = "dg-command dg-cmd-obey";
+      this.el.statusWrap.dataset.stage = "decision-obey";
+      this.el.statusName.textContent = "従え";
     } else {
       this.el.command.className = "dg-command";
+      this.el.statusWrap.dataset.stage = "decision-normal";
+      this.el.statusName.textContent = "逆らえ";
     }
   },
 
@@ -2296,12 +2302,13 @@ const Dungeon = {
     this.el.command.textContent = "";
     this.el.command.className = "dg-command";
     this.el.comment.textContent = "";
+    this.updatePressureUI();
     if (correct) {
-      this.changePressure(-5);
+      this.changePressure(-3);
       this.showFeedback(d.rightReaction, true);
       SoundSystem.correct();
     } else {
-      this.changePressure(5);
+      this.changePressure(8);
       this.showFeedback(d.wrongReaction, false);
       SoundSystem.wrong();
       this.addMiss();
@@ -2326,7 +2333,7 @@ const Dungeon = {
     this.moving = true;
     this.trappedTiles.add(row + "," + col);
     this.cells[row][col].classList.add("dg-trap-flash");
-    this.changePressure(15);
+    this.changePressure(18);
     this.showFeedback("罠だ！", false);
     SoundSystem.wrong();
     this.addMiss();
@@ -2507,6 +2514,7 @@ const Dungeon = {
     }
     this.currentStage = stageNum - 1;
     this.totalMisses = 0;
+    this.pressure = 20;
     this.start();
   },
 };

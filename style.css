@@ -1247,6 +1247,24 @@ body::before {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+/* 判断タイプ表示 */
+[data-stage="decision-normal"] {
+  border-color: rgba(200, 220, 240, 0.5);
+  color: #c8dcf0;
+  background: rgba(200, 220, 240, 0.1);
+}
+[data-stage="decision-obey"] {
+  border-color: rgba(255, 170, 0, 0.6);
+  color: #ffaa00;
+  background: rgba(255, 170, 0, 0.12);
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+[data-stage="decision-wait"] {
+  border-color: rgba(255, 32, 32, 0.6);
+  color: #ff2020;
+  background: rgba(255, 32, 32, 0.12);
+  animation: statusPulse 1s ease-in-out infinite;
+}
 
 /* --- 命令テキスト --- */
 .dg-command {
