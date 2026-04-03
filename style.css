@@ -1379,20 +1379,6 @@ body::before {
 .dg-trap-flash::after {
   display: none;
 }
-/* トラップ踏破済み */
-.dg-trap-spent {
-  background: #1e1235 !important;
-}
-.dg-trap-spent::after {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 6px; height: 6px;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 60, 60, 0.25);
-  border-radius: 50%;
-}
-
 /* 封鎖トラップ: 通路が壁化 */
 .dg-blocked {
   background: linear-gradient(135deg, #2a0818, #180520) !important;

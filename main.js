@@ -1448,10 +1448,6 @@ const Game = {
 const DUNGEON_ROWS = 9;
 const DUNGEON_COLS = 7;
 
-// 各ステージの理論最小ミス数（回避不能トラップ: S4=1, S7=2）
-const STAGE_MIN_MISSES = [0, 0, 0, 1, 0, 0, 2, 0, 0, 0];
-const TOTAL_MIN_MISSES = STAGE_MIN_MISSES.reduce((a, b) => a + b, 0); // = 3
-
 const DUNGEON_STAGES = [
   {
     name: "第一層：覚醒",
@@ -1599,7 +1595,7 @@ const DUNGEON_STAGES = [
     map: [
       [1, 1, 1, 3, 1, 1, 1],
       [1, 1, 1, 0, 1, 1, 1],
-      [1, 2, 0, 0, 0, 0, 1], // trap(1,2)
+      [1, 0, 0, 0, 0, 0, 1],
       [1, 0, 1, 1, 1, 2, 1], // trap(5,3)
       [1, 0, 0, 0, 0, 0, 1],
       [1, 0, 1, 1, 1, 2, 1], // trap(5,5)
@@ -1608,7 +1604,6 @@ const DUNGEON_STAGES = [
       [1, 1, 1, 0, 1, 1, 1],
     ],
     trapWarps: {
-      "2,1": { row: 4, col: 5 },
       "3,5": { row: 6, col: 1 },
       "5,5": { row: 7, col: 3 },
     },
@@ -1729,19 +1724,17 @@ const DUNGEON_STAGES = [
     map: [
       [1, 1, 1, 3, 1, 1, 1],
       [1, 0, 1, 0, 1, 0, 1], // dead-end alcoves at c1, c5
-      [1, 0, 0, 0, 0, 2, 1], // trap(5,2)
+      [1, 0, 0, 0, 0, 0, 1],
       [1, 2, 1, 1, 1, 0, 1], // trap(1,3)
       [1, 0, 0, 0, 0, 0, 1],
-      [1, 2, 1, 1, 1, 2, 1], // trap(1,5), trap(5,5)
+      [1, 0, 1, 1, 1, 2, 1], // trap(5,5)
       [1, 0, 0, 0, 0, 0, 1],
-      [1, 1, 0, 0, 0, 1, 1], // wider approach
+      [1, 1, 0, 0, 0, 1, 1],
       [1, 1, 1, 0, 1, 1, 1],
     ],
     trapWarps: {
       "5,5": { row: 7, col: 3, block: true },
-      "5,1": { row: 7, col: 3 },
       "3,1": { row: 6, col: 5 },
-      "2,5": { row: 4, col: 1 },
     },
     decisions: [
       { row: 6, col: 3, type: "wait",
@@ -2318,7 +2311,6 @@ const Dungeon = {
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.cells[row][col].classList.remove("dg-trap-flash");
-      this.cells[row][col].classList.add("dg-trap-spent");
       if (warpTo && warpTo.block) {
         this.blockedTiles.add(key);
         this.cells[row][col].classList.remove("dg-path");
@@ -2399,12 +2391,11 @@ const Dungeon = {
   },
 
   getRank(totalMisses) {
-    const delta = totalMisses - TOTAL_MIN_MISSES;
-    if (delta <= 0) return { name: "完全覚醒", color: "#ffd700", msg: "全ての誘導を見抜いた" };
-    if (delta <= 3) return { name: "鉄の意志", color: "#00ff80", msg: "ほぼ完璧に見抜いた" };
-    if (delta <= 8) return { name: "抵抗者", color: "#40ccff", msg: "素早く適応した" };
-    if (delta <= 14) return { name: "半覚醒", color: "#ffcc00", msg: "徐々に見抜き始めた" };
-    if (delta <= 21) return { name: "流され体質", color: "#ff8040", msg: "まだ空気を読みすぎている" };
+    if (totalMisses <= 0) return { name: "完全覚醒", color: "#ffd700", msg: "全ての誘導を見抜いた" };
+    if (totalMisses <= 3) return { name: "鉄の意志", color: "#00ff80", msg: "ほぼ完璧に見抜いた" };
+    if (totalMisses <= 8) return { name: "抵抗者", color: "#40ccff", msg: "素早く適応した" };
+    if (totalMisses <= 14) return { name: "半覚醒", color: "#ffcc00", msg: "徐々に見抜き始めた" };
+    if (totalMisses <= 21) return { name: "流され体質", color: "#ff8040", msg: "まだ空気を読みすぎている" };
     return { name: "完全同調", color: "#ff3060", msg: "完全に支配された" };
   },
 
@@ -2447,10 +2438,7 @@ const Dungeon = {
     this.el.resultTitle.textContent = "脱出成功";
     this.el.resultTitle.style.color = "#00ff80";
     this.el.resultRank.textContent = "";
-    const stageMin = STAGE_MIN_MISSES[this.currentStage] || 0;
-    let msg = "今回のミス：" + this.missCount + "\n累計ミス：" + this.totalMisses;
-    if (stageMin > 0) msg += "\n\nこの階層では、無傷では通れない";
-    this.el.resultMsg.textContent = msg;
+    this.el.resultMsg.textContent = "今回のミス：" + this.missCount + "\n累計ミス：" + this.totalMisses;
     this.el.btnNext.classList.add("dg-next-show");
     this.el.resultOverlay.classList.add("dg-result-show");
   },
