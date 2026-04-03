@@ -1383,10 +1383,40 @@ const Game = {
         if (this.currentRound < ROUNDS_PER_GAME) {
           this.startRound();
         } else {
-          this.showResult();
+          this.transitionToDungeon();
         }
       }, TIMING.pausePhase);
     }, TIMING.resultPhase);
+  },
+
+  transitionToDungeon() {
+    this.stopTimer();
+    SoundSystem.stopAmbient();
+    const overlay = document.getElementById("dungeon-transition");
+    const text = document.getElementById("dg-transition-text");
+    // Phase 1: 黒フェードイン (0.6s)
+    overlay.classList.add("dg-trans-active");
+    const gid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== gid) return;
+      // Phase 2: テキスト表示 (1.5s)
+      text.textContent = "…次の層へ";
+      text.classList.add("dg-trans-text-show");
+      setTimeout(() => {
+        if (this.sessionId !== gid) return;
+        // Phase 3: テキスト消し → Dungeon開始
+        text.classList.remove("dg-trans-text-show");
+        setTimeout(() => {
+          if (this.sessionId !== gid) return;
+          Dungeon.currentStage = 0;
+          Dungeon.totalMisses = 0;
+          Dungeon.start();
+          // Phase 4: オーバーレイ除去
+          overlay.classList.remove("dg-trans-active");
+          text.textContent = "";
+        }, 500);
+      }, 1500);
+    }, 600);
   },
 
   showResult() {
