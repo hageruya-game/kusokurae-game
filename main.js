@@ -3383,18 +3383,18 @@ const Slash = {
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
 
-    // ① 0.2秒の静寂 → 暗転
+    // ① 静寂 → 暗転
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.clearOverlay.classList.add("sl-co-show");
 
-      // ② 軽いクリアSE
+      // ② クリアSE
       setTimeout(() => {
         if (this.sessionId !== sid) return;
         SoundSystem.clearChime();
-      }, 300);
+      }, 200);
 
-      // ③ タイプライターメッセージ
+      // ③ タイプライター
       const msg = "…もう、誰にも\n支配されない。";
       const chars = msg.split("");
       let ci = 0;
@@ -3412,7 +3412,7 @@ const Slash = {
             ci++;
           } else {
             clearInterval(typeTimer);
-            // ④ ランク判定
+            // ④ ランク
             setTimeout(() => {
               if (this.sessionId !== sid) return;
               let rank, rankMsg, rankColor;
@@ -3435,24 +3435,24 @@ const Slash = {
               const hasRegret = m === 1 || (m === 3 && mc >= 8);
               let regretText = "";
               if (m === 1) {
-                regretText = "…あと一歩だった。";
+                regretText = "…ミス1つで、Sを逃した。";
               } else if (m === 3 && mc >= 8) {
-                regretText = "…あと少しだった。";
+                regretText = "…コンボは見事だった。";
               }
 
               setTimeout(() => {
                 if (this.sessionId !== sid) return;
                 this.el.clearRegret.textContent = regretText;
 
-                // ⑥ ボタン表示（即操作可能）
+                // ⑥ ボタン表示
                 this.el.clearButtons.style.opacity = "1";
                 this.el.clearButtons.style.pointerEvents = "auto";
-              }, hasRegret ? 400 : 200);
-            }, 500);
+              }, hasRegret ? 350 : 150);
+            }, 350);
           }
-        }, 80);
-      }, 200);
-    }, 200);
+        }, 65);
+      }, 100);
+    }, 150);
   },
 
   showOX(isCorrect) {
