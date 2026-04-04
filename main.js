@@ -2591,9 +2591,9 @@ const SLASH_TARGETS = [
 ];
 
 const SWIPE_CONFIG = {
-  minDistY: 60,
-  maxDistX: 80,
-  maxTime: 600,
+  minDistY: 40,
+  maxDistX: 120,
+  maxTime: 800,
 };
 
 const Slash = {
@@ -2916,12 +2916,12 @@ const Slash = {
       // 8. OX
       this.showOX(true);
 
-      // 9. リトライボタン表示
+      // 9. 次のラウンドへ自動進行
       setTimeout(() => {
         if (this.sessionId !== sid) return;
         this.el.screen.classList.remove("sl-screen-shake");
-        this.el.retryBtn.style.display = "block";
-      }, 700);
+        this.startRound();
+      }, 900);
     }, 70);
   },
 
@@ -2939,12 +2939,12 @@ const Slash = {
     // OX
     this.showOX(false);
 
-    // リトライボタン表示
+    // 次のラウンドへ自動進行
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      this.el.retryBtn.style.display = "block";
-    }, 600);
+      this.startRound();
+    }, 800);
   },
 
   onTimeout() {
@@ -2957,8 +2957,8 @@ const Slash = {
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      this.el.retryBtn.style.display = "block";
-    }, 600);
+      this.startRound();
+    }, 800);
   },
 
   showOX(isCorrect) {
