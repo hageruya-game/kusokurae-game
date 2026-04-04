@@ -393,6 +393,56 @@ const SoundSystem = {
     osc.stop(t + 0.08);
   },
 
+  // --- 斬撃音: ノイズバースト + 金属リング + 低衝撃 ---
+  slash() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    // 高域ノイズバースト（シャッ）
+    const bufSize = ctx.sampleRate * 0.07;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const hpf = ctx.createBiquadFilter();
+    hpf.type = "highpass";
+    hpf.frequency.value = 2000;
+    const nGain = ctx.createGain();
+    noise.connect(hpf);
+    hpf.connect(nGain);
+    nGain.connect(ctx.destination);
+    nGain.gain.setValueAtTime(0.2, t);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    noise.start(t);
+    noise.stop(t + 0.07);
+    // 金属リング（シャキーン）
+    const ring = ctx.createOscillator();
+    const rGain = ctx.createGain();
+    ring.connect(rGain);
+    rGain.connect(ctx.destination);
+    ring.type = "sine";
+    ring.frequency.setValueAtTime(3200, t);
+    ring.frequency.exponentialRampToValueAtTime(1800, t + 0.15);
+    rGain.gain.setValueAtTime(0.07, t);
+    rGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    ring.start(t);
+    ring.stop(t + 0.2);
+    // 低衝撃（ズン）
+    const imp = ctx.createOscillator();
+    const iGain = ctx.createGain();
+    imp.connect(iGain);
+    iGain.connect(ctx.destination);
+    imp.type = "sine";
+    imp.frequency.setValueAtTime(120, t);
+    imp.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+    iGain.gain.setValueAtTime(0.13, t);
+    iGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    imp.start(t);
+    imp.stop(t + 0.1);
+  },
+
   // --- 環境音: 低ドローン + 心拍パルス ---
   ambientNodes: null,
   ambientGains: null,
@@ -1383,35 +1433,32 @@ const Game = {
         if (this.currentRound < ROUNDS_PER_GAME) {
           this.startRound();
         } else {
-          this.transitionToDungeon();
+          this.transitionToSlash();
         }
       }, TIMING.pausePhase);
     }, TIMING.resultPhase);
   },
 
-  transitionToDungeon() {
+  transitionToSlash() {
     this.stopTimer();
     SoundSystem.stopAmbient();
     const overlay = document.getElementById("dungeon-transition");
     const text = document.getElementById("dg-transition-text");
-    // Phase 1: 黒フェードイン (0.6s)
     overlay.classList.add("dg-trans-active");
     const gid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== gid) return;
-      // Phase 2: テキスト表示 (1.5s)
       text.textContent = "…次の層へ";
       text.classList.add("dg-trans-text-show");
       setTimeout(() => {
         if (this.sessionId !== gid) return;
-        // Phase 3: テキスト消し → Dungeon開始
         text.classList.remove("dg-trans-text-show");
         setTimeout(() => {
           if (this.sessionId !== gid) return;
-          Dungeon.currentStage = 0;
-          Dungeon.totalMisses = 0;
-          Dungeon.start();
-          // Phase 4: オーバーレイ除去
+          Slash.pressure = this.pressureLevel;
+          Slash.currentLayer = 0;
+          Slash.totalMisses = 0;
+          Slash.start();
           overlay.classList.remove("dg-trans-active");
           text.textContent = "";
         }, 500);
@@ -2006,8 +2053,7 @@ const Dungeon = {
     document.getElementById("dg-back").addEventListener("click", () => this.goTitle());
     document.getElementById("dg-btn-retry").addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
     document.getElementById("dg-btn-title").addEventListener("click", () => this.goTitle());
-    const btnDungeon = document.getElementById("btn-dungeon");
-    if (btnDungeon) btnDungeon.addEventListener("click", () => { this.currentStage = 0; this.totalMisses = 0; this.start(); });
+    /* Dungeon テストボタンは Slash に移管済み */
     this.el.btnNext.addEventListener("click", () => this.nextStage());
     this.el.tutorialOverlay.addEventListener("click", () => this.dismissTutorial());
   },
@@ -2516,6 +2562,418 @@ const Dungeon = {
     this.totalMisses = 0;
     this.pressure = 20;
     this.start();
+  },
+};
+
+// ============================================================
+// 斬撃モード（Slash）
+// ============================================================
+
+const SLASH_LAYERS = [
+  { name: "第一層：覚醒", rounds: 4, choices: 2, timer: 7000 },
+  { name: "第二層：惑い", rounds: 5, choices: 2, timer: 7000 },
+  { name: "第三層：静寂", rounds: 5, choices: 3, timer: 6000 },
+  { name: "第四層：混乱", rounds: 6, choices: 3, timer: 6000 },
+  { name: "最深層：決断", rounds: 6, choices: 3, timer: 5000 },
+];
+
+const SLASH_TARGETS = [
+  { id: "rat",     name: "ネズミ",     img: "assets/enemy_rat.png" },
+  { id: "fly",     name: "ハエ",       img: "assets/enemy_fly.png" },
+  { id: "pig",     name: "ブタ",       img: "assets/enemy_pig.png" },
+  { id: "spider",  name: "クモ",       img: "assets/enemy_spider.png" },
+  { id: "bomb",    name: "爆弾",       img: "assets/item_bomb.png" },
+  { id: "burger",  name: "バーガー",   img: "assets/item_burger.png" },
+  { id: "mushroom",name: "キノコ",     img: "assets/item_mushroom.png" },
+  { id: "potion",  name: "ポーション", img: "assets/item_potion.png" },
+  { id: "fire",    name: "炎",         img: "assets/item_fire.png" },
+  { id: "treasure",name: "宝箱",       img: "assets/item_treasure.png" },
+];
+
+const SWIPE_CONFIG = {
+  minDistY: 60,
+  maxDistX: 80,
+  maxTime: 600,
+};
+
+const Slash = {
+  // === プロトタイプ: 1ラウンド + タイマー ===
+  sessionId: 0,
+  el: {},
+  answered: false,
+  activeTargets: [],
+  commandedIndex: -1,
+  decisionType: "normal",
+  lastTargetIds: [],
+  guideShown: false,
+  touchState: null,
+  timerTimeout: null,
+  flinchTimeout: null,
+  roundTime: 4000,
+
+  init() {
+    this.el = {
+      screen: document.getElementById("screen-slash"),
+      statusWrap: document.getElementById("sl-status-wrap"),
+      statusName: document.getElementById("sl-status-name"),
+      command: document.getElementById("sl-command"),
+      targets: document.getElementById("sl-targets"),
+      guide: document.getElementById("sl-guide"),
+      retryBtn: document.getElementById("sl-btn-retry"),
+      timerBar: document.getElementById("sl-timer-bar"),
+      timerFill: document.getElementById("sl-timer-fill"),
+      urgentOverlay: document.getElementById("sl-urgent-overlay"),
+    };
+
+    document.getElementById("sl-back").addEventListener("click", () => this.goTitle());
+    this.el.retryBtn.addEventListener("click", () => this.startRound());
+
+    const btnSlash = document.getElementById("btn-slash");
+    if (btnSlash) btnSlash.addEventListener("click", () => this.start());
+
+    // スワイプ入力: targets コンテナにデリゲート
+    let slTouchHandled = false;
+    this.el.targets.addEventListener("touchstart", (e) => { slTouchHandled = true; this.onTouchStart(e); }, { passive: false });
+    this.el.targets.addEventListener("touchmove", (e) => this.onTouchMove(e), { passive: false });
+    this.el.targets.addEventListener("touchend", (e) => this.onTouchEnd(e));
+    this.el.targets.addEventListener("touchcancel", () => this.resetTouch());
+    // PC用クリックフォールバック
+    this.el.targets.addEventListener("click", (e) => {
+      if (slTouchHandled) { slTouchHandled = false; return; }
+      const t = e.target.closest(".sl-target");
+      if (t && !this.answered) this.onSlash(parseInt(t.dataset.index), t);
+    });
+  },
+
+  goTitle() {
+    this.sessionId++;
+    this.cleanup();
+    Game.showScreen(document.getElementById("screen-title"));
+  },
+
+  cleanup() {
+    this.answered = true;
+    this.touchState = null;
+    clearTimeout(this.timerTimeout);
+    clearTimeout(this.flinchTimeout);
+    this.timerTimeout = null;
+    this.flinchTimeout = null;
+  },
+
+  start() {
+    this.sessionId++;
+    this.guideShown = false;
+    this.lastTargetIds = [];
+    SoundSystem.init();
+    Game.showScreen(this.el.screen);
+    this.startRound();
+  },
+
+  startRound() {
+    this.cleanup();
+    this.answered = false;
+    this.el.retryBtn.style.display = "none";
+    this.el.screen.classList.remove("sl-screen-shake", "sl-miss-flash");
+    this.el.urgentOverlay.classList.remove("sl-urgent-active");
+
+    // 判定タイプ: ランダム（逆らえ / 従え）
+    this.decisionType = Math.random() < 0.5 ? "normal" : "obey";
+    this.updateStatusUI();
+
+    // 2択を選択
+    this.roundTime = 4000;
+    this.pickTargets(2);
+    this.generateCommand();
+    this.renderTargets();
+
+    // ガイド（初回のみ）
+    if (!this.guideShown) {
+      this.el.guide.classList.add("sl-guide-show");
+      this.guideShown = true;
+      setTimeout(() => this.el.guide.classList.remove("sl-guide-show"), 2500);
+    }
+
+    // タイマー開始
+    this.startTimer();
+  },
+
+  startTimer() {
+    const dur = this.roundTime;
+    const sid = this.sessionId;
+
+    // タイマーバー: CSSトランジションで減少
+    this.el.timerFill.style.transition = "none";
+    this.el.timerFill.style.width = "100%";
+    this.el.timerBar.classList.remove("sl-timer-urgent");
+    this.el.timerBar.classList.add("sl-timer-active");
+
+    requestAnimationFrame(() => {
+      this.el.timerFill.style.transition = "width " + (dur / 1000) + "s linear";
+      this.el.timerFill.style.width = "0%";
+    });
+
+    // 残り2秒: ビクつき + バー色変更
+    this.flinchTimeout = setTimeout(() => {
+      if (this.sessionId !== sid || this.answered) return;
+      this.el.timerBar.classList.add("sl-timer-urgent");
+      this.el.urgentOverlay.classList.add("sl-urgent-active");
+      this.el.targets.querySelectorAll(".sl-target").forEach(c => {
+        c.classList.add("sl-target-flinch");
+      });
+    }, dur - 2000);
+
+    // タイムアウト
+    this.timerTimeout = setTimeout(() => {
+      if (this.sessionId !== sid || this.answered) return;
+      this.onTimeout();
+    }, dur);
+  },
+
+  stopTimer() {
+    clearTimeout(this.timerTimeout);
+    clearTimeout(this.flinchTimeout);
+    this.timerTimeout = null;
+    this.flinchTimeout = null;
+    this.el.timerFill.style.transition = "none";
+    this.el.timerBar.classList.remove("sl-timer-active", "sl-timer-urgent");
+    this.el.urgentOverlay.classList.remove("sl-urgent-active");
+  },
+
+  pickTargets(count) {
+    const pool = [...SLASH_TARGETS];
+    const filtered = pool.filter(t => !this.lastTargetIds.includes(t.id));
+    const source = filtered.length >= count ? filtered : pool;
+    const shuffled = source.sort(() => Math.random() - 0.5);
+    this.activeTargets = shuffled.slice(0, count);
+    this.lastTargetIds = this.activeTargets.map(t => t.id);
+    this.commandedIndex = Math.floor(Math.random() * count);
+  },
+
+  generateCommand() {
+    const target = this.activeTargets[this.commandedIndex];
+    this.el.command.textContent = target.name + "を斬れ";
+  },
+
+  renderTargets() {
+    this.el.targets.innerHTML = "";
+    this.activeTargets.forEach((t, i) => {
+      const card = document.createElement("div");
+      card.className = "sl-target";
+      card.dataset.index = i;
+      const img = document.createElement("img");
+      img.src = t.img;
+      img.alt = t.name;
+      img.className = "sl-target-img";
+      img.draggable = false;
+      card.appendChild(img);
+      this.el.targets.appendChild(card);
+    });
+    requestAnimationFrame(() => {
+      this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-enter"));
+    });
+  },
+
+  updateStatusUI() {
+    if (this.decisionType === "obey") {
+      this.el.statusWrap.dataset.stage = "decision-obey";
+      this.el.statusName.textContent = "従え";
+    } else {
+      this.el.statusWrap.dataset.stage = "decision-normal";
+      this.el.statusName.textContent = "逆らえ";
+    }
+  },
+
+  // --- スワイプ入力 ---
+  onTouchStart(e) {
+    if (this.answered) return;
+    const touch = e.touches[0];
+    const target = touch.target.closest(".sl-target");
+    if (!target) return;
+    e.preventDefault();
+    this.touchState = {
+      el: target,
+      index: parseInt(target.dataset.index),
+      startX: touch.clientX,
+      startY: touch.clientY,
+      startTime: Date.now(),
+    };
+  },
+
+  onTouchMove(e) {
+    if (!this.touchState || this.answered) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const dy = touch.clientY - this.touchState.startY;
+    if (dy > 0) {
+      const clamped = Math.min(dy, 100);
+      this.touchState.el.style.transform = "translateY(" + clamped + "px)";
+      if (dy > SWIPE_CONFIG.minDistY) {
+        this.touchState.el.style.opacity = "0.5";
+      } else {
+        this.touchState.el.style.opacity = "";
+      }
+    }
+  },
+
+  onTouchEnd(e) {
+    if (!this.touchState || this.answered) return;
+    const ts = this.touchState;
+    this.touchState = null;
+    const touch = e.changedTouches[0];
+    const dy = touch.clientY - ts.startY;
+    const dx = touch.clientX - ts.startX;
+    const dt = Date.now() - ts.startTime;
+    ts.el.style.transform = "";
+    ts.el.style.opacity = "";
+    if (dy > SWIPE_CONFIG.minDistY && Math.abs(dx) < SWIPE_CONFIG.maxDistX && dt < SWIPE_CONFIG.maxTime) {
+      this.onSlash(ts.index, ts.el);
+    }
+  },
+
+  resetTouch() {
+    if (this.touchState) {
+      this.touchState.el.style.transform = "";
+      this.touchState.el.style.opacity = "";
+      this.touchState = null;
+    }
+  },
+
+  // --- 斬り判定 ---
+  onSlash(index, targetEl) {
+    if (this.answered) return;
+    this.answered = true;
+    this.stopTimer();
+
+    let correct;
+    if (this.decisionType === "normal") {
+      correct = (index !== this.commandedIndex);
+    } else {
+      correct = (index === this.commandedIndex);
+    }
+
+    if (correct) {
+      this.onCorrectSlash(targetEl);
+    } else {
+      this.onWrongSlash(targetEl);
+    }
+  },
+
+  onCorrectSlash(targetEl) {
+    // 触覚フィードバック
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    // 1. ヒットフリーズ（70ms: 白く光って一瞬止まる）
+    targetEl.classList.add("sl-hit-freeze");
+    targetEl.style.transform = "";
+    targetEl.style.opacity = "";
+
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+
+      // 2. 斬撃音
+      SoundSystem.slash();
+
+      // 3. フリーズ解除
+      targetEl.classList.remove("sl-hit-freeze");
+
+      // 4. 斬撃線（白い対角フラッシュ）
+      const slashLine = document.createElement("div");
+      slashLine.className = "sl-slash-line-proto";
+      targetEl.appendChild(slashLine);
+
+      // 5. 画像を分裂させる
+      const img = targetEl.querySelector(".sl-target-img");
+      const imgSrc = img.src;
+      img.style.visibility = "hidden";
+      targetEl.style.borderColor = "transparent";
+      targetEl.style.background = "none";
+
+      const leftHalf = document.createElement("div");
+      leftHalf.className = "sl-split-half sl-split-left";
+      leftHalf.style.backgroundImage = "url(" + imgSrc + ")";
+
+      const rightHalf = document.createElement("div");
+      rightHalf.className = "sl-split-half sl-split-right";
+      rightHalf.style.backgroundImage = "url(" + imgSrc + ")";
+
+      targetEl.appendChild(leftHalf);
+      targetEl.appendChild(rightHalf);
+
+      requestAnimationFrame(() => {
+        leftHalf.classList.add("sl-split-fly");
+        rightHalf.classList.add("sl-split-fly");
+      });
+
+      // 6. 画面シェイク
+      this.el.screen.classList.add("sl-screen-shake");
+
+      // 7. 他の対象をフェードアウト
+      this.el.targets.querySelectorAll(".sl-target").forEach(c => {
+        if (c !== targetEl) c.classList.add("sl-target-fade");
+      });
+
+      // 8. OX
+      this.showOX(true);
+
+      // 9. リトライボタン表示
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.screen.classList.remove("sl-screen-shake");
+        this.el.retryBtn.style.display = "block";
+      }, 700);
+    }, 70);
+  },
+
+  onWrongSlash(targetEl) {
+    SoundSystem.wrong();
+    targetEl.classList.add("sl-wrong-hit");
+    targetEl.style.transform = "";
+    targetEl.style.opacity = "";
+
+    // 画面赤フラッシュ
+    this.el.screen.classList.remove("sl-miss-flash");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("sl-miss-flash");
+
+    // OX
+    this.showOX(false);
+
+    // リトライボタン表示
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.retryBtn.style.display = "block";
+    }, 600);
+  },
+
+  onTimeout() {
+    this.answered = true;
+    this.stopTimer();
+    SoundSystem.wrong();
+    this.el.command.textContent = "…遅い";
+    this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
+    this.showOX(false);
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.retryBtn.style.display = "block";
+    }, 600);
+  },
+
+  showOX(isCorrect) {
+    const oxOverlay = document.getElementById("ox-overlay");
+    const oxSymbol = document.getElementById("ox-symbol");
+    oxOverlay.classList.remove("ox-show");
+    oxSymbol.className = "ox-symbol";
+    void oxOverlay.offsetWidth;
+    oxSymbol.classList.add(isCorrect ? "ox-correct" : "ox-wrong");
+    oxOverlay.classList.add("ox-show");
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      oxOverlay.classList.remove("ox-show");
+    }, 400);
   },
 };
 
@@ -3997,6 +4455,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Game.init();
   Tutorial.init();
   Dungeon.init();
+  Slash.init();
   JudgeRoom.init();
   /* Corridor.init(); -- 隔離中 */
 });

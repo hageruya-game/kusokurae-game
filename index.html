@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>圧力回廊</title>
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
   <!-- デバッグラベル（テストモード用） -->
@@ -33,7 +33,7 @@
     <button id="btn-judge" class="btn btn-judge" style="display:none">連続ジャッジルーム</button>
     <!-- 隔離中: <button id="btn-corridor" class="btn btn-sub">圧力回廊（試作中）</button> -->
     <!-- テスト用: Dungeon直接起動 -->
-    <button id="btn-dungeon" class="btn btn-sub">逆指示ダンジョン（テスト）</button>
+    <button id="btn-slash" class="btn btn-sub">斬撃モード（テスト）</button>
     <button id="btn-tutorial" class="btn btn-rule-style">ルール説明</button>
 
     <!-- 非表示（DOM残す） -->
@@ -249,6 +249,30 @@
       <button id="dg-btn-next" class="btn btn-start dg-btn-next">次のステージ →</button>
       <button id="dg-btn-retry" class="btn btn-start">最初からやり直す</button>
       <button id="dg-btn-title" class="btn btn-dungeon">タイトルへ</button>
+    </div>
+  </div>
+
+  <!-- 斬撃モード（プロトタイプ） -->
+  <div id="screen-slash" class="screen">
+    <div class="sl-zone-top">
+      <div class="sl-header">
+        <button id="sl-back" class="sl-back">← 戻る</button>
+      </div>
+      <div class="sl-command" id="sl-command"></div>
+      <div class="sl-status-wrap" id="sl-status-wrap" data-stage="normal">
+        <span class="sl-status-name" id="sl-status-name">逆らえ</span>
+      </div>
+    </div>
+    <div class="sl-urgent-overlay" id="sl-urgent-overlay"></div>
+    <div class="sl-zone-center">
+      <div class="sl-targets" id="sl-targets"></div>
+      <div class="sl-guide" id="sl-guide">↓ スワイプで斬る</div>
+    </div>
+    <div class="sl-zone-bottom">
+      <div class="sl-timer-bar" id="sl-timer-bar">
+        <div class="sl-timer-fill" id="sl-timer-fill"></div>
+      </div>
+      <button id="sl-btn-retry" class="btn btn-start sl-retry-btn">もう一回</button>
     </div>
   </div>
 
