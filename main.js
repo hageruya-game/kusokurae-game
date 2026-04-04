@@ -2867,6 +2867,7 @@ const Slash = {
     const sid = this.sessionId;
     const cmd = this.el.command;
     const scr = this.el.screen;
+    let frame = 0;
     const tick = () => {
       if (this.sessionId !== sid || this.answered) {
         cmd.style.transform = "";
@@ -2874,13 +2875,17 @@ const Slash = {
         this.collapseRAF = null;
         return;
       }
-      // テキスト微ブレ（±1px）
-      const ox = (Math.random() - 0.5) * 2;
-      const oy = (Math.random() - 0.5) * 2;
-      cmd.style.transform = "translate(" + ox + "px," + oy + "px)";
-      // 画面微歪み
-      const s = 1 + Math.random() * 0.015;
-      scr.style.transform = "scale(" + s + ")";
+      // 2フレームに1回更新（酔い防止）
+      frame++;
+      if (frame % 2 === 0) {
+        // テキスト微ブレ（±0.7px — 読みやすさ維持）
+        const ox = (Math.random() - 0.5) * 1.4;
+        const oy = (Math.random() - 0.5) * 1.4;
+        cmd.style.transform = "translate(" + ox + "px," + oy + "px)";
+        // 画面微歪み（scale 1.0-1.008 — 知覚はするが酔わない）
+        const s = 1 + Math.random() * 0.008;
+        scr.style.transform = "scale(" + s + ")";
+      }
       this.collapseRAF = requestAnimationFrame(tick);
     };
     this.collapseRAF = requestAnimationFrame(tick);
@@ -2916,7 +2921,7 @@ const Slash = {
       const hbLoop = () => {
         if (this.sessionId !== sid || this.answered) return;
         SoundSystem.heartbeat();
-        this.heartbeatSpeed = Math.max(350, this.heartbeatSpeed - 40);
+        this.heartbeatSpeed = Math.max(400, this.heartbeatSpeed - 25);
         this.heartbeatInterval = setTimeout(() => hbLoop(), this.heartbeatSpeed);
       };
       hbLoop();
@@ -2967,6 +2972,7 @@ const Slash = {
       const card = document.createElement("div");
       card.className = "sl-target";
       card.dataset.index = i;
+      card.dataset.id = t.id;
       const img = document.createElement("img");
       img.src = t.img;
       img.alt = t.name;
@@ -3119,7 +3125,7 @@ const Slash = {
     } else {
       // 0-2: 控えめ（基準の70%）
       freezeTime = 70;
-      flashOpacity = 0.4;
+      flashOpacity = 0.5;
       shakeClass = "sl-screen-shake-light";
       splitDist = 40; splitRot = 20; splitDrop = 90;
       soundVol = 0.7;
@@ -3219,7 +3225,7 @@ const Slash = {
       this.showReward(combo);
 
       // 10. 次へ
-      const advDelay = isFinal ? 1500 : 900;
+      const advDelay = isFinal ? 1200 : 900;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
         this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy");
@@ -3239,7 +3245,7 @@ const Slash = {
       return;
     }
     this.el.reward.style.opacity = "1";
-    setTimeout(() => { this.el.reward.style.opacity = "0"; }, 500);
+    setTimeout(() => { this.el.reward.style.opacity = "0"; }, 600);
   },
 
   onWrongSlash(targetEl) {
