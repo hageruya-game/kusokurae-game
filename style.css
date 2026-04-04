@@ -2838,8 +2838,6 @@ body::before {
 .sl-target {
   width: clamp(150px, 46vw, 190px);
   height: clamp(150px, 46vw, 190px);
-  /* 当たり判定を画像より+30%拡張（padding） */
-  padding: 15%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2855,6 +2853,12 @@ body::before {
   -webkit-user-select: none;
   touch-action: none;
   overflow: visible;
+}
+/* 当たり判定を画像より拡張（レイアウトに影響しない） */
+.sl-target::after {
+  content: '';
+  position: absolute;
+  inset: -15%;
 }
 .sl-target-enter {
   opacity: 1;
@@ -2894,6 +2898,7 @@ body::before {
 }
 /* キャラ別スケール補正（見た目サイズの均一化） */
 .sl-target[data-id="rat"] .sl-target-img { transform: scale(1.25); }
+.sl-target[data-id="pig"] .sl-target-img { transform: scale(1.3); }
 .sl-target[data-id="bomb"] .sl-target-img { transform: scale(1.1); }
 .sl-target[data-id="burger"] .sl-target-img { transform: scale(1.1); }
 .sl-target[data-id="fire"] .sl-target-img { transform: scale(1.05); }

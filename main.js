@@ -2711,6 +2711,8 @@ const Slash = {
   answered: false,
   activeTargets: [],
   commandedIndex: -1,
+  commandedIndices: null,
+  correctTargetIndex: -1,
   decisionType: "normal",
   lastTargetIds: [],
   guideShown: false,
@@ -2990,16 +2992,36 @@ const Slash = {
     const shuffled = source.sort(() => Math.random() - 0.5);
     this.activeTargets = shuffled.slice(0, count);
     this.lastTargetIds = this.activeTargets.map(t => t.id);
-    this.commandedIndex = Math.floor(Math.random() * count);
+    // 3択+normal: 2体を命令し、残り1体が正解（単一正解）
+    // 3択+obey: 1体を命令し、その1体が正解（単一正解）
+    // 2択: 従来通り1体を命令
+    if (count === 3 && this.decisionType === "normal") {
+      // commandedIndices: 命令される2体のインデックス
+      const all = [0, 1, 2].sort(() => Math.random() - 0.5);
+      this.correctTargetIndex = all[0];       // 正解（命令されない1体）
+      this.commandedIndices = [all[1], all[2]]; // 命令される2体
+      this.commandedIndex = -1; // 単一index は使わない
+    } else {
+      this.commandedIndex = Math.floor(Math.random() * count);
+      this.commandedIndices = null;
+      this.correctTargetIndex = -1;
+    }
   },
 
   generateCommand() {
-    const target = this.activeTargets[this.commandedIndex];
     if (this.decisionType === "wait") {
       this.el.command.textContent = "斬るな";
-    } else {
-      this.el.command.textContent = target.name + "を斬れ";
+      return;
     }
+    // 3択+normal: 「XとYを斬れ」→ 逆らえ＝残り1体を斬る
+    if (this.commandedIndices) {
+      const n1 = this.activeTargets[this.commandedIndices[0]].name;
+      const n2 = this.activeTargets[this.commandedIndices[1]].name;
+      this.el.command.textContent = n1 + "と" + n2 + "を斬れ";
+      return;
+    }
+    const target = this.activeTargets[this.commandedIndex];
+    this.el.command.textContent = target.name + "を斬れ";
   },
 
   renderTargets() {
@@ -3114,8 +3136,11 @@ const Slash = {
     }
 
     let correct;
-    if (this.decisionType === "normal") {
-      // 逆らえ: 命令された対象以外を斬れば正解
+    if (this.commandedIndices) {
+      // 3択+normal: 命令されなかった1体だけが正解
+      correct = (index === this.correctTargetIndex);
+    } else if (this.decisionType === "normal") {
+      // 2択+逆らえ: 命令された対象以外を斬れば正解
       correct = (index !== this.commandedIndex);
     } else {
       // 従え: 命令された対象を斬れば正解
