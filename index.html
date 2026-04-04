@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>圧力回廊</title>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
   <!-- デバッグラベル（テストモード用） -->
@@ -252,11 +252,13 @@
     </div>
   </div>
 
-  <!-- 斬撃モード（プロトタイプ） -->
+  <!-- 斬撃モード -->
   <div id="screen-slash" class="screen">
     <div class="sl-zone-top">
       <div class="sl-header">
         <button id="sl-back" class="sl-back">← 戻る</button>
+        <div class="sl-layer-label" id="sl-layer-label"></div>
+        <div class="sl-combo" id="sl-combo"></div>
       </div>
       <div class="sl-command" id="sl-command"></div>
       <div class="sl-status-wrap" id="sl-status-wrap" data-stage="normal">
@@ -264,6 +266,8 @@
       </div>
     </div>
     <div class="sl-urgent-overlay" id="sl-urgent-overlay"></div>
+    <div class="sl-hit-flash" id="sl-hit-flash"></div>
+    <div class="sl-vignette" id="sl-vignette"></div>
     <div class="sl-zone-center">
       <div class="sl-targets" id="sl-targets"></div>
       <div class="sl-guide" id="sl-guide">↓ スワイプで斬る</div>
@@ -272,7 +276,18 @@
       <div class="sl-timer-bar" id="sl-timer-bar">
         <div class="sl-timer-fill" id="sl-timer-fill"></div>
       </div>
-      <button id="sl-btn-retry" class="btn btn-start sl-retry-btn">もう一回</button>
+    </div>
+    <!-- 層タイトルオーバーレイ -->
+    <div class="sl-layer-overlay" id="sl-layer-overlay">
+      <div class="sl-layer-name" id="sl-layer-name"></div>
+    </div>
+    <!-- クリアオーバーレイ -->
+    <div class="sl-clear-overlay" id="sl-clear-overlay">
+      <div class="sl-clear-msg" id="sl-clear-msg"></div>
+      <div class="sl-clear-stats" id="sl-clear-stats"></div>
+      <div class="sl-clear-rank" id="sl-clear-rank"></div>
+      <button id="sl-btn-again" class="btn btn-start">もう一回</button>
+      <button id="sl-btn-title" class="btn sl-btn-sub">タイトルへ</button>
     </div>
   </div>
 

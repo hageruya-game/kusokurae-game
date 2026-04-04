@@ -394,53 +394,121 @@ const SoundSystem = {
   },
 
   // --- 斬撃音: ノイズバースト + 金属リング + 低衝撃 ---
-  slash() {
+  slash(combo) {
     if (!this.enabled) return;
     this.resume();
     const ctx = this.ctx;
     const t = ctx.currentTime;
-    // 高域ノイズバースト（シャッ）
-    const bufSize = ctx.sampleRate * 0.07;
+    const hot = combo >= 10;
+    // 1. 高域ノイズバースト（シャッ）
+    const bufSize = Math.floor(ctx.sampleRate * 0.1);
     const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.6;
     const noise = ctx.createBufferSource();
     noise.buffer = buf;
     const hpf = ctx.createBiquadFilter();
     hpf.type = "highpass";
-    hpf.frequency.value = 2000;
+    hpf.frequency.value = 1800;
     const nGain = ctx.createGain();
     noise.connect(hpf);
     hpf.connect(nGain);
     nGain.connect(ctx.destination);
-    nGain.gain.setValueAtTime(0.2, t);
-    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    nGain.gain.setValueAtTime(0.3, t);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
     noise.start(t);
-    noise.stop(t + 0.07);
-    // 金属リング（シャキーン）
+    noise.stop(t + 0.1);
+    // 2. 中域（ズバッ）
+    const mid = ctx.createOscillator();
+    const mGain = ctx.createGain();
+    mid.connect(mGain);
+    mGain.connect(ctx.destination);
+    mid.type = "triangle";
+    mid.frequency.setValueAtTime(600, t);
+    mid.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+    mGain.gain.setValueAtTime(0.15, t);
+    mGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    mid.start(t);
+    mid.stop(t + 0.1);
+    // 3. 金属リング（シャキーン）
     const ring = ctx.createOscillator();
     const rGain = ctx.createGain();
     ring.connect(rGain);
     rGain.connect(ctx.destination);
     ring.type = "sine";
     ring.frequency.setValueAtTime(3200, t);
-    ring.frequency.exponentialRampToValueAtTime(1800, t + 0.15);
-    rGain.gain.setValueAtTime(0.07, t);
-    rGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    ring.frequency.exponentialRampToValueAtTime(1800, t + 0.18);
+    rGain.gain.setValueAtTime(0.12, t);
+    rGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
     ring.start(t);
-    ring.stop(t + 0.2);
-    // 低衝撃（ズン）
+    ring.stop(t + 0.25);
+    // 4. 低衝撃（ズン）
     const imp = ctx.createOscillator();
     const iGain = ctx.createGain();
     imp.connect(iGain);
     iGain.connect(ctx.destination);
     imp.type = "sine";
     imp.frequency.setValueAtTime(120, t);
-    imp.frequency.exponentialRampToValueAtTime(40, t + 0.1);
-    iGain.gain.setValueAtTime(0.13, t);
-    iGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    imp.frequency.exponentialRampToValueAtTime(40, t + 0.18);
+    iGain.gain.setValueAtTime(0.22, t);
+    iGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
     imp.start(t);
-    imp.stop(t + 0.1);
+    imp.stop(t + 0.2);
+    // 5. コンボ10+: 二重レイヤー（遅延リング）
+    if (hot) {
+      const r2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      r2.connect(g2); g2.connect(ctx.destination);
+      r2.type = "sine";
+      r2.frequency.setValueAtTime(2400, t + 0.03);
+      r2.frequency.exponentialRampToValueAtTime(1200, t + 0.2);
+      g2.gain.setValueAtTime(0.08, t + 0.03);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      r2.start(t + 0.03);
+      r2.stop(t + 0.25);
+    }
+    // コンボ3+: 低音追加
+    if (combo >= 3) {
+      const sub = ctx.createOscillator();
+      const sGain = ctx.createGain();
+      sub.connect(sGain); sGain.connect(ctx.destination);
+      sub.type = "sine";
+      sub.frequency.setValueAtTime(80, t);
+      sub.frequency.exponentialRampToValueAtTime(30, t + 0.15);
+      sGain.gain.setValueAtTime(0.1, t);
+      sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      sub.start(t);
+      sub.stop(t + 0.15);
+    }
+  },
+
+  heartbeat() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    // ドク…
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(55, t);
+    osc.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+    g.gain.setValueAtTime(0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.start(t);
+    osc.stop(t + 0.15);
+    // …ドク（二打目）
+    const o2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    o2.connect(g2); g2.connect(ctx.destination);
+    o2.type = "sine";
+    o2.frequency.setValueAtTime(50, t + 0.18);
+    o2.frequency.exponentialRampToValueAtTime(30, t + 0.3);
+    g2.gain.setValueAtTime(0.1, t + 0.18);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+    o2.start(t + 0.18);
+    o2.stop(t + 0.32);
   },
 
   // --- 環境音: 低ドローン + 心拍パルス ---
@@ -2570,11 +2638,11 @@ const Dungeon = {
 // ============================================================
 
 const SLASH_LAYERS = [
-  { name: "第一層：覚醒", rounds: 4, choices: 2, timer: 7000 },
-  { name: "第二層：惑い", rounds: 5, choices: 2, timer: 7000 },
-  { name: "第三層：静寂", rounds: 5, choices: 3, timer: 6000 },
-  { name: "第四層：混乱", rounds: 6, choices: 3, timer: 6000 },
-  { name: "最深層：決断", rounds: 6, choices: 3, timer: 5000 },
+  { name: "第一層：覚醒", rounds: 4, choices: 2, timer: 5000, types: ["normal"] },
+  { name: "第二層：惑い", rounds: 5, choices: 2, timer: 4500, types: ["normal", "normal", "obey"] },
+  { name: "第三層：静寂", rounds: 5, choices: 3, timer: 4000, types: ["normal", "obey", "obey", "wait"] },
+  { name: "第四層：混乱", rounds: 6, choices: 3, timer: 3500, types: ["normal", "obey", "wait"] },
+  { name: "最深層：決断", rounds: 6, choices: 3, timer: 3000, types: ["normal", "obey", "wait"] },
 ];
 
 const SLASH_TARGETS = [
@@ -2597,7 +2665,6 @@ const SWIPE_CONFIG = {
 };
 
 const Slash = {
-  // === プロトタイプ: 1ラウンド + タイマー ===
   sessionId: 0,
   el: {},
   answered: false,
@@ -2609,7 +2676,14 @@ const Slash = {
   touchState: null,
   timerTimeout: null,
   flinchTimeout: null,
-  roundTime: 4000,
+  heartbeatInterval: null,
+  roundTime: 5000,
+  // 層・ラウンド管理
+  currentLayer: 0,
+  currentRound: 0,
+  comboCount: 0,
+  totalMisses: 0,
+  lastDecision: "",
 
   init() {
     this.el = {
@@ -2619,14 +2693,24 @@ const Slash = {
       command: document.getElementById("sl-command"),
       targets: document.getElementById("sl-targets"),
       guide: document.getElementById("sl-guide"),
-      retryBtn: document.getElementById("sl-btn-retry"),
       timerBar: document.getElementById("sl-timer-bar"),
       timerFill: document.getElementById("sl-timer-fill"),
       urgentOverlay: document.getElementById("sl-urgent-overlay"),
+      hitFlash: document.getElementById("sl-hit-flash"),
+      vignette: document.getElementById("sl-vignette"),
+      layerLabel: document.getElementById("sl-layer-label"),
+      comboEl: document.getElementById("sl-combo"),
+      layerOverlay: document.getElementById("sl-layer-overlay"),
+      layerName: document.getElementById("sl-layer-name"),
+      clearOverlay: document.getElementById("sl-clear-overlay"),
+      clearMsg: document.getElementById("sl-clear-msg"),
+      clearStats: document.getElementById("sl-clear-stats"),
+      clearRank: document.getElementById("sl-clear-rank"),
     };
 
     document.getElementById("sl-back").addEventListener("click", () => this.goTitle());
-    this.el.retryBtn.addEventListener("click", () => this.startRound());
+    document.getElementById("sl-btn-again").addEventListener("click", () => this.start());
+    document.getElementById("sl-btn-title").addEventListener("click", () => this.goTitle());
 
     const btnSlash = document.getElementById("btn-slash");
     if (btnSlash) btnSlash.addEventListener("click", () => this.start());
@@ -2648,6 +2732,7 @@ const Slash = {
   goTitle() {
     this.sessionId++;
     this.cleanup();
+    this.clearEffects();
     Game.showScreen(document.getElementById("screen-title"));
   },
 
@@ -2656,35 +2741,87 @@ const Slash = {
     this.touchState = null;
     clearTimeout(this.timerTimeout);
     clearTimeout(this.flinchTimeout);
+    clearInterval(this.heartbeatInterval);
     this.timerTimeout = null;
     this.flinchTimeout = null;
+    this.heartbeatInterval = null;
+  },
+
+  clearEffects() {
+    this.el.screen.classList.remove("sl-screen-shake", "sl-miss-flash", "sl-miss-shake", "sl-late-bg");
+    this.el.urgentOverlay.classList.remove("sl-urgent-active");
+    this.el.hitFlash.classList.remove("sl-flash-fire");
+    this.el.vignette.classList.remove("sl-vig-active");
+    this.el.command.classList.remove("sl-cmd-wobble");
+    document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
+    this.el.layerOverlay.classList.remove("sl-lo-show");
+    this.el.clearOverlay.classList.remove("sl-co-show");
   },
 
   start() {
     this.sessionId++;
     this.guideShown = false;
     this.lastTargetIds = [];
+    this.currentLayer = 0;
+    this.currentRound = 0;
+    this.comboCount = 0;
+    this.totalMisses = 0;
+    this.lastDecision = "";
     SoundSystem.init();
+    this.clearEffects();
     Game.showScreen(this.el.screen);
-    this.startRound();
+    this.showLayerTitle();
+  },
+
+  showLayerTitle() {
+    const layer = SLASH_LAYERS[this.currentLayer];
+    this.el.layerName.textContent = layer.name;
+    this.el.layerLabel.textContent = layer.name;
+    this.el.layerOverlay.classList.add("sl-lo-show");
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.layerOverlay.classList.remove("sl-lo-show");
+      // 終盤演出
+      if (this.currentLayer >= 3) {
+        this.el.screen.classList.add("sl-late-bg");
+        this.el.command.classList.add("sl-cmd-wobble");
+      }
+      this.currentRound = 0;
+      this.startRound();
+    }, 1200);
   },
 
   startRound() {
     this.cleanup();
     this.answered = false;
-    this.el.retryBtn.style.display = "none";
-    this.el.screen.classList.remove("sl-screen-shake", "sl-miss-flash");
-    this.el.urgentOverlay.classList.remove("sl-urgent-active");
+    this.clearEffects();
+    // 終盤クラス再適用
+    if (this.currentLayer >= 3) {
+      this.el.screen.classList.add("sl-late-bg");
+      this.el.command.classList.add("sl-cmd-wobble");
+    }
 
-    // 判定タイプ: ランダム（逆らえ / 従え）
-    this.decisionType = Math.random() < 0.5 ? "normal" : "obey";
+    const layer = SLASH_LAYERS[this.currentLayer];
+
+    // 判定タイプ
+    let dt;
+    do {
+      dt = layer.types[Math.floor(Math.random() * layer.types.length)];
+    } while (dt === this.lastDecision && layer.types.length > 1);
+    this.lastDecision = dt;
+    this.decisionType = dt;
     this.updateStatusUI();
 
-    // 2択を選択
-    this.roundTime = 4000;
-    this.pickTargets(2);
+    // 択数 & タイマー
+    const choices = layer.choices;
+    this.roundTime = layer.timer;
+    this.pickTargets(choices);
     this.generateCommand();
     this.renderTargets();
+
+    // コンボUI
+    this.updateComboUI();
 
     // ガイド（初回のみ）
     if (!this.guideShown) {
@@ -2693,15 +2830,14 @@ const Slash = {
       setTimeout(() => this.el.guide.classList.remove("sl-guide-show"), 2500);
     }
 
-    // タイマー開始
     this.startTimer();
   },
 
   startTimer() {
     const dur = this.roundTime;
     const sid = this.sessionId;
+    const urgentAt = Math.min(1500, dur * 0.4);
 
-    // タイマーバー: CSSトランジションで減少
     this.el.timerFill.style.transition = "none";
     this.el.timerFill.style.width = "100%";
     this.el.timerBar.classList.remove("sl-timer-urgent");
@@ -2712,17 +2848,27 @@ const Slash = {
       this.el.timerFill.style.width = "0%";
     });
 
-    // 残り2秒: ビクつき + バー色変更
+    // 残り1.5秒: ビクつき + ビネット + ズーム + 心拍
     this.flinchTimeout = setTimeout(() => {
       if (this.sessionId !== sid || this.answered) return;
       this.el.timerBar.classList.add("sl-timer-urgent");
       this.el.urgentOverlay.classList.add("sl-urgent-active");
+      this.el.vignette.classList.add("sl-vig-active");
+      document.querySelector(".sl-zone-center").classList.add("sl-zoom-in");
       this.el.targets.querySelectorAll(".sl-target").forEach(c => {
         c.classList.add("sl-target-flinch");
       });
-    }, dur - 2000);
+      // 心拍音
+      SoundSystem.heartbeat();
+      this.heartbeatInterval = setInterval(() => {
+        if (this.sessionId !== sid || this.answered) {
+          clearInterval(this.heartbeatInterval);
+          return;
+        }
+        SoundSystem.heartbeat();
+      }, 500);
+    }, dur - urgentAt);
 
-    // タイムアウト
     this.timerTimeout = setTimeout(() => {
       if (this.sessionId !== sid || this.answered) return;
       this.onTimeout();
@@ -2732,11 +2878,15 @@ const Slash = {
   stopTimer() {
     clearTimeout(this.timerTimeout);
     clearTimeout(this.flinchTimeout);
+    clearInterval(this.heartbeatInterval);
     this.timerTimeout = null;
     this.flinchTimeout = null;
+    this.heartbeatInterval = null;
     this.el.timerFill.style.transition = "none";
     this.el.timerBar.classList.remove("sl-timer-active", "sl-timer-urgent");
     this.el.urgentOverlay.classList.remove("sl-urgent-active");
+    this.el.vignette.classList.remove("sl-vig-active");
+    document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
   },
 
   pickTargets(count) {
@@ -2751,7 +2901,11 @@ const Slash = {
 
   generateCommand() {
     const target = this.activeTargets[this.commandedIndex];
-    this.el.command.textContent = target.name + "を斬れ";
+    if (this.decisionType === "wait") {
+      this.el.command.textContent = "斬るな";
+    } else {
+      this.el.command.textContent = target.name + "を斬れ";
+    }
   },
 
   renderTargets() {
@@ -2777,9 +2931,22 @@ const Slash = {
     if (this.decisionType === "obey") {
       this.el.statusWrap.dataset.stage = "decision-obey";
       this.el.statusName.textContent = "従え";
+    } else if (this.decisionType === "wait") {
+      this.el.statusWrap.dataset.stage = "decision-wait";
+      this.el.statusName.textContent = "動くな";
     } else {
       this.el.statusWrap.dataset.stage = "decision-normal";
       this.el.statusName.textContent = "逆らえ";
+    }
+  },
+
+  updateComboUI() {
+    if (this.comboCount >= 3) {
+      this.el.comboEl.textContent = this.comboCount + " combo";
+      this.el.comboEl.classList.add("sl-combo-show");
+      this.el.comboEl.classList.toggle("sl-combo-hot", this.comboCount >= 10);
+    } else {
+      this.el.comboEl.classList.remove("sl-combo-show", "sl-combo-hot");
     }
   },
 
@@ -2844,6 +3011,12 @@ const Slash = {
     this.answered = true;
     this.stopTimer();
 
+    // 「動くな」なのに斬った → ミス
+    if (this.decisionType === "wait") {
+      this.onWrongSlash(targetEl);
+      return;
+    }
+
     let correct;
     if (this.decisionType === "normal") {
       correct = (index !== this.commandedIndex);
@@ -2859,10 +3032,15 @@ const Slash = {
   },
 
   onCorrectSlash(targetEl) {
-    // 触覚フィードバック
-    if (navigator.vibrate) navigator.vibrate(30);
+    this.comboCount++;
+    const combo = this.comboCount;
+    const isFinal = this.isFinalRound();
+    const freezeTime = isFinal ? 200 : (combo >= 10 ? 130 : 100);
 
-    // 1. ヒットフリーズ（70ms: 白く光って一瞬止まる）
+    // 触覚フィードバック
+    if (navigator.vibrate) navigator.vibrate(combo >= 5 ? [15, 30, 50] : 30);
+
+    // 1. ヒットフリーズ
     targetEl.classList.add("sl-hit-freeze");
     targetEl.style.transform = "";
     targetEl.style.opacity = "";
@@ -2871,24 +3049,27 @@ const Slash = {
     setTimeout(() => {
       if (this.sessionId !== sid) return;
 
-      // 2. 斬撃音
-      SoundSystem.slash();
+      // 2. 白フラッシュ
+      this.el.hitFlash.classList.add("sl-flash-fire");
+      setTimeout(() => this.el.hitFlash.classList.remove("sl-flash-fire"), 50);
 
-      // 3. フリーズ解除
+      // 3. 斬撃音（コンボ対応）
+      SoundSystem.slash(combo);
+
+      // 4. フリーズ解除
       targetEl.classList.remove("sl-hit-freeze");
 
-      // 4. 斬撃線（白い対角フラッシュ）
+      // 5. 斬撃線
       const slashLine = document.createElement("div");
       slashLine.className = "sl-slash-line-proto";
       targetEl.appendChild(slashLine);
 
-      // 5. 画像を分裂させる
+      // 6. 画像を分裂
       const img = targetEl.querySelector(".sl-target-img");
       const imgSrc = img.src;
       img.style.visibility = "hidden";
-      targetEl.style.borderColor = "transparent";
-      targetEl.style.background = "none";
 
+      const splitScale = combo >= 5 ? 1.1 : 1;
       const leftHalf = document.createElement("div");
       leftHalf.className = "sl-split-half sl-split-left";
       leftHalf.style.backgroundImage = "url(" + imgSrc + ")";
@@ -2896,6 +3077,12 @@ const Slash = {
       const rightHalf = document.createElement("div");
       rightHalf.className = "sl-split-half sl-split-right";
       rightHalf.style.backgroundImage = "url(" + imgSrc + ")";
+
+      // コンボ5+: 分裂距離+10%
+      if (splitScale > 1) {
+        leftHalf.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
+        rightHalf.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
+      }
 
       targetEl.appendChild(leftHalf);
       targetEl.appendChild(rightHalf);
@@ -2905,60 +3092,152 @@ const Slash = {
         rightHalf.classList.add("sl-split-fly");
       });
 
-      // 6. 画面シェイク
+      // 7. 画面シェイク
+      this.el.screen.classList.remove("sl-screen-shake");
+      void this.el.screen.offsetWidth;
       this.el.screen.classList.add("sl-screen-shake");
 
-      // 7. 他の対象をフェードアウト
+      // 8. 他の対象をフェードアウト
       this.el.targets.querySelectorAll(".sl-target").forEach(c => {
         if (c !== targetEl) c.classList.add("sl-target-fade");
       });
 
-      // 8. OX
-      this.showOX(true);
+      // 9. コンボUI更新
+      this.updateComboUI();
 
-      // 9. 次のラウンドへ自動進行
+      // 10. 次へ
+      const advDelay = isFinal ? 1200 : 900;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
         this.el.screen.classList.remove("sl-screen-shake");
-        this.startRound();
-      }, 900);
-    }, 70);
+        this.advanceRound();
+      }, advDelay);
+    }, freezeTime);
   },
 
   onWrongSlash(targetEl) {
+    this.comboCount = 0;
+    this.totalMisses++;
     SoundSystem.wrong();
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+
     targetEl.classList.add("sl-wrong-hit");
     targetEl.style.transform = "";
     targetEl.style.opacity = "";
 
-    // 画面赤フラッシュ
-    this.el.screen.classList.remove("sl-miss-flash");
+    // ミス: 上に弾く
+    setTimeout(() => targetEl.classList.add("sl-wrong-bounce"), 100);
+
+    // 画面赤フラッシュ + シェイク
+    this.el.screen.classList.remove("sl-miss-flash", "sl-miss-shake");
     void this.el.screen.offsetWidth;
-    this.el.screen.classList.add("sl-miss-flash");
+    this.el.screen.classList.add("sl-miss-flash", "sl-miss-shake");
 
-    // OX
-    this.showOX(false);
+    this.updateComboUI();
 
-    // 次のラウンドへ自動進行
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      this.startRound();
+      this.advanceRound();
     }, 800);
   },
 
   onTimeout() {
     this.answered = true;
     this.stopTimer();
+
+    // 「動くな」でタイムアウト = 正解
+    if (this.decisionType === "wait") {
+      this.onWaitSuccess();
+      return;
+    }
+
+    this.comboCount = 0;
+    this.totalMisses++;
     SoundSystem.wrong();
     this.el.command.textContent = "…遅い";
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
-    this.showOX(false);
+    this.updateComboUI();
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      this.startRound();
+      this.advanceRound();
     }, 800);
+  },
+
+  onWaitSuccess() {
+    this.comboCount++;
+    this.el.command.textContent = "…耐えたな";
+    this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
+    this.updateComboUI();
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.advanceRound();
+    }, 800);
+  },
+
+  advanceRound() {
+    this.currentRound++;
+    const layer = SLASH_LAYERS[this.currentLayer];
+    if (this.currentRound >= layer.rounds) {
+      // 次の層へ
+      this.currentLayer++;
+      if (this.currentLayer >= SLASH_LAYERS.length) {
+        this.showClear();
+      } else {
+        this.showLayerTitle();
+      }
+    } else {
+      this.startRound();
+    }
+  },
+
+  isFinalRound() {
+    const layer = SLASH_LAYERS[this.currentLayer];
+    return this.currentLayer === SLASH_LAYERS.length - 1 &&
+           this.currentRound === layer.rounds - 1;
+  },
+
+  showClear() {
+    const sid = this.sessionId;
+    // 暗転
+    this.el.clearOverlay.classList.add("sl-co-show");
+    // タイプライターメッセージ
+    const msg = "…もう、誰にも\n支配されない。";
+    const chars = msg.split("");
+    this.el.clearMsg.textContent = "";
+    this.el.clearStats.textContent = "";
+    this.el.clearRank.textContent = "";
+    let i = 0;
+    const typeTimer = setInterval(() => {
+      if (this.sessionId !== sid) { clearInterval(typeTimer); return; }
+      if (i < chars.length) {
+        const c = chars[i];
+        if (c === "\n") {
+          this.el.clearMsg.appendChild(document.createElement("br"));
+        } else {
+          this.el.clearMsg.appendChild(document.createTextNode(c));
+        }
+        i++;
+      } else {
+        clearInterval(typeTimer);
+        // ランク表示
+        setTimeout(() => {
+          if (this.sessionId !== sid) return;
+          const m = this.totalMisses;
+          let rank, rankMsg;
+          if (m === 0) { rank = "S"; rankMsg = "完璧。空気を支配した。"; }
+          else if (m <= 3) { rank = "A"; rankMsg = "見事。圧力を跳ね返した。"; }
+          else if (m <= 7) { rank = "B"; rankMsg = "悪くない。だが隙がある。"; }
+          else if (m <= 12) { rank = "C"; rankMsg = "まだ迷いがある。"; }
+          else { rank = "D"; rankMsg = "空気に飲まれかけた。"; }
+          this.el.clearStats.textContent = "MISS: " + m;
+          this.el.clearRank.textContent = rank;
+          this.el.clearRank.style.color = rank === "S" ? "#ffd700" : rank === "A" ? "#c0c0ff" : "#a090c0";
+        }, 600);
+      }
+    }, 80);
   },
 
   showOX(isCorrect) {

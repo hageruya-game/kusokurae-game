@@ -2646,7 +2646,7 @@ body::before {
 }
 
 /* ============================================================
-   斬撃モード（Slash）— プロトタイプ
+   斬撃モード（Slash）
    ============================================================ */
 
 #screen-slash {
@@ -2659,6 +2659,10 @@ body::before {
   touch-action: none;
   overflow: hidden;
   -webkit-overflow-scrolling: auto;
+  transition: background 0.8s ease;
+}
+#screen-slash.sl-late-bg {
+  background: linear-gradient(180deg, #1a0008 0%, #200010 50%, #150005 100%);
 }
 
 /* --- 上段 --- */
@@ -2678,8 +2682,25 @@ body::before {
   color: #a090c0; font-size: 14px;
   padding: 4px 8px; cursor: pointer;
 }
+.sl-layer-label {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #8070a0;
+}
+.sl-combo {
+  font-size: 13px;
+  font-weight: bold;
+  color: #c080ff;
+  min-width: 48px;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.sl-combo.sl-combo-show { opacity: 1; }
+.sl-combo.sl-combo-hot { color: #ff8040; text-shadow: 0 0 8px rgba(255, 128, 64, 0.5); }
 
-/* 状態表示（命令文の直下に中央配置） */
+/* 状態表示 */
 .sl-status-wrap {
   display: inline-flex;
   align-items: center;
@@ -2691,10 +2712,31 @@ body::before {
   transition: all 0.3s ease;
 }
 .sl-status-name { font-weight: bold; }
+.sl-status-wrap[data-stage="decision-normal"] {
+  border-color: rgba(200, 220, 240, 0.5);
+  color: #c8dcf0;
+  background: rgba(200, 220, 240, 0.08);
+}
+.sl-status-wrap[data-stage="decision-obey"] {
+  border-color: rgba(255, 170, 0, 0.6);
+  color: #ffaa00;
+  background: rgba(255, 170, 0, 0.1);
+  animation: slStatusPulse 1.5s ease-in-out infinite;
+}
+.sl-status-wrap[data-stage="decision-wait"] {
+  border-color: rgba(255, 60, 60, 0.6);
+  color: #ff5050;
+  background: rgba(255, 60, 60, 0.1);
+  animation: slStatusPulse 1s ease-in-out infinite;
+}
+@keyframes slStatusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
 
-/* 残り2秒: 赤点滅オーバーレイ */
+/* オーバーレイ群 */
 .sl-urgent-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 40;
@@ -2708,20 +2750,27 @@ body::before {
   100% { opacity: 1; background: rgba(255, 0, 0, 0.08); }
 }
 
-.sl-status-wrap[data-stage="decision-normal"] {
-  border-color: rgba(200, 220, 240, 0.5);
-  color: #c8dcf0;
-  background: rgba(200, 220, 240, 0.08);
+.sl-hit-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 45;
+  background: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  transition: opacity 0.04s;
 }
-.sl-status-wrap[data-stage="decision-obey"] {
-  border-color: rgba(255, 170, 0, 0.6);
-  color: #ffaa00;
-  background: rgba(255, 170, 0, 0.1);
-  animation: slStatusPulse 1.5s ease-in-out infinite;
+.sl-hit-flash.sl-flash-fire { opacity: 1; }
+
+.sl-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 35;
+  box-shadow: inset 0 0 60px 20px rgba(0, 0, 0, 0);
+  transition: box-shadow 0.3s ease;
 }
-@keyframes slStatusPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+.sl-vignette.sl-vig-active {
+  box-shadow: inset 0 0 80px 30px rgba(0, 0, 0, 0.6);
 }
 
 /* 命令文 */
@@ -2733,6 +2782,15 @@ body::before {
   padding: 8px 0 4px;
   min-height: 40px;
   line-height: 1.3;
+  transition: transform 0.1s;
+}
+.sl-cmd-wobble {
+  animation: slCmdWobble 2s ease-in-out infinite;
+}
+@keyframes slCmdWobble {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(0.4deg) scale(1.005); }
+  75% { transform: rotate(-0.4deg) scale(0.995); }
 }
 
 /* --- 中段: 対象エリア --- */
@@ -2746,7 +2804,9 @@ body::before {
   justify-content: center;
   padding: 12px;
   position: relative;
+  transition: transform 0.3s ease;
 }
+.sl-zoom-in { transform: scale(1.02); }
 
 .sl-targets {
   display: flex;
@@ -2760,6 +2820,8 @@ body::before {
 .sl-target {
   width: clamp(140px, 42vw, 170px);
   height: clamp(140px, 42vw, 170px);
+  /* 当たり判定を画像より+20%拡張（padding） */
+  padding: 10%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2787,11 +2849,10 @@ body::before {
   75%  { transform: scale(0.98) translateY(-2px); opacity: 1; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
-.sl-target:nth-child(2) {
-  animation-delay: 0.06s;
-}
+.sl-target:nth-child(2) { animation-delay: 0.06s; }
+.sl-target:nth-child(3) { animation-delay: 0.12s; }
 
-/* 残り2秒: ビクつき */
+/* ビクつき */
 .sl-target-flinch .sl-target-img {
   animation: slFlinch 0.22s ease-out;
 }
@@ -2830,33 +2891,35 @@ body::before {
 
 /* ヒットフリーズ */
 .sl-hit-freeze {
-  transform: scale(1.08) !important;
+  transform: scale(1.1) !important;
   opacity: 1 !important;
-  filter: brightness(2.0);
+  filter: brightness(2.5);
   transition: none !important;
 }
-/* 斬撃線（対角線の白いフラッシュ） */
+
+/* 斬撃線（太め、白→紫グラデ） */
 .sl-slash-line-proto {
   position: absolute;
-  top: -20%; left: -20%;
-  width: 140%; height: 140%;
+  top: -25%; left: -25%;
+  width: 150%; height: 150%;
   background: linear-gradient(135deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.95) 47%,
-    rgba(255, 255, 255, 0.95) 53%,
-    transparent 60%
+    transparent 37%,
+    rgba(255, 255, 255, 0.95) 43%,
+    rgba(200, 160, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.95) 57%,
+    transparent 63%
   );
-  animation: slSlashLine 0.2s ease-out forwards;
+  animation: slSlashLine 0.18s ease-out forwards;
   pointer-events: none;
   z-index: 10;
 }
 @keyframes slSlashLine {
-  0%   { opacity: 1; transform: scale(0.5); }
-  40%  { opacity: 1; transform: scale(1.2); }
-  100% { opacity: 0; transform: scale(1.6); }
+  0%   { opacity: 1; transform: scale(0.4); }
+  35%  { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0; transform: scale(1.8); }
 }
 
-/* 分裂ハーフ（clip-pathで斜め切断） */
+/* 分裂ハーフ */
 .sl-split-half {
   position: absolute;
   top: 0; left: 0;
@@ -2865,7 +2928,7 @@ body::before {
   background-repeat: no-repeat;
   background-position: center;
   filter: drop-shadow(0 0 8px rgba(140, 100, 200, 0.25));
-  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+  transition: transform 0.45s ease-out, opacity 0.45s ease-out;
 }
 .sl-split-left {
   clip-path: polygon(0 0, 55% 0, 45% 100%, 0 100%);
@@ -2874,39 +2937,44 @@ body::before {
   clip-path: polygon(55% 0, 100% 0, 100% 100%, 45% 100%);
 }
 .sl-split-left.sl-split-fly {
-  transform: translate(-40px, 90px) rotate(-20deg);
+  transform: translate(-55px, 120px) rotate(-30deg);
   opacity: 0;
 }
 .sl-split-right.sl-split-fly {
-  transform: translate(40px, 90px) rotate(20deg);
+  transform: translate(55px, 120px) rotate(30deg);
   opacity: 0;
 }
 
-/* ミスヒット */
+/* ミスヒット（強化） */
 .sl-wrong-hit {
-  animation: slWrongShake 0.35s ease-out !important;
-  border-color: #ff4040 !important;
-  box-shadow: 0 0 24px rgba(255, 0, 0, 0.4) !important;
+  animation: slWrongShake 0.4s ease-out !important;
 }
 .sl-wrong-hit::after {
   content: '\00D7';
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 64px;
+  font-size: 72px;
   color: #ff4040;
   font-weight: bold;
-  text-shadow: 0 0 16px rgba(255, 0, 0, 0.7);
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
   pointer-events: none;
+}
+/* ミス: 上に弾かれる */
+.sl-wrong-bounce {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;
+  transform: translateY(-40px) !important;
+  opacity: 0.3 !important;
 }
 @keyframes slWrongShake {
   0%, 100% { transform: translateX(0); }
-  15% { transform: translateX(-10px); }
-  30% { transform: translateX(10px); }
-  45% { transform: translateX(-7px); }
-  60% { transform: translateX(7px); }
-  75% { transform: translateX(-4px); }
-  90% { transform: translateX(4px); }
+  12% { transform: translateX(-14px); }
+  24% { transform: translateX(14px); }
+  36% { transform: translateX(-10px); }
+  48% { transform: translateX(10px); }
+  60% { transform: translateX(-6px); }
+  72% { transform: translateX(6px); }
+  84% { transform: translateX(-3px); }
 }
 
 /* フェードアウト */
@@ -2948,30 +3016,106 @@ body::before {
   background: linear-gradient(90deg, #ff4040, #ff8040);
 }
 
-.sl-retry-btn {
-  display: none;
-}
-
-/* --- 画面フラッシュ --- */
+/* --- 画面フラッシュ(ミス) --- */
 .sl-miss-flash {
-  animation: slMissScreenFlash 0.3s ease-out;
+  animation: slMissScreenFlash 0.2s ease-out;
 }
 @keyframes slMissScreenFlash {
-  0%, 10% { box-shadow: inset 0 0 80px rgba(255, 0, 0, 0.3); }
-  100%    { box-shadow: none; }
+  0%   { box-shadow: inset 0 0 120px rgba(255, 0, 0, 0.45); }
+  100% { box-shadow: none; }
 }
 
 /* --- 画面シェイク --- */
 .sl-screen-shake {
-  animation: slScreenShake 0.3s ease-out;
+  animation: slScreenShake 0.15s ease-out;
 }
 @keyframes slScreenShake {
   0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-4px, 2px); }
-  20% { transform: translate(4px, -3px); }
-  30% { transform: translate(-3px, 3px); }
-  40% { transform: translate(3px, -2px); }
-  50% { transform: translate(-2px, 1px); }
-  60% { transform: translate(2px, -1px); }
-  70% { transform: translate(-1px, 1px); }
+  15% { transform: translate(-5px, 3px); }
+  30% { transform: translate(5px, -3px); }
+  45% { transform: translate(-4px, 2px); }
+  60% { transform: translate(4px, -2px); }
+  75% { transform: translate(-2px, 1px); }
+}
+/* ミス時シェイク（強め） */
+.sl-miss-shake {
+  animation: slMissShake 0.35s ease-out;
+}
+@keyframes slMissShake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-8px, 4px); }
+  20% { transform: translate(8px, -4px); }
+  30% { transform: translate(-6px, 3px); }
+  40% { transform: translate(6px, -3px); }
+  50% { transform: translate(-4px, 2px); }
+  60% { transform: translate(4px, -2px); }
+  70% { transform: translate(-2px, 1px); }
+}
+
+/* --- 層タイトルオーバーレイ --- */
+.sl-layer-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sl-layer-overlay.sl-lo-show { opacity: 1; }
+.sl-layer-name {
+  font-size: clamp(24px, 7vw, 36px);
+  font-weight: bold;
+  color: #c8a0ff;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(160, 100, 255, 0.4);
+}
+
+/* --- クリアオーバーレイ --- */
+.sl-clear-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.sl-clear-overlay.sl-co-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sl-clear-msg {
+  font-size: clamp(18px, 5vw, 26px);
+  color: #e0d0f0;
+  text-align: center;
+  line-height: 1.8;
+  min-height: 80px;
+}
+.sl-clear-stats {
+  font-size: 14px;
+  color: #a090c0;
+}
+.sl-clear-rank {
+  font-size: clamp(36px, 10vw, 56px);
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+.sl-btn-sub {
+  background: none;
+  border: 1px solid #a090c0;
+  color: #a090c0;
+  padding: 8px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
 }
