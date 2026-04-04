@@ -2820,8 +2820,8 @@ body::before {
 .sl-target {
   width: clamp(140px, 42vw, 170px);
   height: clamp(140px, 42vw, 170px);
-  /* 当たり判定を画像より+20%拡張（padding） */
-  padding: 10%;
+  /* 当たり判定を画像より+25%拡張（padding） */
+  padding: 12.5%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3037,6 +3037,31 @@ body::before {
   60% { transform: translate(4px, -2px); }
   75% { transform: translate(-2px, 1px); }
 }
+/* 軽めシェイク（コンボ0-2） */
+.sl-screen-shake-light {
+  animation: slScreenShakeLight 0.12s ease-out;
+}
+@keyframes slScreenShakeLight {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 1px); }
+}
+/* 強めシェイク（コンボ10+, 最終ヒット） */
+.sl-screen-shake-heavy {
+  animation: slScreenShakeHeavy 0.25s ease-out;
+}
+@keyframes slScreenShakeHeavy {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-8px, 5px); }
+  20% { transform: translate(7px, -4px); }
+  30% { transform: translate(-6px, 4px); }
+  40% { transform: translate(6px, -3px); }
+  50% { transform: translate(-4px, 3px); }
+  60% { transform: translate(4px, -2px); }
+  70% { transform: translate(-3px, 2px); }
+  80% { transform: translate(2px, -1px); }
+}
 /* ミス時シェイク（強め） */
 .sl-miss-shake {
   animation: slMissShake 0.35s ease-out;
@@ -3050,6 +3075,34 @@ body::before {
   50% { transform: translate(-4px, 2px); }
   60% { transform: translate(4px, -2px); }
   70% { transform: translate(-2px, 1px); }
+}
+
+/* --- コンボ報酬テキスト --- */
+.sl-reward {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 180;
+  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+  text-shadow: 0 0 12px currentColor, 0 0 24px currentColor;
+}
+.sl-reward[style*="opacity: 1"] {
+  transform: translate(-50%, -50%) scale(1);
+}
+.sl-reward-good {
+  color: #a0ffa0;
+}
+.sl-reward-fever {
+  color: #ffcc00;
+  font-size: 42px;
+  letter-spacing: 8px;
+  text-shadow: 0 0 16px #ff8800, 0 0 32px #ff4400;
 }
 
 /* --- 層タイトルオーバーレイ --- */

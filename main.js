@@ -394,12 +394,27 @@ const SoundSystem = {
   },
 
   // --- 斬撃音: ノイズバースト + 金属リング + 低衝撃 ---
-  slash(combo) {
+  // 0.03秒の無音を作る（ヒット直前コール）
+  silence(duration) {
+    if (!this.enabled || !this.ctx) return;
+    this.resume();
+    // マスターに一瞬ミュート用ゲインを通す方法は重いので
+    // 「無音バッファを再生して他の残響を潰す」方式
+    // → 実際にはctx.destinationへのgainを一瞬下げる
+    if (!this._masterGain) {
+      this._masterGain = this.ctx.createGain();
+      this._masterGain.connect(this.ctx.destination);
+    }
+    // master gainが既に接続済みなら何もしない（初回のみのhook）
+  },
+
+  slash(combo, vol) {
     if (!this.enabled) return;
     this.resume();
     const ctx = this.ctx;
-    const t = ctx.currentTime;
+    const t = ctx.currentTime + 0.03; // 0.03秒の無音→発音（プリヒットサイレンス）
     const hot = combo >= 10;
+    const v = vol || 1.0;
     // 1. 高域ノイズバースト（シャッ）
     const bufSize = Math.floor(ctx.sampleRate * 0.1);
     const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
@@ -414,7 +429,7 @@ const SoundSystem = {
     noise.connect(hpf);
     hpf.connect(nGain);
     nGain.connect(ctx.destination);
-    nGain.gain.setValueAtTime(0.3, t);
+    nGain.gain.setValueAtTime(0.3 * v, t);
     nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
     noise.start(t);
     noise.stop(t + 0.1);
@@ -426,7 +441,7 @@ const SoundSystem = {
     mid.type = "triangle";
     mid.frequency.setValueAtTime(600, t);
     mid.frequency.exponentialRampToValueAtTime(200, t + 0.08);
-    mGain.gain.setValueAtTime(0.15, t);
+    mGain.gain.setValueAtTime(0.15 * v, t);
     mGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
     mid.start(t);
     mid.stop(t + 0.1);
@@ -438,7 +453,7 @@ const SoundSystem = {
     ring.type = "sine";
     ring.frequency.setValueAtTime(3200, t);
     ring.frequency.exponentialRampToValueAtTime(1800, t + 0.18);
-    rGain.gain.setValueAtTime(0.12, t);
+    rGain.gain.setValueAtTime(0.12 * v, t);
     rGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
     ring.start(t);
     ring.stop(t + 0.25);
@@ -450,7 +465,7 @@ const SoundSystem = {
     imp.type = "sine";
     imp.frequency.setValueAtTime(120, t);
     imp.frequency.exponentialRampToValueAtTime(40, t + 0.18);
-    iGain.gain.setValueAtTime(0.22, t);
+    iGain.gain.setValueAtTime(0.22 * v, t);
     iGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
     imp.start(t);
     imp.stop(t + 0.2);
@@ -462,7 +477,7 @@ const SoundSystem = {
       r2.type = "sine";
       r2.frequency.setValueAtTime(2400, t + 0.03);
       r2.frequency.exponentialRampToValueAtTime(1200, t + 0.2);
-      g2.gain.setValueAtTime(0.08, t + 0.03);
+      g2.gain.setValueAtTime(0.08 * v, t + 0.03);
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
       r2.start(t + 0.03);
       r2.stop(t + 0.25);
@@ -475,7 +490,7 @@ const SoundSystem = {
       sub.type = "sine";
       sub.frequency.setValueAtTime(80, t);
       sub.frequency.exponentialRampToValueAtTime(30, t + 0.15);
-      sGain.gain.setValueAtTime(0.1, t);
+      sGain.gain.setValueAtTime(0.1 * v, t);
       sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
       sub.start(t);
       sub.stop(t + 0.15);
@@ -2677,6 +2692,7 @@ const Slash = {
   timerTimeout: null,
   flinchTimeout: null,
   heartbeatInterval: null,
+  heartbeatSpeed: 600,
   roundTime: 5000,
   // 層・ラウンド管理
   currentLayer: 0,
@@ -2684,6 +2700,8 @@ const Slash = {
   comboCount: 0,
   totalMisses: 0,
   lastDecision: "",
+  // 崩壊演出
+  collapseRAF: null,
 
   init() {
     this.el = {
@@ -2706,6 +2724,7 @@ const Slash = {
       clearMsg: document.getElementById("sl-clear-msg"),
       clearStats: document.getElementById("sl-clear-stats"),
       clearRank: document.getElementById("sl-clear-rank"),
+      reward: document.getElementById("sl-reward"),
     };
 
     document.getElementById("sl-back").addEventListener("click", () => this.goTitle());
@@ -2745,6 +2764,7 @@ const Slash = {
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
+    if (this.collapseRAF) { cancelAnimationFrame(this.collapseRAF); this.collapseRAF = null; }
   },
 
   clearEffects() {
@@ -2753,9 +2773,14 @@ const Slash = {
     this.el.hitFlash.classList.remove("sl-flash-fire");
     this.el.vignette.classList.remove("sl-vig-active");
     this.el.command.classList.remove("sl-cmd-wobble");
+    this.el.command.style.transform = "";
+    this.el.screen.style.transform = "";
     document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
     this.el.layerOverlay.classList.remove("sl-lo-show");
     this.el.clearOverlay.classList.remove("sl-co-show");
+    this.el.reward.style.opacity = "0";
+    this.el.reward.textContent = "";
+    if (this.collapseRAF) { cancelAnimationFrame(this.collapseRAF); this.collapseRAF = null; }
   },
 
   start() {
@@ -2831,6 +2856,34 @@ const Slash = {
     }
 
     this.startTimer();
+
+    // 崩壊演出: 最終層 or 残りラウンド2以下
+    const isCollapsing = this.currentLayer === SLASH_LAYERS.length - 1 ||
+      (this.currentLayer >= 3 && (SLASH_LAYERS[this.currentLayer].rounds - this.currentRound) <= 2);
+    if (isCollapsing) this.startCollapse();
+  },
+
+  startCollapse() {
+    const sid = this.sessionId;
+    const cmd = this.el.command;
+    const scr = this.el.screen;
+    const tick = () => {
+      if (this.sessionId !== sid || this.answered) {
+        cmd.style.transform = "";
+        scr.style.transform = "";
+        this.collapseRAF = null;
+        return;
+      }
+      // テキスト微ブレ（±1px）
+      const ox = (Math.random() - 0.5) * 2;
+      const oy = (Math.random() - 0.5) * 2;
+      cmd.style.transform = "translate(" + ox + "px," + oy + "px)";
+      // 画面微歪み
+      const s = 1 + Math.random() * 0.015;
+      scr.style.transform = "scale(" + s + ")";
+      this.collapseRAF = requestAnimationFrame(tick);
+    };
+    this.collapseRAF = requestAnimationFrame(tick);
   },
 
   startTimer() {
@@ -2858,15 +2911,15 @@ const Slash = {
       this.el.targets.querySelectorAll(".sl-target").forEach(c => {
         c.classList.add("sl-target-flinch");
       });
-      // 心拍音
-      SoundSystem.heartbeat();
-      this.heartbeatInterval = setInterval(() => {
-        if (this.sessionId !== sid || this.answered) {
-          clearInterval(this.heartbeatInterval);
-          return;
-        }
+      // 心拍音（加速ループ: 600ms → 350ms）
+      this.heartbeatSpeed = 600;
+      const hbLoop = () => {
+        if (this.sessionId !== sid || this.answered) return;
         SoundSystem.heartbeat();
-      }, 500);
+        this.heartbeatSpeed = Math.max(350, this.heartbeatSpeed - 40);
+        this.heartbeatInterval = setTimeout(() => hbLoop(), this.heartbeatSpeed);
+      };
+      hbLoop();
     }, dur - urgentAt);
 
     this.timerTimeout = setTimeout(() => {
@@ -2878,7 +2931,7 @@ const Slash = {
   stopTimer() {
     clearTimeout(this.timerTimeout);
     clearTimeout(this.flinchTimeout);
-    clearInterval(this.heartbeatInterval);
+    clearTimeout(this.heartbeatInterval);
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
@@ -3035,10 +3088,53 @@ const Slash = {
     this.comboCount++;
     const combo = this.comboCount;
     const isFinal = this.isFinalRound();
-    const freezeTime = isFinal ? 200 : (combo >= 10 ? 130 : 100);
+
+    // コンボ段階でパラメータを決定
+    let freezeTime, flashOpacity, shakeClass, splitDist, splitRot, splitDrop, soundVol;
+    if (isFinal) {
+      // 最終ヒット特別演出
+      freezeTime = 200;
+      flashOpacity = 0.95;
+      shakeClass = "sl-screen-shake-heavy";
+      splitDist = 70; splitRot = 40; splitDrop = 150;
+      soundVol = 1.0;
+    } else if (combo >= 10) {
+      freezeTime = 150;
+      flashOpacity = 0.9;
+      shakeClass = "sl-screen-shake-heavy";
+      splitDist = 60; splitRot = 33; splitDrop = 132;
+      soundVol = 1.0;
+    } else if (combo >= 5) {
+      freezeTime = 100;
+      flashOpacity = 0.8;
+      shakeClass = "sl-screen-shake";
+      splitDist = 60; splitRot = 33; splitDrop = 132;
+      soundVol = 1.0;
+    } else if (combo >= 3) {
+      freezeTime = 100;
+      flashOpacity = 0.7;
+      shakeClass = "sl-screen-shake";
+      splitDist = 55; splitRot = 30; splitDrop = 120;
+      soundVol = 1.0;
+    } else {
+      // 0-2: 控えめ（基準の70%）
+      freezeTime = 70;
+      flashOpacity = 0.4;
+      shakeClass = "sl-screen-shake-light";
+      splitDist = 40; splitRot = 20; splitDrop = 90;
+      soundVol = 0.7;
+    }
 
     // 触覚フィードバック
     if (navigator.vibrate) navigator.vibrate(combo >= 5 ? [15, 30, 50] : 30);
+
+    // 崩壊演出を停止
+    if (this.collapseRAF) {
+      cancelAnimationFrame(this.collapseRAF);
+      this.collapseRAF = null;
+      this.el.command.style.transform = "";
+      this.el.screen.style.transform = "";
+    }
 
     // 1. ヒットフリーズ
     targetEl.classList.add("sl-hit-freeze");
@@ -3049,12 +3145,28 @@ const Slash = {
     setTimeout(() => {
       if (this.sessionId !== sid) return;
 
-      // 2. 白フラッシュ
+      // 2. 白フラッシュ（コンボ段階で強度変化）
+      this.el.hitFlash.style.opacity = flashOpacity;
       this.el.hitFlash.classList.add("sl-flash-fire");
-      setTimeout(() => this.el.hitFlash.classList.remove("sl-flash-fire"), 50);
+      const flashDur = isFinal ? 70 : 50;
+      setTimeout(() => {
+        this.el.hitFlash.classList.remove("sl-flash-fire");
+        this.el.hitFlash.style.opacity = "";
+        // 最終ヒット: 2回目フラッシュ
+        if (isFinal) {
+          setTimeout(() => {
+            this.el.hitFlash.style.opacity = "0.6";
+            this.el.hitFlash.classList.add("sl-flash-fire");
+            setTimeout(() => {
+              this.el.hitFlash.classList.remove("sl-flash-fire");
+              this.el.hitFlash.style.opacity = "";
+            }, 40);
+          }, 60);
+        }
+      }, flashDur);
 
-      // 3. 斬撃音（コンボ対応）
-      SoundSystem.slash(combo);
+      // 3. 斬撃音（無音→発音）
+      SoundSystem.slash(combo, soundVol);
 
       // 4. フリーズ解除
       targetEl.classList.remove("sl-hit-freeze");
@@ -3064,12 +3176,11 @@ const Slash = {
       slashLine.className = "sl-slash-line-proto";
       targetEl.appendChild(slashLine);
 
-      // 6. 画像を分裂
+      // 6. 画像を分裂（コンボ段階で距離変化）
       const img = targetEl.querySelector(".sl-target-img");
       const imgSrc = img.src;
       img.style.visibility = "hidden";
 
-      const splitScale = combo >= 5 ? 1.1 : 1;
       const leftHalf = document.createElement("div");
       leftHalf.className = "sl-split-half sl-split-left";
       leftHalf.style.backgroundImage = "url(" + imgSrc + ")";
@@ -3078,41 +3189,57 @@ const Slash = {
       rightHalf.className = "sl-split-half sl-split-right";
       rightHalf.style.backgroundImage = "url(" + imgSrc + ")";
 
-      // コンボ5+: 分裂距離+10%
-      if (splitScale > 1) {
-        leftHalf.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
-        rightHalf.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
-      }
+      // 動的分裂パラメータ
+      const dur = isFinal ? "0.6s" : (combo >= 5 ? "0.4s" : "0.45s");
+      leftHalf.style.transition = "transform " + dur + " ease-out, opacity " + dur + " ease-out";
+      rightHalf.style.transition = "transform " + dur + " ease-out, opacity " + dur + " ease-out";
 
       targetEl.appendChild(leftHalf);
       targetEl.appendChild(rightHalf);
 
       requestAnimationFrame(() => {
-        leftHalf.classList.add("sl-split-fly");
-        rightHalf.classList.add("sl-split-fly");
+        leftHalf.style.transform = "translate(-" + splitDist + "px, " + splitDrop + "px) rotate(-" + splitRot + "deg)";
+        leftHalf.style.opacity = "0";
+        rightHalf.style.transform = "translate(" + splitDist + "px, " + splitDrop + "px) rotate(" + splitRot + "deg)";
+        rightHalf.style.opacity = "0";
       });
 
-      // 7. 画面シェイク
-      this.el.screen.classList.remove("sl-screen-shake");
+      // 7. 画面シェイク（段階別）
+      this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy");
       void this.el.screen.offsetWidth;
-      this.el.screen.classList.add("sl-screen-shake");
+      this.el.screen.classList.add(shakeClass);
 
       // 8. 他の対象をフェードアウト
       this.el.targets.querySelectorAll(".sl-target").forEach(c => {
         if (c !== targetEl) c.classList.add("sl-target-fade");
       });
 
-      // 9. コンボUI更新
+      // 9. コンボUI + 報酬テキスト
       this.updateComboUI();
+      this.showReward(combo);
 
       // 10. 次へ
-      const advDelay = isFinal ? 1200 : 900;
+      const advDelay = isFinal ? 1500 : 900;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
-        this.el.screen.classList.remove("sl-screen-shake");
+        this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy");
         this.advanceRound();
       }, advDelay);
     }, freezeTime);
+  },
+
+  showReward(combo) {
+    if (combo >= 10) {
+      this.el.reward.textContent = "FEVER";
+      this.el.reward.className = "sl-reward sl-reward-fever";
+    } else if (combo >= 5) {
+      this.el.reward.textContent = "GOOD";
+      this.el.reward.className = "sl-reward sl-reward-good";
+    } else {
+      return;
+    }
+    this.el.reward.style.opacity = "1";
+    setTimeout(() => { this.el.reward.style.opacity = "0"; }, 500);
   },
 
   onWrongSlash(targetEl) {
