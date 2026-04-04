@@ -2700,9 +2700,9 @@ const SLASH_TARGETS = [
 ];
 
 const SWIPE_CONFIG = {
-  minDistY: 40,
-  maxDistX: 120,
-  maxTime: 800,
+  minDistY: 30,
+  maxDistX: 150,
+  maxTime: 1000,
 };
 
 const Slash = {
@@ -2798,7 +2798,7 @@ const Slash = {
   },
 
   clearEffects() {
-    this.el.screen.classList.remove("sl-screen-shake", "sl-miss-flash", "sl-miss-shake", "sl-late-bg");
+    this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy", "sl-hit-zoom", "sl-miss-flash", "sl-miss-shake", "sl-late-bg");
     this.el.urgentOverlay.classList.remove("sl-urgent-active");
     this.el.hitFlash.classList.remove("sl-flash-fire");
     this.el.vignette.classList.remove("sl-vig-active");
@@ -3003,6 +3003,7 @@ const Slash = {
 
   renderTargets() {
     this.el.targets.innerHTML = "";
+    this.el.targets.dataset.count = this.activeTargets.length;
     this.activeTargets.forEach((t, i) => {
       const card = document.createElement("div");
       card.className = "sl-target";
@@ -3113,8 +3114,10 @@ const Slash = {
 
     let correct;
     if (this.decisionType === "normal") {
+      // 逆らえ: 命令された対象以外を斬れば正解
       correct = (index !== this.commandedIndex);
     } else {
+      // 従え: 命令された対象を斬れば正解
       correct = (index === this.commandedIndex);
     }
 
@@ -3247,9 +3250,11 @@ const Slash = {
       });
 
       // 7. 画面シェイク（段階別）
-      this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy");
+      this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy", "sl-hit-zoom");
       void this.el.screen.offsetWidth;
       this.el.screen.classList.add(shakeClass);
+      // ヒットズーム（0.05秒のスケールパンチ）
+      this.el.screen.classList.add("sl-hit-zoom");
 
       // 8. 他の対象をフェードアウト
       this.el.targets.querySelectorAll(".sl-target").forEach(c => {
@@ -3264,7 +3269,7 @@ const Slash = {
       const advDelay = isFinal ? 1200 : 900;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
-        this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy");
+        this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy", "sl-hit-zoom");
         this.advanceRound();
       }, advDelay);
     }, freezeTime);
