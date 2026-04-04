@@ -305,6 +305,32 @@ const SoundSystem = {
     osc.stop(t + 0.15);
   },
 
+  // --- クリア音: 柔らかい余韻のある達成音 ---
+  clearChime() {
+    if (!this.enabled) return;
+    this.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    // 低い芯（ポーン）
+    const o1 = ctx.createOscillator();
+    const g1 = ctx.createGain();
+    o1.connect(g1); g1.connect(ctx.destination);
+    o1.type = "sine";
+    o1.frequency.setValueAtTime(523, t); // C5
+    g1.gain.setValueAtTime(0.1, t);
+    g1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o1.start(t); o1.stop(t + 0.6);
+    // 高い倍音（キーン）
+    const o2 = ctx.createOscillator();
+    const g2 = ctx.createGain();
+    o2.connect(g2); g2.connect(ctx.destination);
+    o2.type = "sine";
+    o2.frequency.setValueAtTime(1047, t + 0.05); // C6
+    g2.gain.setValueAtTime(0.06, t + 0.05);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o2.start(t + 0.05); o2.stop(t + 0.5);
+  },
+
   // --- 不正解音: 短い不快な下降音 ---
   wrong() {
     if (!this.enabled) return;
@@ -2698,6 +2724,7 @@ const Slash = {
   currentLayer: 0,
   currentRound: 0,
   comboCount: 0,
+  maxCombo: 0,
   totalMisses: 0,
   lastDecision: "",
   // 崩壊演出
@@ -2724,6 +2751,9 @@ const Slash = {
       clearMsg: document.getElementById("sl-clear-msg"),
       clearStats: document.getElementById("sl-clear-stats"),
       clearRank: document.getElementById("sl-clear-rank"),
+      clearRankMsg: document.getElementById("sl-clear-rank-msg"),
+      clearRegret: document.getElementById("sl-clear-regret"),
+      clearButtons: document.getElementById("sl-clear-buttons"),
       reward: document.getElementById("sl-reward"),
     };
 
@@ -2780,6 +2810,10 @@ const Slash = {
     this.el.clearOverlay.classList.remove("sl-co-show");
     this.el.reward.style.opacity = "0";
     this.el.reward.textContent = "";
+    this.el.clearRankMsg.textContent = "";
+    this.el.clearRegret.textContent = "";
+    this.el.clearButtons.style.opacity = "0";
+    this.el.clearButtons.style.pointerEvents = "none";
     if (this.collapseRAF) { cancelAnimationFrame(this.collapseRAF); this.collapseRAF = null; }
   },
 
@@ -2790,6 +2824,7 @@ const Slash = {
     this.currentLayer = 0;
     this.currentRound = 0;
     this.comboCount = 0;
+    this.maxCombo = 0;
     this.totalMisses = 0;
     this.lastDecision = "";
     SoundSystem.init();
@@ -3092,6 +3127,7 @@ const Slash = {
 
   onCorrectSlash(targetEl) {
     this.comboCount++;
+    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
     const combo = this.comboCount;
     const isFinal = this.isFinalRound();
 
@@ -3300,6 +3336,7 @@ const Slash = {
 
   onWaitSuccess() {
     this.comboCount++;
+    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
     this.el.command.textContent = "…耐えたな";
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
     this.updateComboUI();
@@ -3334,43 +3371,88 @@ const Slash = {
 
   showClear() {
     const sid = this.sessionId;
-    // 暗転
-    this.el.clearOverlay.classList.add("sl-co-show");
-    // タイプライターメッセージ
-    const msg = "…もう、誰にも\n支配されない。";
-    const chars = msg.split("");
+    const m = this.totalMisses;
+    const mc = this.maxCombo;
+
+    // リセット
     this.el.clearMsg.textContent = "";
     this.el.clearStats.textContent = "";
     this.el.clearRank.textContent = "";
-    let i = 0;
-    const typeTimer = setInterval(() => {
-      if (this.sessionId !== sid) { clearInterval(typeTimer); return; }
-      if (i < chars.length) {
-        const c = chars[i];
-        if (c === "\n") {
-          this.el.clearMsg.appendChild(document.createElement("br"));
-        } else {
-          this.el.clearMsg.appendChild(document.createTextNode(c));
-        }
-        i++;
-      } else {
-        clearInterval(typeTimer);
-        // ランク表示
-        setTimeout(() => {
-          if (this.sessionId !== sid) return;
-          const m = this.totalMisses;
-          let rank, rankMsg;
-          if (m === 0) { rank = "S"; rankMsg = "完璧。空気を支配した。"; }
-          else if (m <= 3) { rank = "A"; rankMsg = "見事。圧力を跳ね返した。"; }
-          else if (m <= 7) { rank = "B"; rankMsg = "悪くない。だが隙がある。"; }
-          else if (m <= 12) { rank = "C"; rankMsg = "まだ迷いがある。"; }
-          else { rank = "D"; rankMsg = "空気に飲まれかけた。"; }
-          this.el.clearStats.textContent = "MISS: " + m;
-          this.el.clearRank.textContent = rank;
-          this.el.clearRank.style.color = rank === "S" ? "#ffd700" : rank === "A" ? "#c0c0ff" : "#a090c0";
-        }, 600);
-      }
-    }, 80);
+    this.el.clearRankMsg.textContent = "";
+    this.el.clearRegret.textContent = "";
+    this.el.clearButtons.style.opacity = "0";
+    this.el.clearButtons.style.pointerEvents = "none";
+
+    // ① 0.2秒の静寂 → 暗転
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.clearOverlay.classList.add("sl-co-show");
+
+      // ② 軽いクリアSE
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        SoundSystem.clearChime();
+      }, 300);
+
+      // ③ タイプライターメッセージ
+      const msg = "…もう、誰にも\n支配されない。";
+      const chars = msg.split("");
+      let ci = 0;
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        const typeTimer = setInterval(() => {
+          if (this.sessionId !== sid) { clearInterval(typeTimer); return; }
+          if (ci < chars.length) {
+            const c = chars[ci];
+            if (c === "\n") {
+              this.el.clearMsg.appendChild(document.createElement("br"));
+            } else {
+              this.el.clearMsg.appendChild(document.createTextNode(c));
+            }
+            ci++;
+          } else {
+            clearInterval(typeTimer);
+            // ④ ランク判定
+            setTimeout(() => {
+              if (this.sessionId !== sid) return;
+              let rank, rankMsg, rankColor;
+              if (m === 0) {
+                rank = "S"; rankMsg = "完璧だ。"; rankColor = "#ffd700";
+              } else if (m <= 2) {
+                rank = "A"; rankMsg = "ほぼ見えている。"; rankColor = "#c0c0ff";
+              } else if (m <= 4) {
+                rank = "B"; rankMsg = "判断が遅い。"; rankColor = "#a0c0e0";
+              } else {
+                rank = "C"; rankMsg = "迷いすぎだ。"; rankColor = "#a090c0";
+              }
+
+              this.el.clearStats.textContent = "MISS: " + m;
+              this.el.clearRank.textContent = rank;
+              this.el.clearRank.style.color = rankColor;
+              this.el.clearRankMsg.textContent = rankMsg;
+
+              // ⑤「惜しい」判定
+              const hasRegret = m === 1 || (m === 3 && mc >= 8);
+              let regretText = "";
+              if (m === 1) {
+                regretText = "…あと一歩だった。";
+              } else if (m === 3 && mc >= 8) {
+                regretText = "…あと少しだった。";
+              }
+
+              setTimeout(() => {
+                if (this.sessionId !== sid) return;
+                this.el.clearRegret.textContent = regretText;
+
+                // ⑥ ボタン表示（即操作可能）
+                this.el.clearButtons.style.opacity = "1";
+                this.el.clearButtons.style.pointerEvents = "auto";
+              }, hasRegret ? 400 : 200);
+            }, 500);
+          }
+        }, 80);
+      }, 200);
+    }, 200);
   },
 
   showOX(isCorrect) {
