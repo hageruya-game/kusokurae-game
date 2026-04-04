@@ -2808,6 +2808,7 @@ const Slash = {
     document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
     this.el.layerOverlay.classList.remove("sl-lo-show");
     this.el.clearOverlay.classList.remove("sl-co-show");
+    this.el.statusWrap.classList.remove("sl-status-pulse");
     this.el.reward.style.opacity = "0";
     this.el.reward.textContent = "";
     this.el.clearRankMsg.textContent = "";
@@ -3306,6 +3307,11 @@ const Slash = {
     this.el.screen.classList.remove("sl-miss-flash", "sl-miss-shake");
     void this.el.screen.offsetWidth;
     this.el.screen.classList.add("sl-miss-flash", "sl-miss-shake");
+
+    // 状態ラベルをパルスして「今のルール」を想起させる
+    this.el.statusWrap.classList.remove("sl-status-pulse");
+    void this.el.statusWrap.offsetWidth;
+    this.el.statusWrap.classList.add("sl-status-pulse");
 
     this.updateComboUI();
 
