@@ -2888,7 +2888,7 @@ body::before {
 .sl-target[data-id="rat"] .sl-target-img { transform: scale(1.25); }
 .sl-target[data-id="bomb"] .sl-target-img { transform: scale(1.1); }
 .sl-target[data-id="burger"] .sl-target-img { transform: scale(1.1); }
-.sl-target[data-id="fire"] .sl-target-img { transform: scale(1.1); }
+.sl-target[data-id="fire"] .sl-target-img { transform: scale(1.05); }
 .sl-target[data-id="mushroom"] .sl-target-img { transform: scale(1.1); }
 .sl-target[data-id="potion"] .sl-target-img { transform: scale(1.1); }
 
