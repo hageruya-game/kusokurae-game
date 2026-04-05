@@ -2807,6 +2807,7 @@ const Slash = {
     this.el.command.classList.remove("sl-cmd-wobble");
     this.el.command.style.transform = "";
     this.el.screen.style.transform = "";
+    this.el.screen.scrollTop = 0;
     document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
     this.el.layerOverlay.classList.remove("sl-lo-show");
     this.el.clearOverlay.classList.remove("sl-co-show");
@@ -2832,6 +2833,11 @@ const Slash = {
     this.lastDecision = "";
     SoundSystem.init();
     this.clearEffects();
+    // スクロール・transform 確実リセット
+    this.el.screen.scrollTop = 0;
+    this.el.screen.style.transform = "";
+    this.el.comboEl.classList.remove("sl-combo-show", "sl-combo-hot");
+    this.el.comboEl.textContent = "";
     Game.showScreen(this.el.screen);
     this.showLayerTitle();
   },
@@ -3316,6 +3322,7 @@ const Slash = {
   },
 
   onWrongSlash(targetEl) {
+    const hadCombo = this.comboCount >= 3;
     this.comboCount = 0;
     this.totalMisses++;
     SoundSystem.wrong();
@@ -3338,7 +3345,18 @@ const Slash = {
     void this.el.statusWrap.offsetWidth;
     this.el.statusWrap.classList.add("sl-status-pulse");
 
-    this.updateComboUI();
+    // コンボブレイク表示
+    if (hadCombo) {
+      this.el.comboEl.textContent = "BREAK";
+      this.el.comboEl.classList.remove("sl-combo-hot");
+      this.el.comboEl.classList.add("sl-combo-show", "sl-combo-break");
+      setTimeout(() => {
+        this.el.comboEl.classList.remove("sl-combo-show", "sl-combo-break");
+        this.el.comboEl.textContent = "";
+      }, 700);
+    } else {
+      this.updateComboUI();
+    }
 
     const sid = this.sessionId;
     setTimeout(() => {
@@ -3357,12 +3375,23 @@ const Slash = {
       return;
     }
 
+    const hadCombo = this.comboCount >= 3;
     this.comboCount = 0;
     this.totalMisses++;
     SoundSystem.wrong();
     this.el.command.textContent = "…遅い";
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
-    this.updateComboUI();
+    if (hadCombo) {
+      this.el.comboEl.textContent = "BREAK";
+      this.el.comboEl.classList.remove("sl-combo-hot");
+      this.el.comboEl.classList.add("sl-combo-show", "sl-combo-break");
+      setTimeout(() => {
+        this.el.comboEl.classList.remove("sl-combo-show", "sl-combo-break");
+        this.el.comboEl.textContent = "";
+      }, 700);
+    } else {
+      this.updateComboUI();
+    }
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;

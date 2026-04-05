@@ -2699,6 +2699,11 @@ body::before {
 }
 .sl-combo.sl-combo-show { opacity: 1; }
 .sl-combo.sl-combo-hot { color: #ff8040; text-shadow: 0 0 8px rgba(255, 128, 64, 0.5); }
+.sl-combo.sl-combo-break { color: #ff4040; animation: slComboBreak 0.7s ease-out; }
+@keyframes slComboBreak {
+  0%   { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
 
 /* 状態表示 */
 .sl-status-wrap {
@@ -2836,8 +2841,8 @@ body::before {
 }
 
 .sl-target {
-  width: clamp(150px, 46vw, 190px);
-  height: clamp(150px, 46vw, 190px);
+  width: clamp(140px, 42vw, 175px);
+  height: clamp(140px, 42vw, 175px);
   display: flex;
   align-items: center;
   justify-content: center;
