@@ -2684,9 +2684,9 @@ const Dungeon = {
 const SLASH_LAYERS = [
   { name: "第一層：覚醒", rounds: 3, choices: 2, timer: 5000, types: ["normal"], imgScale: 1.0 },
   { name: "第二層：惑い", rounds: 4, choices: 2, timer: 4000, types: ["normal", "normal", "obey"], imgScale: 1.0 },
-  { name: "第三層：静寂", rounds: 4, choices: 3, timer: 3400, types: ["normal", "obey", "obey", "wait"], imgScale: 0.92 },
-  { name: "第四層：混乱", rounds: 4, choices: 4, timer: 3000, types: ["normal", "obey", "wait"], imgScale: 0.82 },
-  { name: "最深層：決断", rounds: 5, choices: 4, timer: 2600, types: ["normal", "obey", "wait"], imgScale: 0.72 },
+  { name: "第三層：静寂", rounds: 4, choices: 3, timer: 3400, types: ["normal", "normal", "obey", "wait"], imgScale: 0.92 },
+  { name: "第四層：混乱", rounds: 4, choices: 4, timer: 3000, types: ["normal", "normal", "obey", "obey", "wait"], imgScale: 0.82 },
+  { name: "最深層：決断", rounds: 5, choices: 4, timer: 2600, types: ["normal", "normal", "obey", "obey", "wait"], imgScale: 0.72 },
 ];
 
 const SLASH_TARGETS = [
@@ -2703,8 +2703,8 @@ const SLASH_TARGETS = [
 ];
 
 const SWIPE_CONFIG = {
-  minDistY: 30,
-  maxDistX: 150,
+  minDistY: 25,
+  maxDistX: 180,
   maxTime: 1000,
 };
 
@@ -2946,12 +2946,19 @@ const Slash = {
     this.decisionType = dt;
     this.updateStatusUI();
 
-    // 択数 & タイマー
+    // 択数 & タイマー（waitは通常より長く耐える必要がある）
     const choices = layer.choices;
-    this.roundTime = layer.timer;
+    this.roundTime = (dt === "wait") ? Math.round(layer.timer * 1.15) : layer.timer;
     this.pickTargets(choices);
     this.generateCommand();
     this.renderTargets();
+
+    // wait: ターゲットに警告脈動を付与
+    if (this.decisionType === "wait") {
+      this.el.targets.querySelectorAll(".sl-target").forEach(function(c) {
+        c.classList.add("sl-target-danger");
+      });
+    }
 
     // コンボUI
     this.updateComboUI();
@@ -3148,11 +3155,11 @@ const Slash = {
     var html = "";
     for (var i = 0; i < this.maxLives; i++) {
       if (i < this.lives) {
-        html += '<span class="sl-life-active">\u2716</span>';
+        html += '<div class="sl-life"></div>';
       } else if (i === breakIndex) {
-        html += '<span class="sl-life-lost sl-life-break">\u2716</span>';
+        html += '<div class="sl-life sl-life-lost sl-life-break"></div>';
       } else {
-        html += '<span class="sl-life-lost">\u2716</span>';
+        html += '<div class="sl-life sl-life-lost"></div>';
       }
     }
     this.el.livesEl.innerHTML = html;
