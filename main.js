@@ -832,6 +832,9 @@ const Game = {
       s.classList.remove("active", "fade-in");
     });
     screenEl.classList.add("active", "fade-in");
+    // スクロール位置リセット（タイトル画面復帰時の残留スクロール防止）
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
 
     // ★ 全セッション無効化: sessionIdを進めて古い全callbackを死滅させる
     this.sessionId++;
@@ -5146,4 +5149,10 @@ document.addEventListener("DOMContentLoaded", () => {
   Slash.init();
   JudgeRoom.init();
   /* Corridor.init(); -- 隔離中 */
+
+  // タイトル画面のスクロール/バウンス完全防止（iOS Safari対策）
+  var titleScreen = document.getElementById("screen-title");
+  titleScreen.addEventListener("touchmove", function(e) {
+    e.preventDefault();
+  }, { passive: false });
 });
