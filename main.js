@@ -305,30 +305,126 @@ const SoundSystem = {
     osc.stop(t + 0.15);
   },
 
-  // --- クリア音: 柔らかい余韻のある達成音 ---
+  // --- クリア音: 解放の和音（低→高に広がり、余韻が長い） ---
   clearChime() {
     if (!this.enabled) return;
     this.resume();
-    const ctx = this.ctx;
-    const t = ctx.currentTime;
-    // 低い芯（ポーン）
-    const o1 = ctx.createOscillator();
-    const g1 = ctx.createGain();
-    o1.connect(g1); g1.connect(ctx.destination);
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    // リバーブ代わりのコンボリューション（簡易ディレイ+フィルタ）
+    var master = ctx.createGain();
+    master.gain.value = 1.0;
+    master.connect(ctx.destination);
+    // 1. 低い芯（C4 → 長い余韻）
+    var o1 = ctx.createOscillator();
+    var g1 = ctx.createGain();
+    o1.connect(g1); g1.connect(master);
     o1.type = "sine";
-    o1.frequency.setValueAtTime(523, t); // C5
-    g1.gain.setValueAtTime(0.1, t);
-    g1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-    o1.start(t); o1.stop(t + 0.6);
-    // 高い倍音（キーン）
-    const o2 = ctx.createOscillator();
-    const g2 = ctx.createGain();
-    o2.connect(g2); g2.connect(ctx.destination);
+    o1.frequency.setValueAtTime(262, t);
+    g1.gain.setValueAtTime(0.12, t);
+    g1.gain.setValueAtTime(0.12, t + 0.3);
+    g1.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+    o1.start(t); o1.stop(t + 1.8);
+    // 2. 中域の5度（G4 → 遅れて入る）
+    var o2 = ctx.createOscillator();
+    var g2 = ctx.createGain();
+    o2.connect(g2); g2.connect(master);
     o2.type = "sine";
-    o2.frequency.setValueAtTime(1047, t + 0.05); // C6
-    g2.gain.setValueAtTime(0.06, t + 0.05);
-    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    o2.start(t + 0.05); o2.stop(t + 0.5);
+    o2.frequency.setValueAtTime(392, t + 0.15);
+    g2.gain.setValueAtTime(0.08, t + 0.15);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    o2.start(t + 0.15); o2.stop(t + 1.5);
+    // 3. 高域のオクターブ（C5 → さらに遅れて）
+    var o3 = ctx.createOscillator();
+    var g3 = ctx.createGain();
+    o3.connect(g3); g3.connect(master);
+    o3.type = "sine";
+    o3.frequency.setValueAtTime(523, t + 0.3);
+    g3.gain.setValueAtTime(0.06, t + 0.3);
+    g3.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
+    o3.start(t + 0.3); o3.stop(t + 1.6);
+    // 4. 超高域のきらめき（E5）
+    var o4 = ctx.createOscillator();
+    var g4 = ctx.createGain();
+    o4.connect(g4); g4.connect(master);
+    o4.type = "sine";
+    o4.frequency.setValueAtTime(659, t + 0.5);
+    g4.gain.setValueAtTime(0.04, t + 0.5);
+    g4.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+    o4.start(t + 0.5); o4.stop(t + 1.4);
+    // 5. サブベース（深い共鳴）
+    var sub = ctx.createOscillator();
+    var sg = ctx.createGain();
+    sub.connect(sg); sg.connect(master);
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(65, t);
+    sg.gain.setValueAtTime(0.08, t);
+    sg.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+    sub.start(t); sub.stop(t + 2.0);
+  },
+
+  // --- 最終斬撃SE: 通常slash + 衝撃波 + 残響 ---
+  finalSlash() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime + 0.03;
+    // 通常の斬撃音（強め）
+    this.slash(20, 1.0);
+    // 追加: 衝撃波（低いブーム）
+    var boom = ctx.createOscillator();
+    var bg = ctx.createGain();
+    boom.connect(bg); bg.connect(ctx.destination);
+    boom.type = "sine";
+    boom.frequency.setValueAtTime(60, t);
+    boom.frequency.exponentialRampToValueAtTime(20, t + 0.4);
+    bg.gain.setValueAtTime(0.25, t);
+    bg.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    boom.start(t); boom.stop(t + 0.5);
+    // 追加: 金属残響（長い余韻）
+    var ring = ctx.createOscillator();
+    var rg = ctx.createGain();
+    ring.connect(rg); rg.connect(ctx.destination);
+    ring.type = "sine";
+    ring.frequency.setValueAtTime(2200, t + 0.05);
+    ring.frequency.exponentialRampToValueAtTime(800, t + 0.8);
+    rg.gain.setValueAtTime(0.08, t + 0.05);
+    rg.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+    ring.start(t + 0.05); ring.stop(t + 0.8);
+  },
+
+  // --- ゲームオーバーSE: 低い崩壊音 ---
+  gameoverSound() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    // 低い下降ドローン
+    var o1 = ctx.createOscillator();
+    var g1 = ctx.createGain();
+    o1.connect(g1); g1.connect(ctx.destination);
+    o1.type = "sawtooth";
+    o1.frequency.setValueAtTime(120, t);
+    o1.frequency.exponentialRampToValueAtTime(25, t + 0.8);
+    g1.gain.setValueAtTime(0.1, t);
+    g1.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+    o1.start(t); o1.stop(t + 1.0);
+    // ノイズ
+    var bufSize = Math.floor(ctx.sampleRate * 0.3);
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.4;
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    var lpf = ctx.createBiquadFilter();
+    lpf.type = "lowpass";
+    lpf.frequency.setValueAtTime(400, t);
+    lpf.frequency.exponentialRampToValueAtTime(50, t + 0.6);
+    var ng = ctx.createGain();
+    noise.connect(lpf); lpf.connect(ng); ng.connect(ctx.destination);
+    ng.gain.setValueAtTime(0.12, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    noise.start(t); noise.stop(t + 0.6);
   },
 
   // --- 不正解音: 短い不快な下降音 ---
@@ -3260,11 +3356,11 @@ const Slash = {
     // コンボ段階でパラメータを決定
     let freezeTime, flashOpacity, shakeClass, splitDist, splitRot, splitDrop, soundVol;
     if (isFinal) {
-      // 最終ヒット特別演出
-      freezeTime = 200;
-      flashOpacity = 0.95;
+      // 最終ヒット特別演出（長いフリーズ → 衝撃）
+      freezeTime = 350;
+      flashOpacity = 1.0;
       shakeClass = "sl-screen-shake-heavy";
-      splitDist = 70; splitRot = 40; splitDrop = 150;
+      splitDist = 80; splitRot = 45; splitDrop = 180;
       soundVol = 1.0;
     } else if (combo >= 10) {
       freezeTime = 150;
@@ -3333,8 +3429,12 @@ const Slash = {
         }
       }, flashDur);
 
-      // 3. 斬撃音（無音→発音）
-      SoundSystem.slash(combo, soundVol);
+      // 3. 斬撃音（最終ヒットは特殊SE）
+      if (isFinal) {
+        SoundSystem.finalSlash();
+      } else {
+        SoundSystem.slash(combo, soundVol);
+      }
 
       // 4. フリーズ解除
       targetEl.classList.remove("sl-hit-freeze");
@@ -3388,8 +3488,8 @@ const Slash = {
       this.updateComboUI();
       this.showReward(combo);
 
-      // 10. 次へ
-      const advDelay = isFinal ? 1200 : 900;
+      // 10. 次へ（最終ヒットは長い余韻）
+      const advDelay = isFinal ? 1800 : 900;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
         this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy", "sl-hit-zoom");
@@ -3570,11 +3670,12 @@ const Slash = {
 
     this.el.gameoverMsg.textContent = "…支配された";
     this.el.gameoverStats.textContent = layerName + "\n到達ラウンド: " + totalRounds;
+    SoundSystem.gameoverSound();
 
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.gameoverOverlay.classList.add("sl-go-show");
-    }, 200);
+    }, 300);
   },
 
   showClear() {
@@ -3591,19 +3692,19 @@ const Slash = {
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
 
-    // ① 静寂 → 暗転
+    // ① 静寂（最終ヒットの余韻が消えるまで待つ）→ 暗転
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.clearOverlay.classList.add("sl-co-show");
 
-      // ② クリアSE
+      // ② 暗転後、少し沈黙してからクリアSE
       setTimeout(() => {
         if (this.sessionId !== sid) return;
         SoundSystem.clearChime();
-      }, 200);
+      }, 600);
 
-      // ③ タイプライター
-      const msg = "…もう、誰にも\n支配されない。";
+      // ③ タイプライター（SEの和音が広がった後に開始）
+      const msg = "…お前は最後まで抗った。";
       const chars = msg.split("");
       let ci = 0;
       setTimeout(() => {
@@ -3654,9 +3755,9 @@ const Slash = {
               }, hasRegret ? 350 : 150);
             }, 350);
           }
-        }, 65);
-      }, 100);
-    }, 150);
+        }, 75);
+      }, 900);
+    }, 250);
   },
 
   showOX(isCorrect) {
