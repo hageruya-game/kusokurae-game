@@ -2682,11 +2682,11 @@ const Dungeon = {
 // ============================================================
 
 const SLASH_LAYERS = [
-  { name: "第一層：覚醒", rounds: 4, choices: 2, timer: 5000, types: ["normal"], imgScale: 1.0 },
-  { name: "第二層：惑い", rounds: 5, choices: 2, timer: 4200, types: ["normal", "normal", "obey"], imgScale: 1.0 },
-  { name: "第三層：静寂", rounds: 5, choices: 3, timer: 3600, types: ["normal", "obey", "obey", "wait"], imgScale: 0.92 },
-  { name: "第四層：混乱", rounds: 6, choices: 4, timer: 3200, types: ["normal", "obey", "wait"], imgScale: 0.82 },
-  { name: "最深層：決断", rounds: 6, choices: 4, timer: 2800, types: ["normal", "obey", "wait"], imgScale: 0.72 },
+  { name: "第一層：覚醒", rounds: 3, choices: 2, timer: 5000, types: ["normal"], imgScale: 1.0 },
+  { name: "第二層：惑い", rounds: 4, choices: 2, timer: 4000, types: ["normal", "normal", "obey"], imgScale: 1.0 },
+  { name: "第三層：静寂", rounds: 4, choices: 3, timer: 3400, types: ["normal", "obey", "obey", "wait"], imgScale: 0.92 },
+  { name: "第四層：混乱", rounds: 4, choices: 4, timer: 3000, types: ["normal", "obey", "wait"], imgScale: 0.82 },
+  { name: "最深層：決断", rounds: 5, choices: 4, timer: 2600, types: ["normal", "obey", "wait"], imgScale: 0.72 },
 ];
 
 const SLASH_TARGETS = [
