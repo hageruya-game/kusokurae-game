@@ -2679,11 +2679,11 @@ const Dungeon = {
 // ============================================================
 
 const SLASH_LAYERS = [
-  { name: "第一層：覚醒", rounds: 4, choices: 2, timer: 5000, types: ["normal"] },
-  { name: "第二層：惑い", rounds: 5, choices: 2, timer: 4500, types: ["normal", "normal", "obey"] },
-  { name: "第三層：静寂", rounds: 5, choices: 3, timer: 4000, types: ["normal", "obey", "obey", "wait"] },
-  { name: "第四層：混乱", rounds: 6, choices: 3, timer: 3500, types: ["normal", "obey", "wait"] },
-  { name: "最深層：決断", rounds: 6, choices: 3, timer: 3000, types: ["normal", "obey", "wait"] },
+  { name: "第一層：覚醒", rounds: 4, choices: 2, timer: 5000, types: ["normal"], imgScale: 1.0 },
+  { name: "第二層：惑い", rounds: 5, choices: 2, timer: 4200, types: ["normal", "normal", "obey"], imgScale: 1.0 },
+  { name: "第三層：静寂", rounds: 5, choices: 3, timer: 3600, types: ["normal", "obey", "obey", "wait"], imgScale: 0.92 },
+  { name: "第四層：混乱", rounds: 6, choices: 4, timer: 3200, types: ["normal", "obey", "wait"], imgScale: 0.82 },
+  { name: "最深層：決断", rounds: 6, choices: 4, timer: 2800, types: ["normal", "obey", "wait"], imgScale: 0.72 },
 ];
 
 const SLASH_TARGETS = [
@@ -2728,7 +2728,10 @@ const Slash = {
   comboCount: 0,
   maxCombo: 0,
   totalMisses: 0,
+  lives: 3,
+  maxLives: 3,
   lastDecision: "",
+  roundPlan: [],
   // 崩壊演出
   collapseRAF: null,
 
@@ -2757,11 +2760,17 @@ const Slash = {
       clearRegret: document.getElementById("sl-clear-regret"),
       clearButtons: document.getElementById("sl-clear-buttons"),
       reward: document.getElementById("sl-reward"),
+      livesEl: document.getElementById("sl-lives"),
+      gameoverOverlay: document.getElementById("sl-gameover-overlay"),
+      gameoverMsg: document.getElementById("sl-gameover-msg"),
+      gameoverStats: document.getElementById("sl-gameover-stats"),
     };
 
     document.getElementById("sl-back").addEventListener("click", () => this.goTitle());
     document.getElementById("sl-btn-again").addEventListener("click", () => this.start());
     document.getElementById("sl-btn-title").addEventListener("click", () => this.goTitle());
+    document.getElementById("sl-btn-retry").addEventListener("click", () => this.start());
+    document.getElementById("sl-btn-go-title").addEventListener("click", () => this.goTitle());
 
     const btnSlash = document.getElementById("btn-slash");
     if (btnSlash) btnSlash.addEventListener("click", () => this.start());
@@ -2818,6 +2827,7 @@ const Slash = {
     this.el.clearRegret.textContent = "";
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
+    this.el.gameoverOverlay.classList.remove("sl-go-show");
     if (this.collapseRAF) { cancelAnimationFrame(this.collapseRAF); this.collapseRAF = null; }
   },
 
@@ -2830,6 +2840,7 @@ const Slash = {
     this.comboCount = 0;
     this.maxCombo = 0;
     this.totalMisses = 0;
+    this.lives = this.maxLives;
     this.lastDecision = "";
     SoundSystem.init();
     this.clearEffects();
@@ -2838,8 +2849,59 @@ const Slash = {
     this.el.screen.style.transform = "";
     this.el.comboEl.classList.remove("sl-combo-show", "sl-combo-hot");
     this.el.comboEl.textContent = "";
+    this.updateLivesUI();
     Game.showScreen(this.el.screen);
     this.showLayerTitle();
+  },
+
+  // 制御付きランダム: 層の全ラウンド分のタイプ配列を生成
+  // ルール: 同じタイプが3連続しない、前半と後半でタイプ偏りが少ない
+  buildRoundPlan(layer) {
+    var rounds = layer.rounds;
+    var types = layer.types;
+    // types配列から均等に抽出し、シャッフル
+    var plan = [];
+    // まず各タイプを最低1回ずつ入れ、残りをランダムで埋める
+    var unique = [];
+    for (var i = 0; i < types.length; i++) {
+      if (unique.indexOf(types[i]) === -1) unique.push(types[i]);
+    }
+    // 各ユニークタイプを最低1回保証
+    for (var u = 0; u < unique.length && plan.length < rounds; u++) {
+      plan.push(unique[u]);
+    }
+    // 残りは重み付きランダムで埋める（types配列の出現頻度が重みになる）
+    while (plan.length < rounds) {
+      plan.push(types[Math.floor(Math.random() * types.length)]);
+    }
+    // Fisher-Yatesシャッフル
+    for (var i = plan.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = plan[i]; plan[i] = plan[j]; plan[j] = tmp;
+    }
+    // 3連続チェック: 違反があれば位置を入れ替えて解消（最大20回試行）
+    for (var attempt = 0; attempt < 20; attempt++) {
+      var bad = -1;
+      for (var i = 2; i < plan.length; i++) {
+        if (plan[i] === plan[i - 1] && plan[i] === plan[i - 2]) { bad = i; break; }
+      }
+      if (bad === -1) break;
+      // bad位置の要素を、異なるタイプの位置と交換
+      for (var s = 0; s < plan.length; s++) {
+        if (s !== bad && plan[s] !== plan[bad]) {
+          // 交換後に新たな3連続ができないかチェック
+          var tmp2 = plan[bad]; plan[bad] = plan[s]; plan[s] = tmp2;
+          var ok = true;
+          for (var c = 2; c < plan.length; c++) {
+            if (plan[c] === plan[c - 1] && plan[c] === plan[c - 2]) { ok = false; break; }
+          }
+          if (ok) break;
+          // 戻す
+          plan[s] = plan[bad]; plan[bad] = tmp2;
+        }
+      }
+    }
+    return plan;
   },
 
   showLayerTitle() {
@@ -2847,6 +2909,8 @@ const Slash = {
     this.el.layerName.textContent = layer.name;
     this.el.layerLabel.textContent = layer.name;
     this.el.layerOverlay.classList.add("sl-lo-show");
+    // 層開始時にラウンドプランを生成
+    this.roundPlan = this.buildRoundPlan(layer);
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
@@ -2873,11 +2937,8 @@ const Slash = {
 
     const layer = SLASH_LAYERS[this.currentLayer];
 
-    // 判定タイプ
-    let dt;
-    do {
-      dt = layer.types[Math.floor(Math.random() * layer.types.length)];
-    } while (dt === this.lastDecision && layer.types.length > 1);
+    // 判定タイプ（事前生成プランから取得）
+    const dt = this.roundPlan[this.currentRound] || layer.types[Math.floor(Math.random() * layer.types.length)];
     this.lastDecision = dt;
     this.decisionType = dt;
     this.updateStatusUI();
@@ -2998,15 +3059,17 @@ const Slash = {
     const shuffled = source.sort(() => Math.random() - 0.5);
     this.activeTargets = shuffled.slice(0, count);
     this.lastTargetIds = this.activeTargets.map(t => t.id);
-    // 3択+normal: 2体を命令し、残り1体が正解（単一正解）
-    // 3択+obey: 1体を命令し、その1体が正解（単一正解）
+    // 3択以上+normal: (N-1)体を命令し、残り1体が正解（単一正解）
+    // 3択以上+obey: 1体を命令し、その1体が正解（単一正解）
     // 2択: 従来通り1体を命令
-    if (count === 3 && this.decisionType === "normal") {
-      // commandedIndices: 命令される2体のインデックス
-      const all = [0, 1, 2].sort(() => Math.random() - 0.5);
-      this.correctTargetIndex = all[0];       // 正解（命令されない1体）
-      this.commandedIndices = [all[1], all[2]]; // 命令される2体
-      this.commandedIndex = -1; // 単一index は使わない
+    if (count >= 3 && this.decisionType === "normal") {
+      // commandedIndices: 命令される(count-1)体、残り1体が正解
+      const all = [];
+      for (var ai = 0; ai < count; ai++) all.push(ai);
+      all.sort(() => Math.random() - 0.5);
+      this.correctTargetIndex = all[0];
+      this.commandedIndices = all.slice(1);
+      this.commandedIndex = -1;
     } else {
       this.commandedIndex = Math.floor(Math.random() * count);
       this.commandedIndices = null;
@@ -3019,11 +3082,10 @@ const Slash = {
       this.el.command.textContent = "斬るな";
       return;
     }
-    // 3択+normal: 「XとYを斬れ」→ 逆らえ＝残り1体を斬る
+    // 3択以上+normal: 「XとYとZを斬れ」→ 逆らえ＝残り1体を斬る
     if (this.commandedIndices) {
-      const n1 = this.activeTargets[this.commandedIndices[0]].name;
-      const n2 = this.activeTargets[this.commandedIndices[1]].name;
-      this.el.command.textContent = n1 + "と" + n2 + "を斬れ";
+      const names = this.commandedIndices.map(i => this.activeTargets[i].name);
+      this.el.command.textContent = names.join("と") + "を斬れ";
       return;
     }
     const target = this.activeTargets[this.commandedIndex];
@@ -3033,11 +3095,16 @@ const Slash = {
   renderTargets() {
     this.el.targets.innerHTML = "";
     this.el.targets.dataset.count = this.activeTargets.length;
+    const layer = SLASH_LAYERS[this.currentLayer];
     this.activeTargets.forEach((t, i) => {
       const card = document.createElement("div");
       card.className = "sl-target";
       card.dataset.index = i;
       card.dataset.id = t.id;
+      // 層ごとの画像スケール
+      if (layer.imgScale && layer.imgScale < 1) {
+        card.style.setProperty("--layer-scale", layer.imgScale);
+      }
       const img = document.createElement("img");
       img.src = t.img;
       img.alt = t.name;
@@ -3072,6 +3139,20 @@ const Slash = {
     } else {
       this.el.comboEl.classList.remove("sl-combo-show", "sl-combo-hot");
     }
+  },
+
+  updateLivesUI(breakIndex) {
+    var html = "";
+    for (var i = 0; i < this.maxLives; i++) {
+      if (i < this.lives) {
+        html += '<span class="sl-life-active">\u2716</span>';
+      } else if (i === breakIndex) {
+        html += '<span class="sl-life-lost sl-life-break">\u2716</span>';
+      } else {
+        html += '<span class="sl-life-lost">\u2716</span>';
+      }
+    }
+    this.el.livesEl.innerHTML = html;
   },
 
   // --- スワイプ入力 ---
@@ -3325,6 +3406,8 @@ const Slash = {
     const hadCombo = this.comboCount >= 3;
     this.comboCount = 0;
     this.totalMisses++;
+    this.lives--;
+    this.updateLivesUI(this.lives); // breakIndex = 失われたライフの位置
     SoundSystem.wrong();
     if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
 
@@ -3358,6 +3441,16 @@ const Slash = {
       this.updateComboUI();
     }
 
+    // ゲームオーバー判定
+    if (this.lives <= 0) {
+      const sid = this.sessionId;
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.showGameOver();
+      }, 900);
+      return;
+    }
+
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
@@ -3378,6 +3471,8 @@ const Slash = {
     const hadCombo = this.comboCount >= 3;
     this.comboCount = 0;
     this.totalMisses++;
+    this.lives--;
+    this.updateLivesUI(this.lives);
     SoundSystem.wrong();
     this.el.command.textContent = "…遅い";
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
@@ -3392,6 +3487,17 @@ const Slash = {
     } else {
       this.updateComboUI();
     }
+
+    // ゲームオーバー判定
+    if (this.lives <= 0) {
+      const sid = this.sessionId;
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.showGameOver();
+      }, 900);
+      return;
+    }
+
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
@@ -3432,6 +3538,33 @@ const Slash = {
     const layer = SLASH_LAYERS[this.currentLayer];
     return this.currentLayer === SLASH_LAYERS.length - 1 &&
            this.currentRound === layer.rounds - 1;
+  },
+
+  showGameOver() {
+    const sid = this.sessionId;
+    this.cleanup();
+
+    // 崩壊演出を停止
+    if (this.collapseRAF) {
+      cancelAnimationFrame(this.collapseRAF);
+      this.collapseRAF = null;
+      this.el.command.style.transform = "";
+      this.el.screen.style.transform = "";
+    }
+
+    // ゲームオーバーメッセージ
+    var layerName = SLASH_LAYERS[this.currentLayer] ? SLASH_LAYERS[this.currentLayer].name : "";
+    var totalRounds = 0;
+    for (var li = 0; li < this.currentLayer; li++) totalRounds += SLASH_LAYERS[li].rounds;
+    totalRounds += this.currentRound;
+
+    this.el.gameoverMsg.textContent = "…支配された";
+    this.el.gameoverStats.textContent = layerName + "\n到達ラウンド: " + totalRounds;
+
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.gameoverOverlay.classList.add("sl-go-show");
+    }, 200);
   },
 
   showClear() {
@@ -3483,12 +3616,10 @@ const Slash = {
               let rank, rankMsg, rankColor;
               if (m === 0) {
                 rank = "S"; rankMsg = "完璧だ。"; rankColor = "#ffd700";
-              } else if (m <= 2) {
-                rank = "A"; rankMsg = "ほぼ見えている。"; rankColor = "#c0c0ff";
-              } else if (m <= 4) {
-                rank = "B"; rankMsg = "判断が遅い。"; rankColor = "#a0c0e0";
+              } else if (m === 1) {
+                rank = "A"; rankMsg = "惜しい。あと一歩。"; rankColor = "#c0c0ff";
               } else {
-                rank = "C"; rankMsg = "迷いすぎだ。"; rankColor = "#a090c0";
+                rank = "B"; rankMsg = "ギリギリだ。"; rankColor = "#a0c0e0";
               }
 
               this.el.clearStats.textContent = "MISS: " + m;
@@ -3497,12 +3628,10 @@ const Slash = {
               this.el.clearRankMsg.textContent = rankMsg;
 
               // ⑤「惜しい」判定
-              const hasRegret = m === 1 || (m === 3 && mc >= 8);
+              const hasRegret = m === 1;
               let regretText = "";
               if (m === 1) {
                 regretText = "…ミス1つで、Sを逃した。";
-              } else if (m === 3 && mc >= 8) {
-                regretText = "…コンボは見事だった。";
               }
 
               setTimeout(() => {

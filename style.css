@@ -1,12 +1,20 @@
 /* ===== リセット・基本 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
 body {
   font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   background: #1a0a2e;
   color: #fff;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow: hidden;
+  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
@@ -2472,6 +2480,9 @@ body::before {
   justify-content: center;
   background: url('assets/title-bg-clean.png') center / cover no-repeat;
   position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  overscroll-behavior: none;
 }
 #screen-title::before {
   content: '';
@@ -2491,6 +2502,7 @@ body::before {
 #screen-title > * {
   position: relative;
   z-index: 2;
+  max-width: 100%;
 }
 
 /* 導入文 */
@@ -2688,6 +2700,26 @@ body::before {
   font-size: 12px;
   color: #8070a0;
 }
+/* ライフ表示 */
+.sl-lives {
+  font-size: 16px;
+  letter-spacing: 2px;
+  min-width: 60px;
+  text-align: center;
+  color: #ff6060;
+}
+.sl-lives .sl-life-lost {
+  opacity: 0.2;
+  transition: opacity 0.3s;
+}
+.sl-lives .sl-life-break {
+  animation: slLifeBreak 0.4s ease-out;
+}
+@keyframes slLifeBreak {
+  0%   { transform: scale(1.3); opacity: 1; color: #ff2020; }
+  100% { transform: scale(0.8); opacity: 0.2; }
+}
+
 .sl-combo {
   font-size: 13px;
   font-weight: bold;
@@ -2839,6 +2871,13 @@ body::before {
 .sl-targets[data-count="3"] .sl-target:first-child {
   grid-column: 1 / -1;
 }
+/* 4択: 2×2グリッド */
+.sl-targets[data-count="4"] {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  gap: clamp(4px, 1.5vw, 10px);
+}
 
 .sl-target {
   width: clamp(140px, 42vw, 175px);
@@ -2867,7 +2906,7 @@ body::before {
 }
 .sl-target-enter {
   opacity: 1;
-  transform: scale(1) translateY(0);
+  transform: scale(var(--layer-scale, 1)) translateY(0);
   animation: slLand 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes slLand {
@@ -2878,6 +2917,13 @@ body::before {
 }
 .sl-target:nth-child(2) { animation-delay: 0.06s; }
 .sl-target:nth-child(3) { animation-delay: 0.12s; }
+.sl-target:nth-child(4) { animation-delay: 0.18s; }
+
+/* 4択時のターゲットサイズ調整 */
+.sl-targets[data-count="4"] .sl-target {
+  width: clamp(105px, 32vw, 135px);
+  height: clamp(105px, 32vw, 135px);
+}
 
 /* ビクつき */
 .sl-target-flinch .sl-target-img {
@@ -3235,4 +3281,46 @@ body::before {
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* --- ゲームオーバーオーバーレイ --- */
+.sl-gameover-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(20, 0, 0, 0.94);
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.sl-gameover-overlay.sl-go-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sl-gameover-msg {
+  font-size: clamp(20px, 6vw, 30px);
+  font-weight: 900;
+  color: #ff4040;
+  text-align: center;
+  line-height: 1.6;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+}
+.sl-gameover-stats {
+  font-size: 14px;
+  color: #a08080;
+  text-align: center;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.sl-gameover-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
 }

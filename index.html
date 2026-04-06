@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>圧力回廊</title>
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
   <!-- デバッグラベル（テストモード用） -->
@@ -258,6 +258,7 @@
       <div class="sl-header">
         <button id="sl-back" class="sl-back">← 戻る</button>
         <div class="sl-layer-label" id="sl-layer-label"></div>
+        <div class="sl-lives" id="sl-lives"></div>
         <div class="sl-combo" id="sl-combo"></div>
       </div>
       <div class="sl-command" id="sl-command"></div>
@@ -292,6 +293,15 @@
       <div class="sl-clear-buttons" id="sl-clear-buttons">
         <button id="sl-btn-again" class="btn btn-start">もう一回</button>
         <button id="sl-btn-title" class="btn sl-btn-sub">タイトルへ</button>
+      </div>
+    </div>
+    <!-- ゲームオーバーオーバーレイ -->
+    <div class="sl-gameover-overlay" id="sl-gameover-overlay">
+      <div class="sl-gameover-msg" id="sl-gameover-msg"></div>
+      <div class="sl-gameover-stats" id="sl-gameover-stats"></div>
+      <div class="sl-gameover-buttons">
+        <button id="sl-btn-retry" class="btn btn-start">もう一回</button>
+        <button id="sl-btn-go-title" class="btn sl-btn-sub">タイトルへ</button>
       </div>
     </div>
   </div>
