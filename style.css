@@ -3666,6 +3666,15 @@ body::before {
   border-radius: 50%;
   pointer-events: none;
 }
+/* 敵意ある視線（控えめ） */
+.cw-pupil-hostile {
+  box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25);
+  animation: cwPupilHostile 2.5s ease-in-out infinite;
+}
+@keyframes cwPupilHostile {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25); }
+  50%      { box-shadow: 0 0 7px 2px rgba(255, 60, 30, 0.45); }
+}
 /* 正解フラッシュ */
 .cw-cell-correct {
   animation: cwCorrectPulse 0.5s ease-out;
@@ -3674,6 +3683,17 @@ body::before {
   0%   { box-shadow: 0 0 0 0 rgba(80, 255, 120, 0.6); transform: scale(1); }
   40%  { box-shadow: 0 0 20px 8px rgba(80, 255, 120, 0.4); transform: scale(1.1); }
   100% { box-shadow: 0 0 0 0 rgba(80, 255, 120, 0); transform: scale(1); }
+}
+/* 正解: 潰しアニメーション */
+.cw-cell-crush {
+  animation: cwCrush 0.45s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes cwCrush {
+  0%   { transform: scale(1); opacity: 1; filter: brightness(1); box-shadow: none; }
+  20%  { transform: scale(1.25); opacity: 1; filter: brightness(2); box-shadow: 0 0 30px rgba(255, 100, 80, 0.8); }
+  60%  { transform: scale(0.3); opacity: 0.5; filter: brightness(0.5); box-shadow: 0 0 10px rgba(255, 100, 80, 0.2); }
+  100% { transform: scale(0); opacity: 0; filter: brightness(0); box-shadow: none; }
 }
 /* 不正解シェイク */
 .cw-cell-wrong {
@@ -3698,6 +3718,25 @@ body::before {
   opacity: 0.2 !important;
   transform: scale(0.85) !important;
   transition: opacity 0.3s, transform 0.3s !important;
+}
+/* 暴露アニメーション（ミス時に正解セルを示す） */
+.cw-cell-expose {
+  animation: cwExpose 0.5s ease-out forwards;
+}
+@keyframes cwExpose {
+  0%   { transform: scale(1); box-shadow: none; }
+  30%  { transform: scale(1.2); box-shadow: 0 0 20px 6px rgba(255, 60, 60, 0.7); }
+  70%  { transform: scale(1.15); box-shadow: 0 0 15px 4px rgba(255, 40, 40, 0.5); }
+  100% { transform: scale(1.1); box-shadow: 0 0 8px 2px rgba(255, 40, 40, 0.3); }
+}
+/* 嘲笑瞳（ミス時に正解セルの瞳がプレイヤーを見下ろす） */
+.cw-pupil-mock {
+  animation: cwPupilMock 0.35s ease-out forwards;
+}
+@keyframes cwPupilMock {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(0, 2px) scale(1.15); }
+  100% { transform: translate(0, 1px) scale(1.1); }
 }
 
 /* --- 下段 --- */

@@ -305,6 +305,105 @@ const SoundSystem = {
     osc.stop(t + 0.15);
   },
 
+  // --- 審眼正解: 深い衝撃 + 金属的クラック ---
+  crowdHit() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+
+    // 深いサブベース thump
+    var thump = ctx.createOscillator();
+    var thumpGain = ctx.createGain();
+    thump.connect(thumpGain);
+    thumpGain.connect(ctx.destination);
+    thump.type = "sine";
+    thump.frequency.setValueAtTime(55, t);
+    thump.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+    thumpGain.gain.setValueAtTime(0.18, t);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    thump.start(t);
+    thump.stop(t + 0.25);
+
+    // 金属的クラック (noise burst, bandpass 3kHz)
+    var bufSize = Math.floor(ctx.sampleRate * 0.08);
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.5;
+    }
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    var bandpass = ctx.createBiquadFilter();
+    bandpass.type = "bandpass";
+    bandpass.frequency.value = 3000;
+    bandpass.Q.value = 2.0;
+    var noiseGain = ctx.createGain();
+    noise.connect(bandpass);
+    bandpass.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noiseGain.gain.setValueAtTime(0.12, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    noise.start(t);
+    noise.stop(t + 0.1);
+
+    // 短い確認上昇音
+    var ping = ctx.createOscillator();
+    var pingGain = ctx.createGain();
+    ping.connect(pingGain);
+    pingGain.connect(ctx.destination);
+    ping.type = "sine";
+    ping.frequency.setValueAtTime(600, t + 0.03);
+    ping.frequency.exponentialRampToValueAtTime(900, t + 0.1);
+    pingGain.gain.setValueAtTime(0.06, t + 0.03);
+    pingGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    ping.start(t + 0.03);
+    ping.stop(t + 0.15);
+  },
+
+  // --- 審眼ミス: 空虚な下降 + 残響テール ---
+  crowdMiss() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+
+    // 低い下降サイン波（空虚な喪失感）
+    var osc = ctx.createOscillator();
+    var oscGain = ctx.createGain();
+    osc.connect(oscGain);
+    oscGain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(80, t + 0.35);
+    oscGain.gain.setValueAtTime(0.10, t);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.start(t);
+    osc.stop(t + 0.4);
+
+    // 微弱な残響ノイズテール（逃げていく感じ）
+    var bufSize = Math.floor(ctx.sampleRate * 0.3);
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1);
+    }
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(800, t);
+    lp.frequency.exponentialRampToValueAtTime(200, t + 0.4);
+    var noiseGain = ctx.createGain();
+    noise.connect(lp);
+    lp.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noiseGain.gain.setValueAtTime(0.04, t + 0.05);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    noise.start(t + 0.05);
+    noise.stop(t + 0.45);
+  },
+
   // --- クリア音: 解放の和音（低→高に広がり、余韻が長い） ---
   clearChime() {
     if (!this.enabled) return;
@@ -5974,10 +6073,16 @@ const Crowd = {
           var range = 8 + (40 - 8) * s;
           diff.hue = baseHue + sign * range;
         } else if (axis === "pupilSize") {
-          // 強度1.0: ±30% → 強度0.25: ±8%
-          var range = 0.08 + (0.30 - 0.08) * s;
+          // 強度1.0: ±35% → 強度0.25: ±12% + 微小位置ズレ補強
+          var range = 0.12 + (0.35 - 0.12) * s;
           diff.pupilSize = basePupilSize + sign * range * basePupilSize;
           diff.pupilSize = Math.max(0.15, Math.min(0.55, diff.pupilSize));
+          // pupilPos未選択時: 微小な位置ズレで二重手がかり
+          if (diff.pupilX === 0 && diff.pupilY === 0) {
+            var nudge = 2 + 2 * s;
+            diff.pupilX = sign * nudge;
+            diff.pupilY = (Math.random() - 0.5) * nudge * 0.6;
+          }
         } else if (axis === "pupilPos") {
           // 強度1.0: ±20px → 強度0.25: ±3px
           var range = 3 + (20 - 3) * s;
@@ -6010,6 +6115,11 @@ const Crowd = {
         }
       }
 
+      // 15%の確率でoddセルに「敵意」を付与
+      if (Math.random() < 0.15) {
+        diff.hostile = true;
+      }
+
       this.diffShape = diff;
     } else {
       // none: 全員同じ
@@ -6036,6 +6146,10 @@ const Crowd = {
       var cell = document.createElement("div");
       cell.className = "cw-cell";
       cell.dataset.index = i;
+      cell.dataset.gridX = i % layer.cols;
+      cell.dataset.gridY = Math.floor(i / layer.cols);
+      cell.dataset.maxCols = layer.cols;
+      cell.dataset.maxRows = layer.rows;
       cell.style.width = cellSize + "px";
       cell.style.height = cellSize + "px";
 
@@ -6085,6 +6199,17 @@ const Crowd = {
     pupil.style.top = (cellSize / 2 - pSize / 2 + shape.pupilY) + "px";
     pupil.style.background = "radial-gradient(circle at 40% 35%, hsl(" + (h + 180) + ", 60%, 70%), hsl(" + (h + 180) + ", 70%, 20%))";
     cell.appendChild(pupil);
+
+    // 敵意ある視線（控えめな赤グロー + 瞳を中央方向にシフト）
+    if (shape.hostile) {
+      pupil.classList.add("cw-pupil-hostile");
+      var gx = parseInt(cell.dataset.gridX || "0");
+      var gy = parseInt(cell.dataset.gridY || "0");
+      var centerX = (parseInt(cell.dataset.maxCols || "1") - 1) / 2;
+      var centerY = (parseInt(cell.dataset.maxRows || "1") - 1) / 2;
+      pupil.style.left = (parseFloat(pupil.style.left) + (centerX - gx) * 3) + "px";
+      pupil.style.top = (parseFloat(pupil.style.top) + (centerY - gy) * 3) + "px";
+    }
   },
 
   startTimer(dur) {
@@ -6178,14 +6303,20 @@ const Crowd = {
   onCorrectFind(tappedCell) {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
-    SoundSystem.correct();
+    SoundSystem.crowdHit();
     this.updateComboUI();
 
-    tappedCell.classList.add("cw-cell-correct");
-    // 他のセルをフェードアウト
-    this.el.grid.querySelectorAll(".cw-cell").forEach(function(c) {
-      if (c !== tappedCell) c.classList.add("cw-cell-fade");
-    });
+    // 潰しアニメーション
+    tappedCell.classList.add("cw-cell-crush");
+
+    // タイムフリーズ: 100ms後に他セルをフェードアウト
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    setTimeout(function() {
+      cells.forEach(function(c) {
+        if (c !== tappedCell) c.classList.add("cw-cell-fade");
+      });
+    }, 100);
+
     this.el.command.textContent = "…見つけた";
     this.el.command.style.color = "#60ff90";
 
@@ -6220,7 +6351,7 @@ const Crowd = {
     this.totalMisses++;
     this.lives--;
     this.updateLivesUI(this.lives);
-    SoundSystem.wrong();
+    SoundSystem.crowdMiss();
     SoundSystem.updateSlashTension(this.calcTension());
     if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
 
@@ -6231,10 +6362,14 @@ const Crowd = {
     void this.el.screen.offsetWidth;
     this.el.screen.classList.add("cw-miss-flash");
 
-    // 正解セルを示す（findの場合のみ）
+    // 正解セルを暴露（赤グロー + 瞳が見下ろす）
     if (this.roundType === "find" && this.oddIndex >= 0) {
       var cells = this.el.grid.querySelectorAll(".cw-cell");
-      if (cells[this.oddIndex]) cells[this.oddIndex].classList.add("cw-cell-reveal");
+      if (cells[this.oddIndex]) {
+        cells[this.oddIndex].classList.add("cw-cell-expose");
+        var correctPupil = cells[this.oddIndex].querySelector(".cw-pupil");
+        if (correctPupil) correctPupil.classList.add("cw-pupil-mock");
+      }
     }
 
     this.el.command.textContent = this.roundType === "none" ? "…罠だった" : "…違う";
@@ -6268,7 +6403,7 @@ const Crowd = {
       if (this.sessionId !== sid) return;
       this.el.command.style.color = "";
       this.advanceRound();
-    }, 800);
+    }, 1000);
   },
 
   onMiss() {
@@ -6277,13 +6412,17 @@ const Crowd = {
     this.totalMisses++;
     this.lives--;
     this.updateLivesUI(this.lives);
-    SoundSystem.wrong();
+    SoundSystem.crowdMiss();
     SoundSystem.updateSlashTension(this.calcTension());
 
-    // 正解セルを示す
+    // 正解セルを暴露（赤グロー + 瞳が見下ろす）
     if (this.oddIndex >= 0) {
       var cells = this.el.grid.querySelectorAll(".cw-cell");
-      if (cells[this.oddIndex]) cells[this.oddIndex].classList.add("cw-cell-reveal");
+      if (cells[this.oddIndex]) {
+        cells[this.oddIndex].classList.add("cw-cell-expose");
+        var correctPupil = cells[this.oddIndex].querySelector(".cw-pupil");
+        if (correctPupil) correctPupil.classList.add("cw-pupil-mock");
+      }
       // 他をフェードアウト
       cells.forEach(function(c, idx) {
         if (idx !== this.oddIndex) c.classList.add("cw-cell-fade");
@@ -6320,7 +6459,7 @@ const Crowd = {
       if (this.sessionId !== sid) return;
       this.el.command.style.color = "";
       this.advanceRound();
-    }, 800);
+    }, 1000);
   },
 
   advanceRound() {
