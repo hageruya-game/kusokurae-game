@@ -4101,8 +4101,6 @@ const Slash = {
   showClear() {
     SoundSystem.stopSlashAmbient();
     const sid = this.sessionId;
-    const m = this.totalMisses;
-    const mc = this.maxCombo;
 
     // リセット
     this.el.clearMsg.textContent = "";
@@ -4113,19 +4111,13 @@ const Slash = {
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
 
-    // ① 静寂（最終ヒットの余韻が消えるまで待つ）→ 暗転
+    // ① 暗転
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.clearOverlay.classList.add("sl-co-show");
 
-      // ② 暗転後、少し沈黙してからクリアSE
-      setTimeout(() => {
-        if (this.sessionId !== sid) return;
-        SoundSystem.clearChime();
-      }, 600);
-
-      // ③ タイプライター（SEの和音が広がった後に開始）
-      const msg = "…お前は最後まで抗った。";
+      // ② タイプライター: "…まだ終わりじゃない。"
+      const msg = "…まだ終わりじゃない。";
       const chars = msg.split("");
       let ci = 0;
       setTimeout(() => {
@@ -4134,51 +4126,41 @@ const Slash = {
           if (this.sessionId !== sid) { clearInterval(typeTimer); return; }
           if (ci < chars.length) {
             const c = chars[ci];
-            if (c === "\n") {
-              this.el.clearMsg.appendChild(document.createElement("br"));
-            } else {
-              this.el.clearMsg.appendChild(document.createTextNode(c));
-            }
+            this.el.clearMsg.appendChild(document.createTextNode(c));
             ci++;
           } else {
             clearInterval(typeTimer);
-            // ④ ランク
+            // ③ 少し余韻 → Crowdへ遷移
             setTimeout(() => {
               if (this.sessionId !== sid) return;
-              let rank, rankMsg, rankColor;
-              if (m === 0) {
-                rank = "S"; rankMsg = "完璧だ。"; rankColor = "#ffd700";
-              } else if (m === 1) {
-                rank = "A"; rankMsg = "惜しい。あと一歩。"; rankColor = "#c0c0ff";
-              } else {
-                rank = "B"; rankMsg = "ギリギリだ。"; rankColor = "#a0c0e0";
-              }
-
-              this.el.clearStats.textContent = "MISS: " + m;
-              this.el.clearRank.textContent = rank;
-              this.el.clearRank.style.color = rankColor;
-              this.el.clearRankMsg.textContent = rankMsg;
-
-              // ⑤「惜しい」判定
-              const hasRegret = m === 1;
-              let regretText = "";
-              if (m === 1) {
-                regretText = "…ミス1つで、Sを逃した。";
-              }
-
-              setTimeout(() => {
-                if (this.sessionId !== sid) return;
-                this.el.clearRegret.textContent = regretText;
-
-                // ⑥ ボタン表示
-                this.el.clearButtons.style.opacity = "1";
-                this.el.clearButtons.style.pointerEvents = "auto";
-              }, hasRegret ? 350 : 150);
-            }, 350);
+              this.transitionToCrowd();
+            }, 1200);
           }
         }, 75);
       }, 900);
     }, 250);
+  },
+
+  transitionToCrowd() {
+    const overlay = document.getElementById("dungeon-transition");
+    const text = document.getElementById("dg-transition-text");
+    overlay.classList.add("dg-trans-active");
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      text.textContent = "…最深部へ";
+      text.classList.add("dg-trans-text-show");
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        text.classList.remove("dg-trans-text-show");
+        setTimeout(() => {
+          if (this.sessionId !== sid) return;
+          Crowd.start();
+          overlay.classList.remove("dg-trans-active");
+          text.textContent = "";
+        }, 500);
+      }, 1500);
+    }, 600);
   },
 
   showOX(isCorrect) {
@@ -5676,6 +5658,755 @@ const Tutorial = {
 };
 
 // ============================================================
+// ステージ3: 審眼 (Crowd)
+// ============================================================
+
+const CROWD_LAYERS = [
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0 },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7 },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45 },
+  { name: "最終層：同化", cols: 4, rows: 3, rounds: 4, timer: 3200, types: ["find"], diffStrength: 0.25 },
+];
+
+const CROWD_LAYER_HINTS = [
+  "異端を見つけろ。\n違う目を持つ者をタップしろ。",
+  "「全員同じ」の時がある。\nその時は、何もタップするな。",
+  "違いが小さくなる。よく見ろ。",
+  null,
+];
+
+const Crowd = {
+  sessionId: 0,
+  el: {},
+  answered: false,
+  currentLayer: 0,
+  currentRound: 0,
+  lives: 3,
+  maxLives: 3,
+  totalMisses: 0,
+  comboCount: 0,
+  maxCombo: 0,
+  roundPlan: [],
+  roundType: "find",
+  oddIndex: -1,
+  baseShape: null,
+  diffShape: null,
+  timerTimeout: null,
+  flinchTimeout: null,
+  heartbeatInterval: null,
+  heartbeatSpeed: 600,
+  hintTimeout: null,
+  _dismissFn: null,
+  layerTutorialShown: new Set(),
+
+  init() {
+    this.el = {
+      screen: document.getElementById("screen-crowd"),
+      command: document.getElementById("cw-command"),
+      grid: document.getElementById("cw-grid"),
+      timerBar: document.getElementById("cw-timer-bar"),
+      timerFill: document.getElementById("cw-timer-fill"),
+      layerLabel: document.getElementById("cw-layer-label"),
+      comboEl: document.getElementById("cw-combo"),
+      livesEl: document.getElementById("cw-lives"),
+      layerOverlay: document.getElementById("cw-layer-overlay"),
+      layerName: document.getElementById("cw-layer-name"),
+      layerHint: document.getElementById("cw-layer-hint"),
+      clearOverlay: document.getElementById("cw-clear-overlay"),
+      clearMsg: document.getElementById("cw-clear-msg"),
+      clearRank: document.getElementById("cw-clear-rank"),
+      clearRankMsg: document.getElementById("cw-clear-rank-msg"),
+      clearEpilogue: document.getElementById("cw-clear-epilogue"),
+      clearButtons: document.getElementById("cw-clear-buttons"),
+      gameoverOverlay: document.getElementById("cw-gameover-overlay"),
+      gameoverMsg: document.getElementById("cw-gameover-msg"),
+    };
+
+    document.getElementById("cw-back").addEventListener("click", () => this.goTitle());
+    document.getElementById("cw-btn-again").addEventListener("click", () => this.start());
+    document.getElementById("cw-btn-title").addEventListener("click", () => this.goTitle());
+    document.getElementById("cw-btn-retry").addEventListener("click", () => this.start());
+    document.getElementById("cw-btn-go-title").addEventListener("click", () => this.goTitle());
+  },
+
+  calcTension() {
+    var layerBase = [0.3, 0.5, 0.7, 0.9][this.currentLayer] || 0.3;
+    var livesBonus = this.lives >= 3 ? 0 : this.lives === 2 ? 0.05 : 0.15;
+    return Math.min(1.0, layerBase + livesBonus);
+  },
+
+  start() {
+    this.sessionId++;
+    this.cleanup();
+    this.currentLayer = 0;
+    this.currentRound = 0;
+    this.comboCount = 0;
+    this.maxCombo = 0;
+    this.totalMisses = 0;
+    this.lives = this.maxLives;
+    SoundSystem.init();
+    SoundSystem.stopAmbient();
+    SoundSystem.startSlashAmbient(0.3);
+    this.clearEffects();
+    this.el.screen.scrollTop = 0;
+    this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-hot");
+    this.el.comboEl.textContent = "";
+    this.updateLivesUI();
+    Game.showScreen(this.el.screen);
+    this.showLayerTitle();
+  },
+
+  goTitle() {
+    this.sessionId++;
+    this.cleanup();
+    this.clearEffects();
+    SoundSystem.stopSlashAmbient();
+    SoundSystem.startTitleAmbient();
+    Game.showScreen(document.getElementById("screen-title"));
+    TitlePrologue.startIdle();
+  },
+
+  cleanup() {
+    this.answered = true;
+    clearTimeout(this.timerTimeout);
+    clearTimeout(this.flinchTimeout);
+    clearTimeout(this.heartbeatInterval);
+    clearTimeout(this.hintTimeout);
+    this.timerTimeout = null;
+    this.flinchTimeout = null;
+    this.heartbeatInterval = null;
+    this.hintTimeout = null;
+  },
+
+  clearEffects() {
+    this.el.screen.classList.remove("cw-miss-flash");
+    this.el.layerOverlay.classList.remove("cw-lo-show");
+    this.el.layerOverlay.style.pointerEvents = "";
+    if (this._dismissFn) {
+      this.el.layerOverlay.removeEventListener("click", this._dismissFn);
+      this._dismissFn = null;
+    }
+    this.el.layerHint.classList.remove("cw-lh-show");
+    this.el.layerHint.textContent = "";
+    this.el.clearOverlay.classList.remove("cw-co-show");
+    this.el.clearMsg.textContent = "";
+    this.el.clearRank.textContent = "";
+    this.el.clearRankMsg.textContent = "";
+    this.el.clearEpilogue.textContent = "";
+    this.el.clearButtons.style.opacity = "0";
+    this.el.clearButtons.style.pointerEvents = "none";
+    this.el.gameoverOverlay.classList.remove("cw-go-show");
+    this.el.command.textContent = "";
+    this.el.grid.innerHTML = "";
+  },
+
+  buildRoundPlan(layer) {
+    var rounds = layer.rounds;
+    var types = layer.types;
+    var plan = [];
+    var unique = [];
+    for (var i = 0; i < types.length; i++) {
+      if (unique.indexOf(types[i]) === -1) unique.push(types[i]);
+    }
+    for (var u = 0; u < unique.length && plan.length < rounds; u++) {
+      plan.push(unique[u]);
+    }
+    while (plan.length < rounds) {
+      plan.push(types[Math.floor(Math.random() * types.length)]);
+    }
+    // Fisher-Yates
+    for (var i = plan.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = plan[i]; plan[i] = plan[j]; plan[j] = tmp;
+    }
+    // 3連続防止
+    for (var attempt = 0; attempt < 20; attempt++) {
+      var bad = -1;
+      for (var i = 2; i < plan.length; i++) {
+        if (plan[i] === plan[i - 1] && plan[i] === plan[i - 2]) { bad = i; break; }
+      }
+      if (bad === -1) break;
+      for (var s = 0; s < plan.length; s++) {
+        if (s !== bad && plan[s] !== plan[bad]) {
+          var tmp2 = plan[bad]; plan[bad] = plan[s]; plan[s] = tmp2;
+          var ok = true;
+          for (var c = 2; c < plan.length; c++) {
+            if (plan[c] === plan[c - 1] && plan[c] === plan[c - 2]) { ok = false; break; }
+          }
+          if (ok) break;
+          plan[s] = plan[bad]; plan[bad] = tmp2;
+        }
+      }
+    }
+    return plan;
+  },
+
+  showLayerTitle() {
+    const layer = CROWD_LAYERS[this.currentLayer];
+    this.el.layerName.textContent = layer.name;
+    this.el.layerLabel.textContent = layer.name;
+    this.el.layerHint.textContent = "";
+    this.el.layerHint.classList.remove("cw-lh-show");
+    this.el.layerOverlay.classList.add("cw-lo-show");
+    SoundSystem.updateSlashTension(this.calcTension());
+    this.roundPlan = this.buildRoundPlan(layer);
+    const sid = this.sessionId;
+
+    const hint = CROWD_LAYER_HINTS[this.currentLayer];
+    const showHint = hint && !this.layerTutorialShown.has(this.currentLayer);
+
+    if (showHint) {
+      this.layerTutorialShown.add(this.currentLayer);
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.layerHint.textContent = hint;
+        this.el.layerHint.classList.add("cw-lh-show");
+
+        var dismissed = false;
+        const dismiss = () => {
+          if (dismissed || this.sessionId !== sid) return;
+          dismissed = true;
+          clearTimeout(this.hintTimeout);
+          this.el.layerOverlay.removeEventListener("click", dismiss);
+          this.el.layerOverlay.style.pointerEvents = "";
+          this.el.layerOverlay.classList.remove("cw-lo-show");
+          this.el.layerHint.classList.remove("cw-lh-show");
+          this.currentRound = 0;
+          this.startRound();
+        };
+        this.el.layerOverlay.style.pointerEvents = "auto";
+        if (this._dismissFn) this.el.layerOverlay.removeEventListener("click", this._dismissFn);
+        this._dismissFn = dismiss;
+        this.el.layerOverlay.addEventListener("click", dismiss);
+        this.hintTimeout = setTimeout(dismiss, 3000);
+      }, 1200);
+    } else {
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.layerOverlay.classList.remove("cw-lo-show");
+        this.currentRound = 0;
+        this.startRound();
+      }, 1200);
+    }
+  },
+
+  startRound() {
+    this.cleanup();
+    this.answered = false;
+    this.el.screen.classList.remove("cw-miss-flash");
+    this.el.command.textContent = "";
+
+    const layer = CROWD_LAYERS[this.currentLayer];
+    this.roundType = this.roundPlan[this.currentRound] || "find";
+
+    this.generateShapes(layer);
+    this.renderGrid(layer);
+    this.startTimer(layer.timer);
+  },
+
+  generateShapes(layer) {
+    // ベースシェイプ
+    var baseHue = 260 + Math.random() * 20; // 260-280 紫系
+    var basePupilSize = 0.3 + Math.random() * 0.1; // 30-40% of cell
+    var basePupilX = 0;
+    var basePupilY = 0;
+    var baseRotation = 0;
+
+    this.baseShape = {
+      hue: baseHue,
+      pupilSize: basePupilSize,
+      pupilX: basePupilX,
+      pupilY: basePupilY,
+      rotation: baseRotation,
+    };
+
+    var totalCells = layer.cols * layer.rows;
+
+    if (this.roundType === "find") {
+      this.oddIndex = Math.floor(Math.random() * totalCells);
+
+      // 1-2軸をランダム選択
+      var axes = ["hue", "pupilSize", "pupilPos", "rotation"];
+      // 高難度ほど1軸にする
+      var numAxes = layer.diffStrength > 0.5 ? (Math.random() < 0.5 ? 2 : 1) : 1;
+      // シャッフルして先頭から取る
+      for (var i = axes.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = axes[i]; axes[i] = axes[j]; axes[j] = tmp;
+      }
+      var chosenAxes = axes.slice(0, numAxes);
+
+      var diff = { hue: baseHue, pupilSize: basePupilSize, pupilX: basePupilX, pupilY: basePupilY, rotation: baseRotation };
+
+      for (var a = 0; a < chosenAxes.length; a++) {
+        var axis = chosenAxes[a];
+        var s = layer.diffStrength;
+        var sign = Math.random() < 0.5 ? 1 : -1;
+
+        if (axis === "hue") {
+          // 強度1.0: ±40deg → 強度0.25: ±8deg
+          var range = 8 + (40 - 8) * s;
+          diff.hue = baseHue + sign * range;
+        } else if (axis === "pupilSize") {
+          // 強度1.0: ±30% → 強度0.25: ±8%
+          var range = 0.08 + (0.30 - 0.08) * s;
+          diff.pupilSize = basePupilSize + sign * range * basePupilSize;
+          diff.pupilSize = Math.max(0.15, Math.min(0.55, diff.pupilSize));
+        } else if (axis === "pupilPos") {
+          // 強度1.0: ±20px → 強度0.25: ±3px
+          var range = 3 + (20 - 3) * s;
+          diff.pupilX = sign * range;
+          diff.pupilY = (Math.random() - 0.5) * range * 0.5;
+        } else if (axis === "rotation") {
+          // 強度1.0: ±30deg → 強度0.25: ±5deg
+          var range = 5 + (30 - 5) * s;
+          diff.rotation = sign * range;
+        }
+      }
+
+      this.diffShape = diff;
+    } else {
+      // none: 全員同じ
+      this.oddIndex = -1;
+      this.diffShape = null;
+    }
+  },
+
+  renderGrid(layer) {
+    this.el.grid.innerHTML = "";
+    var totalCells = layer.cols * layer.rows;
+
+    // セルサイズ計算（画面幅に合わせる）
+    var maxGridWidth = Math.min(400, window.innerWidth - 40);
+    var maxGridHeight = window.innerHeight * 0.55;
+    var cellW = Math.floor((maxGridWidth - (layer.cols - 1) * 8) / layer.cols);
+    var cellH = Math.floor((maxGridHeight - (layer.rows - 1) * 8) / layer.rows);
+    var cellSize = Math.min(cellW, cellH, 90);
+
+    this.el.grid.style.gridTemplateColumns = "repeat(" + layer.cols + ", " + cellSize + "px)";
+    this.el.grid.style.gridTemplateRows = "repeat(" + layer.rows + ", " + cellSize + "px)";
+
+    for (var i = 0; i < totalCells; i++) {
+      var cell = document.createElement("div");
+      cell.className = "cw-cell";
+      cell.dataset.index = i;
+      cell.style.width = cellSize + "px";
+      cell.style.height = cellSize + "px";
+
+      var shape = (i === this.oddIndex) ? this.diffShape : this.baseShape;
+      this.applyShapeStyle(cell, shape, cellSize);
+
+      // タップイベント
+      (function(idx, self) {
+        cell.addEventListener("click", function() {
+          self.onCellTap(idx);
+        });
+      })(i, this);
+
+      this.el.grid.appendChild(cell);
+    }
+
+    // 入場アニメーション
+    requestAnimationFrame(() => {
+      var cells = this.el.grid.querySelectorAll(".cw-cell");
+      cells.forEach(function(c, idx) {
+        setTimeout(function() {
+          c.classList.add("cw-cell-enter");
+        }, idx * 30);
+      });
+    });
+  },
+
+  applyShapeStyle(cell, shape, cellSize) {
+    // 外円（白目/頭部）: radial-gradient 紫系
+    var h = shape.hue;
+    cell.style.background = "radial-gradient(circle at 45% 40%, hsl(" + h + ", 40%, 55%), hsl(" + h + ", 50%, 25%))";
+    cell.style.transform = "rotate(" + shape.rotation + "deg)";
+
+    // 瞳（内円）
+    var pupil = document.createElement("div");
+    pupil.className = "cw-pupil";
+    var pSize = cellSize * shape.pupilSize;
+    pupil.style.width = pSize + "px";
+    pupil.style.height = pSize + "px";
+    pupil.style.left = (cellSize / 2 - pSize / 2 + shape.pupilX) + "px";
+    pupil.style.top = (cellSize / 2 - pSize / 2 + shape.pupilY) + "px";
+    pupil.style.background = "radial-gradient(circle at 40% 35%, hsl(" + (h + 180) + ", 60%, 70%), hsl(" + (h + 180) + ", 70%, 20%))";
+    cell.appendChild(pupil);
+  },
+
+  startTimer(dur) {
+    const sid = this.sessionId;
+    const urgentAt = Math.min(1500, dur * 0.4);
+
+    this.el.timerFill.style.transition = "none";
+    this.el.timerFill.style.width = "100%";
+    this.el.timerBar.classList.remove("cw-timer-urgent");
+    this.el.timerBar.classList.add("cw-timer-active");
+
+    requestAnimationFrame(() => {
+      this.el.timerFill.style.transition = "width " + (dur / 1000) + "s linear";
+      this.el.timerFill.style.width = "0%";
+    });
+
+    // urgency
+    this.flinchTimeout = setTimeout(() => {
+      if (this.sessionId !== sid || this.answered) return;
+      this.el.timerBar.classList.add("cw-timer-urgent");
+      // ビクつき
+      this.el.grid.querySelectorAll(".cw-cell").forEach(function(c) {
+        c.style.animation = "none";
+        void c.offsetWidth;
+        c.style.animation = "";
+      });
+      // 心拍
+      this.heartbeatSpeed = 600;
+      const hbLoop = () => {
+        if (this.sessionId !== sid || this.answered) return;
+        SoundSystem.heartbeat();
+        this.heartbeatSpeed = Math.max(400, this.heartbeatSpeed - 25);
+        this.heartbeatInterval = setTimeout(() => hbLoop(), this.heartbeatSpeed);
+      };
+      hbLoop();
+    }, dur - urgentAt);
+
+    this.timerTimeout = setTimeout(() => {
+      if (this.sessionId !== sid || this.answered) return;
+      this.onTimeout();
+    }, dur);
+  },
+
+  stopTimer() {
+    clearTimeout(this.timerTimeout);
+    clearTimeout(this.flinchTimeout);
+    clearTimeout(this.heartbeatInterval);
+    this.timerTimeout = null;
+    this.flinchTimeout = null;
+    this.heartbeatInterval = null;
+    this.el.timerFill.style.transition = "none";
+    this.el.timerBar.classList.remove("cw-timer-active", "cw-timer-urgent");
+  },
+
+  onCellTap(index) {
+    if (this.answered) return;
+    this.answered = true;
+    this.stopTimer();
+
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    var tappedCell = cells[index];
+
+    if (this.roundType === "none") {
+      // none: タップした → ミス
+      this.onWrongTap(tappedCell);
+      return;
+    }
+
+    // find: 正しいセルをタップしたか？
+    if (index === this.oddIndex) {
+      this.onCorrectFind(tappedCell);
+    } else {
+      this.onWrongTap(tappedCell);
+    }
+  },
+
+  onTimeout() {
+    this.answered = true;
+    this.stopTimer();
+
+    if (this.roundType === "none") {
+      // none: タイムアウト = 正解
+      this.onNoneSuccess();
+      return;
+    }
+
+    // find: タイムアウト = ミス
+    this.onMiss();
+  },
+
+  onCorrectFind(tappedCell) {
+    this.comboCount++;
+    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+    SoundSystem.correct();
+    this.updateComboUI();
+
+    tappedCell.classList.add("cw-cell-correct");
+    // 他のセルをフェードアウト
+    this.el.grid.querySelectorAll(".cw-cell").forEach(function(c) {
+      if (c !== tappedCell) c.classList.add("cw-cell-fade");
+    });
+    this.el.command.textContent = "…見つけた";
+    this.el.command.style.color = "#60ff90";
+
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.command.style.color = "";
+      this.advanceRound();
+    }, 800);
+  },
+
+  onNoneSuccess() {
+    this.comboCount++;
+    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+    SoundSystem.correct();
+    this.updateComboUI();
+
+    this.el.command.textContent = "…全員同じだ";
+    this.el.command.style.color = "#60ff90";
+
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.command.style.color = "";
+      this.advanceRound();
+    }, 800);
+  },
+
+  onWrongTap(tappedCell) {
+    var hadCombo = this.comboCount >= 3;
+    this.comboCount = 0;
+    this.totalMisses++;
+    this.lives--;
+    this.updateLivesUI(this.lives);
+    SoundSystem.wrong();
+    SoundSystem.updateSlashTension(this.calcTension());
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+
+    tappedCell.classList.add("cw-cell-wrong");
+
+    // 赤フラッシュ
+    this.el.screen.classList.remove("cw-miss-flash");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("cw-miss-flash");
+
+    // 正解セルを示す（findの場合のみ）
+    if (this.roundType === "find" && this.oddIndex >= 0) {
+      var cells = this.el.grid.querySelectorAll(".cw-cell");
+      if (cells[this.oddIndex]) cells[this.oddIndex].classList.add("cw-cell-reveal");
+    }
+
+    this.el.command.textContent = this.roundType === "none" ? "…罠だった" : "…違う";
+    this.el.command.style.color = "#ff4060";
+
+    // コンボブレイク
+    if (hadCombo) {
+      this.el.comboEl.textContent = "BREAK";
+      this.el.comboEl.classList.remove("cw-combo-hot");
+      this.el.comboEl.classList.add("cw-combo-show", "cw-combo-break");
+      setTimeout(() => {
+        this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-break");
+        this.el.comboEl.textContent = "";
+      }, 700);
+    } else {
+      this.updateComboUI();
+    }
+
+    if (this.lives <= 0) {
+      const sid = this.sessionId;
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.command.style.color = "";
+        this.showGameOver();
+      }, 900);
+      return;
+    }
+
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.command.style.color = "";
+      this.advanceRound();
+    }, 800);
+  },
+
+  onMiss() {
+    var hadCombo = this.comboCount >= 3;
+    this.comboCount = 0;
+    this.totalMisses++;
+    this.lives--;
+    this.updateLivesUI(this.lives);
+    SoundSystem.wrong();
+    SoundSystem.updateSlashTension(this.calcTension());
+
+    // 正解セルを示す
+    if (this.oddIndex >= 0) {
+      var cells = this.el.grid.querySelectorAll(".cw-cell");
+      if (cells[this.oddIndex]) cells[this.oddIndex].classList.add("cw-cell-reveal");
+      // 他をフェードアウト
+      cells.forEach(function(c, idx) {
+        if (idx !== this.oddIndex) c.classList.add("cw-cell-fade");
+      }.bind(this));
+    }
+
+    this.el.command.textContent = "…見逃した";
+    this.el.command.style.color = "#ff4060";
+
+    if (hadCombo) {
+      this.el.comboEl.textContent = "BREAK";
+      this.el.comboEl.classList.remove("cw-combo-hot");
+      this.el.comboEl.classList.add("cw-combo-show", "cw-combo-break");
+      setTimeout(() => {
+        this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-break");
+        this.el.comboEl.textContent = "";
+      }, 700);
+    } else {
+      this.updateComboUI();
+    }
+
+    if (this.lives <= 0) {
+      const sid = this.sessionId;
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.command.style.color = "";
+        this.showGameOver();
+      }, 900);
+      return;
+    }
+
+    const sid = this.sessionId;
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.command.style.color = "";
+      this.advanceRound();
+    }, 800);
+  },
+
+  advanceRound() {
+    this.currentRound++;
+    const layer = CROWD_LAYERS[this.currentLayer];
+    if (this.currentRound >= layer.rounds) {
+      this.currentLayer++;
+      if (this.currentLayer >= CROWD_LAYERS.length) {
+        this.showClear();
+      } else {
+        this.showLayerTitle();
+      }
+    } else {
+      this.startRound();
+    }
+  },
+
+  updateLivesUI(breakIndex) {
+    var html = "";
+    for (var i = 0; i < this.maxLives; i++) {
+      if (i < this.lives) {
+        html += '<div class="cw-life"></div>';
+      } else if (i === breakIndex) {
+        html += '<div class="cw-life cw-life-lost cw-life-break"></div>';
+      } else {
+        html += '<div class="cw-life cw-life-lost"></div>';
+      }
+    }
+    this.el.livesEl.innerHTML = html;
+  },
+
+  updateComboUI() {
+    if (this.comboCount >= 3) {
+      this.el.comboEl.textContent = this.comboCount + " combo";
+      this.el.comboEl.classList.add("cw-combo-show");
+      this.el.comboEl.classList.toggle("cw-combo-hot", this.comboCount >= 10);
+    } else {
+      this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-hot");
+    }
+  },
+
+  showClear() {
+    SoundSystem.stopSlashAmbient();
+    const sid = this.sessionId;
+    const m = this.totalMisses;
+
+    this.el.clearMsg.textContent = "";
+    this.el.clearRank.textContent = "";
+    this.el.clearRankMsg.textContent = "";
+    this.el.clearEpilogue.textContent = "";
+    this.el.clearButtons.style.opacity = "0";
+    this.el.clearButtons.style.pointerEvents = "none";
+
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.clearOverlay.classList.add("cw-co-show");
+
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        SoundSystem.clearChime();
+      }, 600);
+
+      // タイプライター
+      const msg = "…群衆の中で、お前だけが\n自分の目で見ていた。";
+      const chars = msg.split("");
+      let ci = 0;
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        const typeTimer = setInterval(() => {
+          if (this.sessionId !== sid) { clearInterval(typeTimer); return; }
+          if (ci < chars.length) {
+            const c = chars[ci];
+            if (c === "\n") {
+              this.el.clearMsg.appendChild(document.createElement("br"));
+            } else {
+              this.el.clearMsg.appendChild(document.createTextNode(c));
+            }
+            ci++;
+          } else {
+            clearInterval(typeTimer);
+            // ランク
+            setTimeout(() => {
+              if (this.sessionId !== sid) return;
+              let rank, rankMsg, rankColor;
+              if (m === 0) {
+                rank = "S"; rankMsg = "完璧な目だ。"; rankColor = "#ffd700";
+              } else if (m <= 2) {
+                rank = "A"; rankMsg = "鋭い目だ。"; rankColor = "#c0c0ff";
+              } else {
+                rank = "B"; rankMsg = "見えてはいた。"; rankColor = "#a0c0e0";
+              }
+
+              this.el.clearRank.textContent = rank;
+              this.el.clearRank.style.color = rankColor;
+              this.el.clearRankMsg.textContent = rankMsg;
+
+              // 三幕総括エピローグ
+              setTimeout(() => {
+                if (this.sessionId !== sid) return;
+                const epilogue = "命令に逆らい、\n刃を振り、\n群衆の中で目を開けた。\n\n…お前はもう、誰の支配も受けない。";
+                this.el.clearEpilogue.textContent = epilogue;
+
+                // ボタン
+                setTimeout(() => {
+                  if (this.sessionId !== sid) return;
+                  this.el.clearButtons.style.opacity = "1";
+                  this.el.clearButtons.style.pointerEvents = "auto";
+                }, 1500);
+              }, 500);
+            }, 350);
+          }
+        }, 75);
+      }, 900);
+    }, 250);
+  },
+
+  showGameOver() {
+    const sid = this.sessionId;
+    this.cleanup();
+    SoundSystem.stopSlashAmbient();
+
+    var reached = 0;
+    for (var li = 0; li < this.currentLayer; li++) reached += CROWD_LAYERS[li].rounds;
+    reached += this.currentRound;
+    var total = 0;
+    for (var li = 0; li < CROWD_LAYERS.length; li++) total += CROWD_LAYERS[li].rounds;
+
+    this.el.gameoverMsg.textContent = "…見えなかった";
+    SoundSystem.gameoverSound();
+
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.gameoverOverlay.classList.add("cw-go-show");
+    }, 300);
+  },
+};
+
+// ============================================================
 // タイトル放置時プロローグ
 // ============================================================
 const TitlePrologue = {
@@ -5740,6 +6471,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Tutorial.init();
   Dungeon.init();
   Slash.init();
+  Crowd.init();
   JudgeRoom.init();
   /* Corridor.init(); -- 隔離中 */
   TitlePrologue.init();

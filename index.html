@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>圧力回廊</title>
-  <link rel="stylesheet" href="style.css?v=40">
+  <link rel="stylesheet" href="style.css?v=41">
 </head>
 <body>
   <!-- デバッグラベル（テストモード用） -->
@@ -314,6 +314,51 @@
     </div>
   </div>
 
+  <!-- 審眼モード（Stage3） -->
+  <div id="screen-crowd" class="screen">
+    <div class="cw-zone-top">
+      <div class="cw-header">
+        <button id="cw-back" class="cw-back">← 戻る</button>
+        <div class="cw-layer-label" id="cw-layer-label"></div>
+        <div class="cw-lives" id="cw-lives"></div>
+        <div class="cw-combo" id="cw-combo"></div>
+      </div>
+      <div class="cw-command" id="cw-command"></div>
+    </div>
+    <div class="cw-zone-center">
+      <div class="cw-grid" id="cw-grid"></div>
+    </div>
+    <div class="cw-zone-bottom">
+      <div class="cw-timer-bar" id="cw-timer-bar">
+        <div class="cw-timer-fill" id="cw-timer-fill"></div>
+      </div>
+    </div>
+    <!-- 層タイトルオーバーレイ -->
+    <div class="cw-layer-overlay" id="cw-layer-overlay">
+      <div class="cw-layer-name" id="cw-layer-name"></div>
+      <div class="cw-layer-hint" id="cw-layer-hint"></div>
+    </div>
+    <!-- クリアオーバーレイ -->
+    <div class="cw-clear-overlay" id="cw-clear-overlay">
+      <div class="cw-clear-msg" id="cw-clear-msg"></div>
+      <div class="cw-clear-rank" id="cw-clear-rank"></div>
+      <div class="cw-clear-rank-msg" id="cw-clear-rank-msg"></div>
+      <div class="cw-clear-epilogue" id="cw-clear-epilogue"></div>
+      <div class="cw-clear-buttons" id="cw-clear-buttons">
+        <button id="cw-btn-again" class="btn btn-start">もう一回</button>
+        <button id="cw-btn-title" class="btn cw-btn-sub">タイトルへ</button>
+      </div>
+    </div>
+    <!-- ゲームオーバーオーバーレイ -->
+    <div class="cw-gameover-overlay" id="cw-gameover-overlay">
+      <div class="cw-gameover-msg" id="cw-gameover-msg"></div>
+      <div class="cw-gameover-buttons">
+        <button id="cw-btn-retry" class="btn btn-start">もう一回</button>
+        <button id="cw-btn-go-title" class="btn cw-btn-sub">タイトルへ</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 圧力回廊（ダンジョンv2 試作） -->
   <div id="screen-corridor" class="screen">
     <div class="cr-zone-top">
@@ -359,6 +404,6 @@
     </div>
   </div>
 
-  <script src="main.js?v=40"></script>
+  <script src="main.js?v=41"></script>
 </body>
 </html>

@@ -3509,3 +3509,373 @@ body::before {
   gap: 10px;
   margin-top: 8px;
 }
+
+/* ===== 審眼モード (Stage3 - Crowd) ===== */
+
+#screen-crowd {
+  height: 100%;
+  padding: 0 !important;
+  background: linear-gradient(180deg, #0a0018 0%, #10001e 50%, #0a0018 100%);
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+  touch-action: none;
+  overflow: hidden;
+  -webkit-overflow-scrolling: auto;
+  transition: background 0.8s ease;
+}
+/* 浮遊微粒子（SlashのslParticleDrift再利用） */
+#screen-crowd::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(180, 140, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 45% 65%, rgba(180, 140, 255, 0.15), transparent),
+    radial-gradient(1px 1px at 70% 30%, rgba(200, 160, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 85% 75%, rgba(160, 120, 240, 0.15), transparent),
+    radial-gradient(1px 1px at 30% 85%, rgba(180, 140, 255, 0.1), transparent),
+    radial-gradient(1.5px 1.5px at 55% 10%, rgba(200, 180, 255, 0.25), transparent);
+  background-size: 200px 200px;
+  animation: slParticleDrift 20s linear infinite;
+}
+
+/* --- 上段 --- */
+.cw-zone-top {
+  width: 100%;
+  flex-shrink: 0;
+  padding: 12px 16px 0;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+.cw-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.cw-back {
+  background: none; border: none;
+  color: #a090c0; font-size: 14px;
+  padding: 4px 8px; cursor: pointer;
+  font-family: inherit;
+}
+.cw-layer-label {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #8070a0;
+}
+.cw-lives {
+  display: flex;
+  gap: 6px;
+  min-width: 60px;
+  justify-content: center;
+  align-items: center;
+}
+/* ライフ: Slashの.sl-life再利用 */
+.cw-life {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ff8080, #cc2020);
+  box-shadow: 0 0 6px rgba(255, 60, 60, 0.5), inset 0 -2px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, opacity 0.3s, box-shadow 0.3s;
+}
+.cw-life-lost {
+  background: radial-gradient(circle at 40% 35%, #403040, #201020);
+  box-shadow: none;
+  opacity: 0.3;
+  transform: scale(0.7);
+}
+.cw-life-break {
+  animation: slLifeBreak 0.5s ease-out forwards;
+}
+.cw-combo {
+  font-size: 13px;
+  font-weight: bold;
+  color: #c080ff;
+  min-width: 48px;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.cw-combo.cw-combo-show { opacity: 1; }
+.cw-combo.cw-combo-hot { color: #ff8040; text-shadow: 0 0 8px rgba(255, 128, 64, 0.5); }
+.cw-combo.cw-combo-break { color: #ff4040; animation: slComboBreak 0.7s ease-out; }
+
+/* 命令/フィードバック */
+.cw-command {
+  text-align: center;
+  font-size: clamp(16px, 4.5vw, 22px);
+  font-weight: 700;
+  color: #c0b0e0;
+  padding: 6px 12px 4px;
+  min-height: 32px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+}
+
+/* --- 中段: グリッド --- */
+.cw-zone-center {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  position: relative;
+  z-index: 2;
+}
+.cw-grid {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  align-items: center;
+}
+/* セル（目シェイプ） */
+.cw-cell {
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: transform 0.12s ease-out, opacity 0.12s ease-out;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cw-cell.cw-cell-enter {
+  opacity: 1;
+  transform: scale(1);
+  animation: cwCellAppear 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes cwCellAppear {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.cw-cell:active {
+  transform: scale(0.93);
+}
+/* 瞳 */
+.cw-pupil {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+/* 正解フラッシュ */
+.cw-cell-correct {
+  animation: cwCorrectPulse 0.5s ease-out;
+}
+@keyframes cwCorrectPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(80, 255, 120, 0.6); transform: scale(1); }
+  40%  { box-shadow: 0 0 20px 8px rgba(80, 255, 120, 0.4); transform: scale(1.1); }
+  100% { box-shadow: 0 0 0 0 rgba(80, 255, 120, 0); transform: scale(1); }
+}
+/* 不正解シェイク */
+.cw-cell-wrong {
+  animation: cwWrongShake 0.4s ease-out;
+}
+@keyframes cwWrongShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px); }
+  30% { transform: translateX(8px); }
+  45% { transform: translateX(-6px); }
+  60% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+/* 正解セル強調表示（タイムアウト時） */
+.cw-cell-reveal {
+  box-shadow: 0 0 16px 4px rgba(255, 200, 80, 0.6);
+  transform: scale(1.15);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+/* セルフェードアウト */
+.cw-cell-fade {
+  opacity: 0.2 !important;
+  transform: scale(0.85) !important;
+  transition: opacity 0.3s, transform 0.3s !important;
+}
+
+/* --- 下段 --- */
+.cw-zone-bottom {
+  width: 100%;
+  flex-shrink: 0;
+  padding: 12px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+.cw-timer-bar {
+  width: 90%;
+  max-width: 360px;
+  height: 3px;
+  background: rgba(80, 60, 120, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.15s;
+  margin: 0 auto;
+}
+.cw-timer-active { opacity: 1; }
+.cw-timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a070e0, #6030a0);
+  border-radius: 2px;
+  width: 100%;
+  box-shadow: 0 0 6px rgba(140, 80, 220, 0.4);
+}
+.cw-timer-urgent .cw-timer-fill {
+  background: linear-gradient(90deg, #ff3030, #ff6040);
+  box-shadow: 0 0 8px rgba(255, 60, 40, 0.5);
+}
+
+/* 画面赤フラッシュ（ミス） */
+.cw-miss-flash {
+  animation: slMissScreenFlash 0.2s ease-out;
+}
+
+/* --- 層タイトルオーバーレイ --- */
+.cw-layer-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.cw-layer-overlay.cw-lo-show { opacity: 1; }
+.cw-layer-name {
+  font-size: clamp(24px, 7vw, 36px);
+  font-weight: 900;
+  color: #d0b0ff;
+  letter-spacing: 6px;
+  text-shadow: 0 0 20px rgba(160, 100, 255, 0.4), 0 0 40px rgba(140, 80, 240, 0.2);
+  animation: slLayerNameIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cw-layer-hint {
+  font-size: clamp(14px, 4vw, 18px);
+  color: #c0a8e0;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.7;
+  margin-top: 20px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.cw-layer-hint.cw-lh-show { opacity: 1; }
+
+/* --- クリアオーバーレイ --- */
+.cw-clear-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(0, 0, 5, 0.96);
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.cw-clear-overlay.cw-co-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cw-clear-msg {
+  font-size: clamp(18px, 5vw, 26px);
+  color: #e0d0f0;
+  text-align: center;
+  line-height: 1.8;
+  min-height: 80px;
+  letter-spacing: 2px;
+}
+.cw-clear-rank {
+  font-size: clamp(40px, 12vw, 64px);
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.2);
+  animation: slRankAppear 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cw-clear-rank-msg {
+  font-size: clamp(13px, 3.5vw, 16px);
+  color: #b0a0c8;
+  margin-top: -8px;
+  letter-spacing: 1px;
+}
+.cw-clear-epilogue {
+  font-size: clamp(14px, 3.8vw, 17px);
+  color: #c0b0d8;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.8;
+  max-width: 320px;
+  min-height: 40px;
+}
+.cw-clear-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.cw-btn-sub {
+  background: none;
+  border: 1px solid #a090c0;
+  color: #a090c0;
+  padding: 8px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* --- ゲームオーバーオーバーレイ --- */
+.cw-gameover-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(20, 0, 0, 0.94);
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.cw-gameover-overlay.cw-go-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cw-gameover-msg {
+  font-size: clamp(20px, 6vw, 30px);
+  font-weight: 900;
+  color: #ff4040;
+  text-align: center;
+  line-height: 1.6;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+}
+.cw-gameover-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
