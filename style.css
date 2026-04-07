@@ -3637,15 +3637,27 @@ body::before {
   align-items: center;
 }
 /* セル（目シェイプ） */
+/* === 仮面セル（顔） === */
 .cw-cell {
-  border-radius: 50%;
+  border-radius: 45% 45% 42% 42%;
   position: relative;
   cursor: pointer;
   opacity: 0;
   transform: scale(0.6);
   transition: transform 0.12s ease-out, opacity 0.12s ease-out;
+  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+}
+/* 眉の影（顔の上部に深み） */
+.cw-cell::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15), transparent);
+  pointer-events: none;
+  z-index: 1;
 }
 .cw-cell.cw-cell-enter {
   opacity: 1;
@@ -3660,31 +3672,64 @@ body::before {
 .cw-cell:active {
   transform: scale(0.93);
 }
-/* 瞳 */
-.cw-pupil {
+/* === 目（アーモンド型スロット） === */
+.cw-eye {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(8, 4, 16, 0.55);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+/* === 虹彩 === */
+.cw-iris {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
 }
-/* 敵意ある視線（控えめ） */
-.cw-pupil-hostile {
-  box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25);
-  animation: cwPupilHostile 2.5s ease-in-out infinite;
+/* 瞳のハイライト */
+.cw-iris::after {
+  content: "";
+  position: absolute;
+  width: 25%;
+  height: 25%;
+  top: 20%;
+  left: 22%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
 }
-@keyframes cwPupilHostile {
+/* === 口 === */
+.cw-mouth {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 0;
+  border-bottom: 2px solid transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+.cw-mouth-smirk {
+  opacity: 0.7;
+  border-bottom-style: solid;
+  border-radius: 0 0 50% 50%;
+}
+.cw-mouth-frown {
+  opacity: 0.7;
+  border-bottom-style: solid;
+  border-radius: 50% 50% 0 0;
+}
+/* === 敵意ある視線 === */
+.cw-iris-hostile {
+  box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25);
+  animation: cwIrisHostile 2.5s ease-in-out infinite;
+}
+@keyframes cwIrisHostile {
   0%, 100% { box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25); }
   50%      { box-shadow: 0 0 7px 2px rgba(255, 60, 30, 0.45); }
 }
-/* 正解フラッシュ */
-.cw-cell-correct {
-  animation: cwCorrectPulse 0.5s ease-out;
-}
-@keyframes cwCorrectPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(80, 255, 120, 0.6); transform: scale(1); }
-  40%  { box-shadow: 0 0 20px 8px rgba(80, 255, 120, 0.4); transform: scale(1.1); }
-  100% { box-shadow: 0 0 0 0 rgba(80, 255, 120, 0); transform: scale(1); }
-}
-/* 正解: 潰しアニメーション */
+/* === 正解: 潰しアニメーション === */
 .cw-cell-crush {
   animation: cwCrush 0.45s ease-out forwards;
   pointer-events: none;
@@ -3695,7 +3740,7 @@ body::before {
   60%  { transform: scale(0.3); opacity: 0.5; filter: brightness(0.5); box-shadow: 0 0 10px rgba(255, 100, 80, 0.2); }
   100% { transform: scale(0); opacity: 0; filter: brightness(0); box-shadow: none; }
 }
-/* 不正解シェイク */
+/* === 不正解シェイク === */
 .cw-cell-wrong {
   animation: cwWrongShake 0.4s ease-out;
 }
@@ -3707,19 +3752,19 @@ body::before {
   60% { transform: translateX(6px); }
   75% { transform: translateX(-3px); }
 }
-/* 正解セル強調表示（タイムアウト時） */
+/* === 正解セル強調表示（タイムアウト時） === */
 .cw-cell-reveal {
   box-shadow: 0 0 16px 4px rgba(255, 200, 80, 0.6);
   transform: scale(1.15);
   transition: transform 0.3s, box-shadow 0.3s;
 }
-/* セルフェードアウト */
+/* === セルフェードアウト === */
 .cw-cell-fade {
   opacity: 0.2 !important;
   transform: scale(0.85) !important;
   transition: opacity 0.3s, transform 0.3s !important;
 }
-/* 暴露アニメーション（ミス時に正解セルを示す） */
+/* === 暴露アニメーション（ミス時に正解セルを示す） === */
 .cw-cell-expose {
   animation: cwExpose 0.5s ease-out forwards;
 }
@@ -3729,11 +3774,11 @@ body::before {
   70%  { transform: scale(1.15); box-shadow: 0 0 15px 4px rgba(255, 40, 40, 0.5); }
   100% { transform: scale(1.1); box-shadow: 0 0 8px 2px rgba(255, 40, 40, 0.3); }
 }
-/* 嘲笑瞳（ミス時に正解セルの瞳がプレイヤーを見下ろす） */
-.cw-pupil-mock {
-  animation: cwPupilMock 0.35s ease-out forwards;
+/* === 嘲笑虹彩（ミス時に正解セルの虹彩がプレイヤーを見下ろす） === */
+.cw-iris-mock {
+  animation: cwIrisMock 0.35s ease-out forwards;
 }
-@keyframes cwPupilMock {
+@keyframes cwIrisMock {
   0%   { transform: translate(0, 0) scale(1); }
   40%  { transform: translate(0, 2px) scale(1.15); }
   100% { transform: translate(0, 1px) scale(1.1); }
