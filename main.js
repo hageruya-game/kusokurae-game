@@ -427,6 +427,40 @@ const SoundSystem = {
     noise.start(t); noise.stop(t + 0.6);
   },
 
+  // --- 開始音: 短い低音ブーム（重みのある突入感） ---
+  startBoom() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    // サブベース（低いドーン）
+    var sub = ctx.createOscillator();
+    var sg = ctx.createGain();
+    sub.connect(sg); sg.connect(ctx.destination);
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(55, t);
+    sub.frequency.exponentialRampToValueAtTime(30, t + 0.4);
+    sg.gain.setValueAtTime(0.18, t);
+    sg.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    sub.start(t); sub.stop(t + 0.45);
+    // ノイズ（空気感）
+    var bufSize = Math.floor(ctx.sampleRate * 0.15);
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.3;
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    var lpf = ctx.createBiquadFilter();
+    lpf.type = "lowpass";
+    lpf.frequency.setValueAtTime(200, t);
+    lpf.frequency.exponentialRampToValueAtTime(40, t + 0.3);
+    var ng = ctx.createGain();
+    noise.connect(lpf); lpf.connect(ng); ng.connect(ctx.destination);
+    ng.gain.setValueAtTime(0.1, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    noise.start(t); noise.stop(t + 0.3);
+  },
+
   // --- 不正解音: 短い不快な下降音 ---
   wrong() {
     if (!this.enabled) return;
@@ -913,8 +947,25 @@ const Game = {
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
 
     this.el.btnStart.addEventListener("click", () => {
-      if (Tutorial.shouldShow()) Tutorial.start();
-      else this.startGame();
+      TitlePrologue.stopAll();
+      SoundSystem.init();
+      SoundSystem.startBoom();
+      // タイトル要素フェードアウト + 暗転
+      var titleScreen = document.getElementById("screen-title");
+      var transition = document.getElementById("start-transition");
+      titleScreen.classList.add("title-leaving");
+      setTimeout(function() {
+        transition.classList.add("st-active");
+      }, 100);
+      // 暗転が完了したらSlash開始 + フェードバック
+      setTimeout(function() {
+        titleScreen.classList.remove("title-leaving");
+        Slash.start();
+        transition.classList.add("st-fade-out");
+        setTimeout(function() {
+          transition.classList.remove("st-active", "st-fade-out");
+        }, 300);
+      }, 450);
     });
     this.el.btnReplay.addEventListener("click", () => this.startGame());
     this.el.btnChoice0.addEventListener("click", () => this.choose(0));
@@ -2277,6 +2328,7 @@ const Dungeon = {
     this.sessionId++;
     this.cleanup();
     Game.showScreen(document.getElementById("screen-title"));
+    TitlePrologue.startIdle();
   },
 
   cleanup() {
@@ -2785,6 +2837,14 @@ const SLASH_LAYERS = [
   { name: "最深層：決断", rounds: 5, choices: 4, timer: 2600, types: ["normal", "normal", "obey", "obey", "wait"], imgScale: 0.72 },
 ];
 
+const SLASH_LAYER_HINTS = [
+  "命令の逆を斬れ。",
+  "「従え」が出たら、命令通りに斬れ。",
+  "「待て」が出たら、何も斬るな。\n選択肢が3つになる。",
+  "選択肢が4つになる。見極めろ。",
+  null, // 最深層: ヒントなし
+];
+
 const SLASH_TARGETS = [
   { id: "rat",     name: "ネズミ",     img: "assets/enemy_rat.png" },
   { id: "fly",     name: "ハエ",       img: "assets/enemy_fly.png" },
@@ -2821,6 +2881,8 @@ const Slash = {
   heartbeatInterval: null,
   heartbeatSpeed: 600,
   roundTime: 5000,
+  layerTutorialShown: new Set(),
+  hintTimeout: null,
   // 層・ラウンド管理
   currentLayer: 0,
   currentRound: 0,
@@ -2851,6 +2913,7 @@ const Slash = {
       comboEl: document.getElementById("sl-combo"),
       layerOverlay: document.getElementById("sl-layer-overlay"),
       layerName: document.getElementById("sl-layer-name"),
+      layerHint: document.getElementById("sl-layer-hint"),
       clearOverlay: document.getElementById("sl-clear-overlay"),
       clearMsg: document.getElementById("sl-clear-msg"),
       clearStats: document.getElementById("sl-clear-stats"),
@@ -2893,6 +2956,7 @@ const Slash = {
     this.cleanup();
     this.clearEffects();
     Game.showScreen(document.getElementById("screen-title"));
+    TitlePrologue.startIdle();
   },
 
   cleanup() {
@@ -2918,6 +2982,10 @@ const Slash = {
     this.el.screen.scrollTop = 0;
     document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
     this.el.layerOverlay.classList.remove("sl-lo-show");
+    this.el.layerOverlay.style.pointerEvents = "";
+    this.el.layerHint.classList.remove("sl-lh-show");
+    this.el.layerHint.textContent = "";
+    clearTimeout(this.hintTimeout);
     this.el.clearOverlay.classList.remove("sl-co-show");
     this.el.statusWrap.classList.remove("sl-status-pulse");
     this.el.reward.style.opacity = "0";
@@ -3007,21 +3075,55 @@ const Slash = {
     const layer = SLASH_LAYERS[this.currentLayer];
     this.el.layerName.textContent = layer.name;
     this.el.layerLabel.textContent = layer.name;
+    this.el.layerHint.textContent = "";
+    this.el.layerHint.classList.remove("sl-lh-show");
     this.el.layerOverlay.classList.add("sl-lo-show");
     // 層開始時にラウンドプランを生成
     this.roundPlan = this.buildRoundPlan(layer);
     const sid = this.sessionId;
-    setTimeout(() => {
-      if (this.sessionId !== sid) return;
-      this.el.layerOverlay.classList.remove("sl-lo-show");
-      // 終盤演出
-      if (this.currentLayer >= 3) {
-        this.el.screen.classList.add("sl-late-bg");
-        this.el.command.classList.add("sl-cmd-wobble");
-      }
-      this.currentRound = 0;
-      this.startRound();
-    }, 1200);
+
+    const hint = SLASH_LAYER_HINTS[this.currentLayer];
+    const showHint = hint && !this.layerTutorialShown.has(this.currentLayer);
+
+    if (showHint) {
+      this.layerTutorialShown.add(this.currentLayer);
+      // 1200ms後にヒント表示
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.layerHint.textContent = hint;
+        this.el.layerHint.classList.add("sl-lh-show");
+
+        // タップ or 3秒で消去 → startRound
+        const dismiss = () => {
+          if (this.sessionId !== sid) return;
+          clearTimeout(this.hintTimeout);
+          this.el.layerOverlay.removeEventListener("click", dismiss);
+          this.el.layerOverlay.classList.remove("sl-lo-show");
+          this.el.layerHint.classList.remove("sl-lh-show");
+          if (this.currentLayer >= 3) {
+            this.el.screen.classList.add("sl-late-bg");
+            this.el.command.classList.add("sl-cmd-wobble");
+          }
+          this.currentRound = 0;
+          this.startRound();
+        };
+        this.el.layerOverlay.style.pointerEvents = "auto";
+        this.el.layerOverlay.addEventListener("click", dismiss);
+        this.hintTimeout = setTimeout(dismiss, 3000);
+      }, 1200);
+    } else {
+      // ヒントなし: 従来通り1200msで消去
+      setTimeout(() => {
+        if (this.sessionId !== sid) return;
+        this.el.layerOverlay.classList.remove("sl-lo-show");
+        if (this.currentLayer >= 3) {
+          this.el.screen.classList.add("sl-late-bg");
+          this.el.command.classList.add("sl-cmd-wobble");
+        }
+        this.currentRound = 0;
+        this.startRound();
+      }, 1200);
+    }
   },
 
   startRound() {
@@ -4083,6 +4185,7 @@ const JudgeRoom = {
   goTitle() {
     this.cleanup();
     Game.showScreen(document.getElementById("screen-title"));
+    TitlePrologue.startIdle();
   },
 
   cleanup() {
@@ -4434,6 +4537,7 @@ const Corridor = {
   goTitle() {
     this.cleanup();
     Game.showScreen(document.getElementById("screen-title"));
+    TitlePrologue.startIdle();
   },
 
   cleanup() {
@@ -5259,6 +5363,66 @@ const Tutorial = {
   },
 };
 
+// ============================================================
+// タイトル放置時プロローグ
+// ============================================================
+const TitlePrologue = {
+  idleTimeout: null,
+  loopTimeout: null,
+  lineTimeouts: [],
+  el: null,
+  lines: null,
+
+  init() {
+    this.el = document.getElementById("title-prologue");
+    this.lines = this.el.querySelectorAll(".prologue-line");
+  },
+
+  startIdle() {
+    this.stopAll();
+    this.idleTimeout = setTimeout(() => this.showPrologue(), 10000);
+  },
+
+  stopAll() {
+    clearTimeout(this.idleTimeout);
+    clearTimeout(this.loopTimeout);
+    this.lineTimeouts.forEach(t => clearTimeout(t));
+    this.lineTimeouts = [];
+    if (this.el) {
+      this.el.classList.remove("prologue-active", "prologue-fadeout");
+      this.lines.forEach(l => l.classList.remove("prologue-line-show"));
+    }
+  },
+
+  showPrologue() {
+    this.el.classList.add("prologue-active");
+    this.el.classList.remove("prologue-fadeout");
+    this.lines.forEach(l => l.classList.remove("prologue-line-show"));
+
+    // 1行ずつフェードイン（1.8秒間隔）
+    for (var i = 0; i < this.lines.length; i++) {
+      (function(idx, self) {
+        var t = setTimeout(function() {
+          self.lines[idx].classList.add("prologue-line-show");
+        }, idx * 1800);
+        self.lineTimeouts.push(t);
+      })(i, this);
+    }
+
+    // 全行表示後2.5秒ホールド → フェードアウト → 12秒後にループ
+    var totalShowTime = (this.lines.length - 1) * 1800 + 2500;
+    var fadeT = setTimeout(() => {
+      this.el.classList.add("prologue-fadeout");
+      this.loopTimeout = setTimeout(() => {
+        this.el.classList.remove("prologue-active", "prologue-fadeout");
+        this.lines.forEach(l => l.classList.remove("prologue-line-show"));
+        this.loopTimeout = setTimeout(() => this.showPrologue(), 12000);
+      }, 1500); // フェードアウト時間
+    }, totalShowTime);
+    this.lineTimeouts.push(fadeT);
+  },
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   Game.init();
   Tutorial.init();
@@ -5266,6 +5430,8 @@ document.addEventListener("DOMContentLoaded", () => {
   Slash.init();
   JudgeRoom.init();
   /* Corridor.init(); -- 隔離中 */
+  TitlePrologue.init();
+  TitlePrologue.startIdle();
 
   // タイトル画面のスクロール/バウンス完全防止（iOS Safari対策）
   var titleScreen = document.getElementById("screen-title");

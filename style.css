@@ -82,6 +82,69 @@ body {
   text-align: center;
 }
 
+/* ===== ゲーム開始トランジション ===== */
+.start-transition {
+  position: fixed;
+  inset: 0;
+  background: #0a0418;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.start-transition.st-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.start-transition.st-fade-out {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* タイトル要素のフェードアウト */
+#screen-title.title-leaving .title-intro,
+#screen-title.title-leaving .title-main,
+#screen-title.title-leaving .btn-start,
+#screen-title.title-leaving .title-prologue {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ===== タイトル放置プロローグ ===== */
+.title-prologue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+.title-prologue.prologue-active {
+  opacity: 1;
+}
+.title-prologue.prologue-fadeout {
+  opacity: 0;
+}
+.prologue-line {
+  font-size: clamp(14px, 4vw, 17px);
+  color: #b8a0d8;
+  text-align: center;
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
+.prologue-line.prologue-line-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ===== ボタン共通 ===== */
 .btn {
   border: none;
@@ -2591,9 +2654,6 @@ body::before {
 #screen-title .btn-start {
   animation: titleFadeIn 0.8s ease-out 1.0s both;
 }
-#screen-title .btn-rule-style {
-  animation: titleFadeIn 0.8s ease-out 1.2s both;
-}
 
 /* ===== ルール説明オーバーレイ ===== */
 .rule-overlay {
@@ -3296,6 +3356,7 @@ body::before {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
@@ -3316,6 +3377,19 @@ body::before {
 @keyframes slLayerNameIn {
   0%   { opacity: 0; transform: scale(0.8) translateY(8px); letter-spacing: 12px; }
   100% { opacity: 1; transform: scale(1) translateY(0); letter-spacing: 6px; }
+}
+.sl-layer-hint {
+  font-size: clamp(14px, 4vw, 18px);
+  color: #c0a8e0;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.7;
+  margin-top: 20px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.sl-layer-hint.sl-lh-show {
+  opacity: 1;
 }
 
 /* --- クリアオーバーレイ --- */

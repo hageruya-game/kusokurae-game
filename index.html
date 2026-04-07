@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>圧力回廊</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
   <!-- デバッグラベル（テストモード用） -->
@@ -31,13 +31,17 @@
     <!-- ボタン -->
     <button id="btn-start" class="btn btn-start">はじめる</button>
     <button id="btn-judge" class="btn btn-judge" style="display:none">連続ジャッジルーム</button>
-    <!-- 隔離中: <button id="btn-corridor" class="btn btn-sub">圧力回廊（試作中）</button> -->
-    <!-- テスト用: Dungeon直接起動 -->
-    <button id="btn-slash" class="btn btn-sub">斬撃モード（テスト）</button>
-    <button id="btn-tutorial" class="btn btn-rule-style">ルール説明</button>
 
     <!-- 非表示（DOM残す） -->
     <div class="title-footer" style="display:none">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
+
+    <!-- 放置時プロローグ -->
+    <div class="title-prologue" id="title-prologue">
+      <div class="prologue-line">この世界では、従うことが正しさになる。</div>
+      <div class="prologue-line">読まない者は、間違いにされる。</div>
+      <div class="prologue-line">沈黙もまた、服従である。</div>
+      <div class="prologue-line">それでも抗うなら、斬れ。</div>
+    </div>
   </div>
 
   <!-- ゲーム画面（3段レイアウト: 上段/中央キャラ段/下段） -->
@@ -91,6 +95,9 @@
       </div>
     </div>
   </div>
+
+  <!-- ゲーム開始トランジション -->
+  <div id="start-transition" class="start-transition"></div>
 
   <!-- ○×フィードバックオーバーレイ -->
   <div id="ox-overlay" class="ox-overlay">
@@ -282,6 +289,7 @@
     <!-- 層タイトルオーバーレイ -->
     <div class="sl-layer-overlay" id="sl-layer-overlay">
       <div class="sl-layer-name" id="sl-layer-name"></div>
+      <div class="sl-layer-hint" id="sl-layer-hint"></div>
     </div>
     <!-- クリアオーバーレイ -->
     <div class="sl-clear-overlay" id="sl-clear-overlay">
