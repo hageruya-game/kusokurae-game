@@ -960,10 +960,11 @@ const Game = {
       setTimeout(function() {
         transition.classList.add("st-active");
       }, 100);
-      // 暗転が完了したらSlash開始 + フェードバック
+      // 暗転が完了したら本編（文章問題）開始 + フェードバック
+      var self = this;
       setTimeout(function() {
         titleScreen.classList.remove("title-leaving");
-        Slash.start();
+        self.startGame();
         transition.classList.add("st-fade-out");
         setTimeout(function() {
           transition.classList.remove("st-active", "st-fade-out");
