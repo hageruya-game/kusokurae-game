@@ -5729,7 +5729,12 @@ const Crowd = {
     document.getElementById("cw-btn-go-title").addEventListener("click", () => this.goTitle());
 
     var btnTestCrowd = document.getElementById("btn-test-crowd");
-    if (btnTestCrowd) btnTestCrowd.addEventListener("click", () => this.start());
+    if (btnTestCrowd) btnTestCrowd.addEventListener("click", () => {
+      TitlePrologue.stopAll();
+      SoundSystem.init();
+      SoundSystem.stopTitleAmbient();
+      this.start();
+    });
   },
 
   calcTension() {
