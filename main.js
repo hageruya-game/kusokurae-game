@@ -5760,15 +5760,26 @@ const Tutorial = {
 // ステージ3: 審眼 (Crowd)
 // ============================================================
 
+const CW_SILHOUETTES = {
+  circle:   { radius: "50%" },
+  rounded:  { radius: "22%" },
+  diamond:  { clip: "polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)" },
+  pentagon: { clip: "polygon(50% 5%, 97% 38%, 79% 93%, 21% 93%, 3% 38%)" },
+  hexagon:  { clip: "polygon(50% 3%, 93% 25%, 93% 75%, 50% 97%, 7% 75%, 7% 25%)" },
+  triangle: { clip: "polygon(50% 8%, 93% 88%, 7% 88%)" },
+  drop:     { clip: "polygon(50% 5%, 80% 35%, 90% 65%, 50% 95%, 10% 65%, 20% 35%)" },
+  shield:   { clip: "polygon(50% 5%, 95% 20%, 85% 80%, 50% 95%, 15% 80%, 5% 20%)" },
+};
+
 const CROWD_LAYERS = [
-  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["hue","gaze","eyelid","expression","tilt"] },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["hue","gaze","eyelid","expression","tilt"] },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["gaze","eyelid","expression","tilt"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["gaze","eyelid","tilt"] },
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["hue","silhouette","rotation","scale"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["hue","silhouette","rotation","scale"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["silhouette","rotation","scale"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["silhouette","rotation","scale"] },
 ];
 
 const CROWD_LAYER_HINTS = [
-  "異端を見つけろ。\n違う目を持つ者をタップしろ。",
+  "異端を見つけろ。\n違う形を持つ者をタップしろ。",
   "「全員同じ」の時がある。\nその時は、何もタップするな。",
   "違いが小さくなる。よく見ろ。",
   null,
@@ -6012,16 +6023,15 @@ const Crowd = {
   },
 
   generateShapes(layer) {
-    // ベースシェイプ（仮面の群衆 — 全員同じ無表情）
     var baseHue = 260 + Math.random() * 20; // 260-280 紫系
+    var keys = Object.keys(CW_SILHOUETTES);
+    var baseKey = keys[Math.floor(Math.random() * keys.length)];
 
     this.baseShape = {
       hue: baseHue,
-      eyeOpenness: 0.18,  // 目の開き（cellSize比率）
-      irisX: 0,           // 虹彩の水平オフセット(px)
-      irisY: 0,           // 虹彩の垂直オフセット(px)
-      mouthCurve: 0,      // 口（0=非表示）
+      silhouette: baseKey,
       rotation: 0,
+      inset: 8,
       hostile: false,
     };
 
@@ -6033,14 +6043,13 @@ const Crowd = {
       // 層のaxesから軸を選択
       var axes = layer.axes.slice();
       var numAxes = layer.diffStrength > 0.5 ? (Math.random() < 0.5 ? 2 : 1) : 1;
-      // シャッフルして先頭から取る
       for (var i = axes.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
         var tmp = axes[i]; axes[i] = axes[j]; axes[j] = tmp;
       }
       var chosenAxes = axes.slice(0, numAxes);
 
-      var diff = { hue: baseHue, eyeOpenness: 0.18, irisX: 0, irisY: 0, mouthCurve: 0, rotation: 0, hostile: false };
+      var diff = { hue: baseHue, silhouette: baseKey, rotation: 0, inset: 8, hostile: false };
 
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
@@ -6050,28 +6059,16 @@ const Crowd = {
         if (axis === "hue") {
           var range = 8 + (40 - 8) * s;
           diff.hue = baseHue + sign * range;
-        } else if (axis === "gaze") {
-          // 視線: 虹彩の位置移動（「こっちを見てる」）
-          var range = 3 + (12 - 3) * s;
-          diff.irisX = sign * range;
-          diff.irisY = (Math.random() - 0.5) * range * 0.4;
-        } else if (axis === "eyelid") {
-          // まぶた: 目の開き変化（「睨んでる/見開いてる」）
-          var range = 0.03 + (0.06 - 0.03) * s;
-          diff.eyeOpenness = 0.18 + sign * range;
-          diff.eyeOpenness = Math.max(0.10, Math.min(0.26, diff.eyeOpenness));
-          // eyelid変化時: 微小な視線ズレを補強
-          if (diff.irisX === 0 && diff.irisY === 0) {
-            var nudge = 1 + 2 * s;
-            diff.irisX = sign * nudge;
-          }
-        } else if (axis === "expression") {
-          // 表情: 口元が出現（「笑ってる/歪んでる」）
-          diff.mouthCurve = sign; // +1 smirk, -1 frown
-        } else if (axis === "tilt") {
-          // 頭の傾き
-          var range = 5 + (25 - 5) * s;
+        } else if (axis === "silhouette") {
+          var diffKey;
+          do { diffKey = keys[Math.floor(Math.random() * keys.length)]; } while (diffKey === baseKey);
+          diff.silhouette = diffKey;
+        } else if (axis === "rotation") {
+          var range = 8 + (45 - 8) * s;
           diff.rotation = sign * range;
+        } else if (axis === "scale") {
+          var range = 3 + (10 - 3) * s;
+          diff.inset = Math.max(2, Math.min(20, 8 + sign * range));
         }
       }
 
@@ -6139,62 +6136,34 @@ const Crowd = {
 
   applyShapeStyle(cell, shape, cellSize) {
     var h = shape.hue;
+    var def = CW_SILHOUETTES[shape.silhouette];
 
-    // 顔（仮面）
-    cell.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ", 35%, 52%), hsl(" + h + ", 45%, 22%))";
-    cell.style.transform = "rotate(" + shape.rotation + "deg)";
+    // .cw-shape生成
+    var el = document.createElement("div");
+    el.className = "cw-shape";
+    el.style.inset = shape.inset + "%";
 
-    // 目（アーモンド型スロット）
-    var eye = document.createElement("div");
-    eye.className = "cw-eye";
-    var eyeW = cellSize * 0.55;
-    var eyeH = cellSize * shape.eyeOpenness;
-    eye.style.width = eyeW + "px";
-    eye.style.height = eyeH + "px";
-    eye.style.top = (cellSize * 0.35) + "px";
-    eye.style.left = (cellSize / 2 - eyeW / 2) + "px";
+    // シルエット適用
+    if (def.clip) {
+      el.style.clipPath = def.clip;
+      el.style.webkitClipPath = def.clip;
+    } else {
+      el.style.borderRadius = def.radius;
+    }
 
-    // 虹彩（目の中）
-    var iris = document.createElement("div");
-    iris.className = "cw-iris";
-    var irisSize = cellSize * 0.15;
-    iris.style.width = irisSize + "px";
-    iris.style.height = irisSize + "px";
-    var irisBaseX = eyeW / 2 - irisSize / 2 + shape.irisX;
-    var irisBaseY = eyeH / 2 - irisSize / 2 + shape.irisY;
-    iris.style.left = irisBaseX + "px";
-    iris.style.top = irisBaseY + "px";
-    iris.style.background = "radial-gradient(circle at 35% 30%, hsl(" + (h + 180) + ", 55%, 65%), hsl(" + (h + 180) + ", 65%, 18%))";
+    // 背景色
+    el.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",35%,52%), hsl(" + h + ",45%,22%))";
 
-    // 敵意ある視線
+    // 回転
+    el.style.transform = "rotate(" + shape.rotation + "deg)";
+
+    // 敵意
     if (shape.hostile) {
-      iris.classList.add("cw-iris-hostile");
-      // 虹彩に赤みを混ぜる
-      iris.style.background = "radial-gradient(circle at 35% 30%, hsl(0, 40%, 55%), hsl(" + (h + 180) + ", 55%, 18%))";
-      // 虹彩をグリッド中央方向にシフト
-      var gx = parseInt(cell.dataset.gridX || "0");
-      var gy = parseInt(cell.dataset.gridY || "0");
-      var centerX = (parseInt(cell.dataset.maxCols || "1") - 1) / 2;
-      var centerY = (parseInt(cell.dataset.maxRows || "1") - 1) / 2;
-      iris.style.left = (irisBaseX + (centerX - gx) * 3) + "px";
-      iris.style.top = (irisBaseY + (centerY - gy) * 2) + "px";
+      el.classList.add("cw-shape-hostile");
+      el.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",30%,50%), hsl(350,40%,20%))";
     }
 
-    eye.appendChild(iris);
-    cell.appendChild(eye);
-
-    // 口（expression diff時のみ表示）
-    var mouth = document.createElement("div");
-    mouth.className = "cw-mouth";
-    mouth.style.top = (cellSize * 0.68) + "px";
-    mouth.style.width = (cellSize * 0.22) + "px";
-    mouth.style.borderColor = "hsl(" + h + ", 25%, 38%)";
-    if (shape.mouthCurve > 0) {
-      mouth.classList.add("cw-mouth-smirk");
-    } else if (shape.mouthCurve < 0) {
-      mouth.classList.add("cw-mouth-frown");
-    }
-    cell.appendChild(mouth);
+    cell.appendChild(el);
   },
 
   startTimer(dur) {
@@ -6347,13 +6316,13 @@ const Crowd = {
     void this.el.screen.offsetWidth;
     this.el.screen.classList.add("cw-miss-flash");
 
-    // 正解セルを暴露（赤グロー + 瞳が見下ろす）
+    // 正解セルを暴露（赤グロー + シルエット強調）
     if (this.roundType === "find" && this.oddIndex >= 0) {
       var cells = this.el.grid.querySelectorAll(".cw-cell");
       if (cells[this.oddIndex]) {
         cells[this.oddIndex].classList.add("cw-cell-expose");
-        var correctPupil = cells[this.oddIndex].querySelector(".cw-iris");
-        if (correctPupil) correctPupil.classList.add("cw-iris-mock");
+        var correctShape = cells[this.oddIndex].querySelector(".cw-shape");
+        if (correctShape) correctShape.classList.add("cw-shape-mock");
       }
     }
 
@@ -6400,13 +6369,13 @@ const Crowd = {
     SoundSystem.crowdMiss();
     SoundSystem.updateSlashTension(this.calcTension());
 
-    // 正解セルを暴露（赤グロー + 瞳が見下ろす）
+    // 正解セルを暴露（赤グロー + シルエット強調）
     if (this.oddIndex >= 0) {
       var cells = this.el.grid.querySelectorAll(".cw-cell");
       if (cells[this.oddIndex]) {
         cells[this.oddIndex].classList.add("cw-cell-expose");
-        var correctPupil = cells[this.oddIndex].querySelector(".cw-iris");
-        if (correctPupil) correctPupil.classList.add("cw-iris-mock");
+        var correctShape = cells[this.oddIndex].querySelector(".cw-shape");
+        if (correctShape) correctShape.classList.add("cw-shape-mock");
       }
       // 他をフェードアウト
       cells.forEach(function(c, idx) {

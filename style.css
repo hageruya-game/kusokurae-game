@@ -3637,27 +3637,15 @@ body::before {
   align-items: center;
 }
 /* セル（目シェイプ） */
-/* === 仮面セル（顔） === */
+/* === シルエットセル === */
 .cw-cell {
-  border-radius: 45% 45% 42% 42%;
   position: relative;
   cursor: pointer;
   opacity: 0;
   transform: scale(0.6);
   transition: transform 0.12s ease-out, opacity 0.12s ease-out;
-  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-}
-/* 眉の影（顔の上部に深み） */
-.cw-cell::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 40%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.15), transparent);
-  pointer-events: none;
-  z-index: 1;
 }
 .cw-cell.cw-cell-enter {
   opacity: 1;
@@ -3672,62 +3660,20 @@ body::before {
 .cw-cell:active {
   transform: scale(0.93);
 }
-/* === 目（アーモンド型スロット） === */
-.cw-eye {
+/* === シルエット形状 === */
+.cw-shape {
   position: absolute;
-  overflow: hidden;
-  border-radius: 50%;
-  background: rgba(8, 4, 16, 0.55);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-  z-index: 2;
-}
-/* === 虹彩 === */
-.cw-iris {
-  position: absolute;
-  border-radius: 50%;
+  inset: 8%;
   pointer-events: none;
 }
-/* 瞳のハイライト */
-.cw-iris::after {
-  content: "";
-  position: absolute;
-  width: 25%;
-  height: 25%;
-  top: 20%;
-  left: 22%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
+/* === 敵意シルエット === */
+.cw-shape-hostile {
+  filter: drop-shadow(0 0 4px rgba(255,50,40,0.25));
+  animation: cwShapeHostile 2.5s ease-in-out infinite;
 }
-/* === 口 === */
-.cw-mouth {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 0;
-  border-bottom: 2px solid transparent;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
-  z-index: 2;
-}
-.cw-mouth-smirk {
-  opacity: 0.7;
-  border-bottom-style: solid;
-  border-radius: 0 0 50% 50%;
-}
-.cw-mouth-frown {
-  opacity: 0.7;
-  border-bottom-style: solid;
-  border-radius: 50% 50% 0 0;
-}
-/* === 敵意ある視線 === */
-.cw-iris-hostile {
-  box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25);
-  animation: cwIrisHostile 2.5s ease-in-out infinite;
-}
-@keyframes cwIrisHostile {
-  0%, 100% { box-shadow: 0 0 4px 1px rgba(255, 50, 40, 0.25); }
-  50%      { box-shadow: 0 0 7px 2px rgba(255, 60, 30, 0.45); }
+@keyframes cwShapeHostile {
+  0%,100% { filter: drop-shadow(0 0 4px rgba(255,50,40,0.25)); }
+  50%     { filter: drop-shadow(0 0 8px rgba(255,60,30,0.45)); }
 }
 /* === 正解: 潰しアニメーション === */
 .cw-cell-crush {
@@ -3735,10 +3681,10 @@ body::before {
   pointer-events: none;
 }
 @keyframes cwCrush {
-  0%   { transform: scale(1); opacity: 1; filter: brightness(1); box-shadow: none; }
-  20%  { transform: scale(1.25); opacity: 1; filter: brightness(2); box-shadow: 0 0 30px rgba(255, 100, 80, 0.8); }
-  60%  { transform: scale(0.3); opacity: 0.5; filter: brightness(0.5); box-shadow: 0 0 10px rgba(255, 100, 80, 0.2); }
-  100% { transform: scale(0); opacity: 0; filter: brightness(0); box-shadow: none; }
+  0%   { transform: scale(1); opacity: 1; filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  20%  { transform: scale(1.25); opacity: 1; filter: brightness(2) drop-shadow(0 0 30px rgba(255, 100, 80, 0.8)); }
+  60%  { transform: scale(0.3); opacity: 0.5; filter: brightness(0.5) drop-shadow(0 0 10px rgba(255, 100, 80, 0.2)); }
+  100% { transform: scale(0); opacity: 0; filter: brightness(0) drop-shadow(0 0 0 transparent); }
 }
 /* === 不正解シェイク === */
 .cw-cell-wrong {
@@ -3754,9 +3700,9 @@ body::before {
 }
 /* === 正解セル強調表示（タイムアウト時） === */
 .cw-cell-reveal {
-  box-shadow: 0 0 16px 4px rgba(255, 200, 80, 0.6);
+  filter: drop-shadow(0 0 10px rgba(255, 200, 80, 0.6));
   transform: scale(1.15);
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s, filter 0.3s;
 }
 /* === セルフェードアウト === */
 .cw-cell-fade {
@@ -3769,19 +3715,15 @@ body::before {
   animation: cwExpose 0.5s ease-out forwards;
 }
 @keyframes cwExpose {
-  0%   { transform: scale(1); box-shadow: none; }
-  30%  { transform: scale(1.2); box-shadow: 0 0 20px 6px rgba(255, 60, 60, 0.7); }
-  70%  { transform: scale(1.15); box-shadow: 0 0 15px 4px rgba(255, 40, 40, 0.5); }
-  100% { transform: scale(1.1); box-shadow: 0 0 8px 2px rgba(255, 40, 40, 0.3); }
+  0%   { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  30%  { transform: scale(1.2); filter: drop-shadow(0 0 12px rgba(255, 60, 60, 0.7)); }
+  70%  { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255, 40, 40, 0.5)); }
+  100% { transform: scale(1.1); filter: drop-shadow(0 0 5px rgba(255, 40, 40, 0.3)); }
 }
-/* === 嘲笑虹彩（ミス時に正解セルの虹彩がプレイヤーを見下ろす） === */
-.cw-iris-mock {
-  animation: cwIrisMock 0.35s ease-out forwards;
-}
-@keyframes cwIrisMock {
-  0%   { transform: translate(0, 0) scale(1); }
-  40%  { transform: translate(0, 2px) scale(1.15); }
-  100% { transform: translate(0, 1px) scale(1.1); }
+/* === ミス時に正解シルエットを明るく強調 === */
+.cw-shape-mock {
+  filter: brightness(1.3);
+  transition: filter 0.3s ease-out;
 }
 
 /* --- 下段 --- */
