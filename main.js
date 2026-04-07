@@ -3663,13 +3663,22 @@ const Slash = {
     }
 
     // ゲームオーバーメッセージ
-    var layerName = SLASH_LAYERS[this.currentLayer] ? SLASH_LAYERS[this.currentLayer].name : "";
-    var totalRounds = 0;
-    for (var li = 0; li < this.currentLayer; li++) totalRounds += SLASH_LAYERS[li].rounds;
-    totalRounds += this.currentRound;
+    var reached = 0;
+    for (var li = 0; li < this.currentLayer; li++) reached += SLASH_LAYERS[li].rounds;
+    reached += this.currentRound;
+    var total = 0;
+    for (var li = 0; li < SLASH_LAYERS.length; li++) total += SLASH_LAYERS[li].rounds;
+    var remaining = total - reached;
+
+    var regret = "";
+    if (remaining === 1) regret = "あと1問だった。";
+    else if (remaining === 2) regret = "あと2問だった。";
+    else if (remaining <= 4) regret = "あと" + remaining + "問だった。";
+    else if (reached <= 5) regret = "まだ序盤だった。";
 
     this.el.gameoverMsg.textContent = "…支配された";
-    this.el.gameoverStats.textContent = layerName + "\n到達ラウンド: " + totalRounds;
+    this.el.gameoverStats.textContent = "到達：" + reached + " / " + total + "問"
+      + (regret ? "\n" + regret : "");
     SoundSystem.gameoverSound();
 
     setTimeout(() => {
