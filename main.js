@@ -5662,10 +5662,10 @@ const Tutorial = {
 // ============================================================
 
 const CROWD_LAYERS = [
-  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0 },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7 },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45 },
-  { name: "最終層：同化", cols: 4, rows: 3, rounds: 4, timer: 3200, types: ["find"], diffStrength: 0.25 },
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["hue","pupilSize","pupilPos","rotation","shape"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["hue","pupilSize","pupilPos","rotation","shape"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["pupilSize","pupilPos","rotation","shape"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["pupilSize","pupilPos","rotation"] },
 ];
 
 const CROWD_LAYER_HINTS = [
@@ -5727,6 +5727,9 @@ const Crowd = {
     document.getElementById("cw-btn-title").addEventListener("click", () => this.goTitle());
     document.getElementById("cw-btn-retry").addEventListener("click", () => this.start());
     document.getElementById("cw-btn-go-title").addEventListener("click", () => this.goTitle());
+
+    var btnTestCrowd = document.getElementById("btn-test-crowd");
+    if (btnTestCrowd) btnTestCrowd.addEventListener("click", () => this.start());
   },
 
   calcTension() {
@@ -5905,12 +5908,27 @@ const Crowd = {
   },
 
   generateShapes(layer) {
+    // シェイプタイプをランダム選択
+    var shapeTypes = ["circle", "diamond", "roundedSquare", "hexagon"];
+    var shapeType = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+    var borderRadius, clipPath = null;
+    if (shapeType === "circle") {
+      borderRadius = "50%";
+    } else if (shapeType === "diamond") {
+      borderRadius = "25%";
+    } else if (shapeType === "roundedSquare") {
+      borderRadius = "18%";
+    } else {
+      borderRadius = "0";
+      clipPath = "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+    }
+
     // ベースシェイプ
     var baseHue = 260 + Math.random() * 20; // 260-280 紫系
     var basePupilSize = 0.3 + Math.random() * 0.1; // 30-40% of cell
     var basePupilX = 0;
     var basePupilY = 0;
-    var baseRotation = 0;
+    var baseRotation = shapeType === "diamond" ? 45 : 0;
 
     this.baseShape = {
       hue: baseHue,
@@ -5918,6 +5936,9 @@ const Crowd = {
       pupilX: basePupilX,
       pupilY: basePupilY,
       rotation: baseRotation,
+      shapeType: shapeType,
+      borderRadius: borderRadius,
+      clipPath: clipPath,
     };
 
     var totalCells = layer.cols * layer.rows;
@@ -5925,8 +5946,8 @@ const Crowd = {
     if (this.roundType === "find") {
       this.oddIndex = Math.floor(Math.random() * totalCells);
 
-      // 1-2軸をランダム選択
-      var axes = ["hue", "pupilSize", "pupilPos", "rotation"];
+      // 層のaxesから軸を選択
+      var axes = layer.axes.slice();
       // 高難度ほど1軸にする
       var numAxes = layer.diffStrength > 0.5 ? (Math.random() < 0.5 ? 2 : 1) : 1;
       // シャッフルして先頭から取る
@@ -5936,7 +5957,7 @@ const Crowd = {
       }
       var chosenAxes = axes.slice(0, numAxes);
 
-      var diff = { hue: baseHue, pupilSize: basePupilSize, pupilX: basePupilX, pupilY: basePupilY, rotation: baseRotation };
+      var diff = { hue: baseHue, pupilSize: basePupilSize, pupilX: basePupilX, pupilY: basePupilY, rotation: baseRotation, shapeType: shapeType, borderRadius: borderRadius, clipPath: clipPath };
 
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
@@ -5960,7 +5981,27 @@ const Crowd = {
         } else if (axis === "rotation") {
           // 強度1.0: ±30deg → 強度0.25: ±5deg
           var range = 5 + (30 - 5) * s;
-          diff.rotation = sign * range;
+          diff.rotation = baseRotation + sign * range;
+        } else if (axis === "shape") {
+          // borderRadius / clipPath を微妙にずらす
+          if (shapeType === "hexagon") {
+            var offset = 5 + (20 - 5) * s;
+            var pts = [
+              [25 + (Math.random() - 0.5) * offset, 0 + Math.random() * offset * 0.5],
+              [75 + (Math.random() - 0.5) * offset, 0 + Math.random() * offset * 0.5],
+              [100 + (Math.random() - 0.5) * offset * 0.5, 50 + (Math.random() - 0.5) * offset],
+              [75 + (Math.random() - 0.5) * offset, 100 - Math.random() * offset * 0.5],
+              [25 + (Math.random() - 0.5) * offset, 100 - Math.random() * offset * 0.5],
+              [0 + Math.random() * offset * 0.5, 50 + (Math.random() - 0.5) * offset]
+            ];
+            diff.clipPath = "polygon(" + pts.map(function(p) { return p[0] + "% " + p[1] + "%"; }).join(", ") + ")";
+          } else {
+            var brBase = parseFloat(borderRadius);
+            var offset = 5 + (20 - 5) * s;
+            var newBr = brBase + sign * offset;
+            newBr = Math.max(0, Math.min(50, newBr));
+            diff.borderRadius = newBr + "%";
+          }
         }
       }
 
@@ -6018,6 +6059,12 @@ const Crowd = {
   },
 
   applyShapeStyle(cell, shape, cellSize) {
+    // 外形（borderRadius / clipPath）
+    cell.style.borderRadius = shape.borderRadius;
+    if (shape.clipPath) {
+      cell.style.clipPath = shape.clipPath;
+    }
+
     // 外円（白目/頭部）: radial-gradient 紫系
     var h = shape.hue;
     cell.style.background = "radial-gradient(circle at 45% 40%, hsl(" + h + ", 40%, 55%), hsl(" + h + ", 50%, 25%))";
