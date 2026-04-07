@@ -946,7 +946,10 @@ const Game = {
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
 
+    var startLocked = false;
     this.el.btnStart.addEventListener("click", () => {
+      if (startLocked) return;
+      startLocked = true;
       TitlePrologue.stopAll();
       SoundSystem.init();
       SoundSystem.startBoom();
@@ -964,6 +967,7 @@ const Game = {
         transition.classList.add("st-fade-out");
         setTimeout(function() {
           transition.classList.remove("st-active", "st-fade-out");
+          startLocked = false;
         }, 300);
       }, 450);
     });
@@ -2883,6 +2887,7 @@ const Slash = {
   roundTime: 5000,
   layerTutorialShown: new Set(),
   hintTimeout: null,
+  _dismissFn: null,
   // 層・ラウンド管理
   currentLayer: 0,
   currentRound: 0,
@@ -2983,6 +2988,10 @@ const Slash = {
     document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
     this.el.layerOverlay.classList.remove("sl-lo-show");
     this.el.layerOverlay.style.pointerEvents = "";
+    if (this._dismissFn) {
+      this.el.layerOverlay.removeEventListener("click", this._dismissFn);
+      this._dismissFn = null;
+    }
     this.el.layerHint.classList.remove("sl-lh-show");
     this.el.layerHint.textContent = "";
     clearTimeout(this.hintTimeout);
@@ -3000,6 +3009,7 @@ const Slash = {
 
   start() {
     this.sessionId++;
+    this.cleanup();
     this.guideShown = false;
     this.lastTargetIds = [];
     this.currentLayer = 0;
@@ -3093,11 +3103,14 @@ const Slash = {
         this.el.layerHint.textContent = hint;
         this.el.layerHint.classList.add("sl-lh-show");
 
-        // タップ or 3秒で消去 → startRound
+        // タップ or 3秒で消去 → startRound（二重実行防止）
+        var dismissed = false;
         const dismiss = () => {
-          if (this.sessionId !== sid) return;
+          if (dismissed || this.sessionId !== sid) return;
+          dismissed = true;
           clearTimeout(this.hintTimeout);
           this.el.layerOverlay.removeEventListener("click", dismiss);
+          this.el.layerOverlay.style.pointerEvents = "";
           this.el.layerOverlay.classList.remove("sl-lo-show");
           this.el.layerHint.classList.remove("sl-lh-show");
           if (this.currentLayer >= 3) {
@@ -3108,6 +3121,8 @@ const Slash = {
           this.startRound();
         };
         this.el.layerOverlay.style.pointerEvents = "auto";
+        if (this._dismissFn) this.el.layerOverlay.removeEventListener("click", this._dismissFn);
+        this._dismissFn = dismiss;
         this.el.layerOverlay.addEventListener("click", dismiss);
         this.hintTimeout = setTimeout(dismiss, 3000);
       }, 1200);
