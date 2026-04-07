@@ -5760,26 +5760,16 @@ const Tutorial = {
 // ステージ3: 審眼 (Crowd)
 // ============================================================
 
-const CW_SILHOUETTES = {
-  circle:   { radius: "50%" },
-  rounded:  { radius: "22%" },
-  diamond:  { clip: "polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)" },
-  pentagon: { clip: "polygon(50% 5%, 97% 38%, 79% 93%, 21% 93%, 3% 38%)" },
-  hexagon:  { clip: "polygon(50% 3%, 93% 25%, 93% 75%, 50% 97%, 7% 75%, 7% 25%)" },
-  triangle: { clip: "polygon(50% 8%, 93% 88%, 7% 88%)" },
-  drop:     { clip: "polygon(50% 5%, 80% 35%, 90% 65%, 50% 95%, 10% 65%, 20% 35%)" },
-  shield:   { clip: "polygon(50% 5%, 95% 20%, 85% 80%, 50% 95%, 15% 80%, 5% 20%)" },
-};
 
 const CROWD_LAYERS = [
-  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["hue","silhouette","rotation","scale"] },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["hue","silhouette","rotation","scale"] },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["silhouette","rotation","scale"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["silhouette","rotation","scale"] },
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation","hue"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["offset","scale","rotation","hue"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["offset","scale","rotation"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","scale","rotation"] },
 ];
 
 const CROWD_LAYER_HINTS = [
-  "異端を見つけろ。\n違う形を持つ者をタップしろ。",
+  "異端を見つけろ。\n違和感のある者をタップしろ。",
   "「全員同じ」の時がある。\nその時は、何もタップするな。",
   "違いが小さくなる。よく見ろ。",
   null,
@@ -6024,14 +6014,13 @@ const Crowd = {
 
   generateShapes(layer) {
     var baseHue = 260 + Math.random() * 20; // 260-280 紫系
-    var keys = Object.keys(CW_SILHOUETTES);
-    var baseKey = keys[Math.floor(Math.random() * keys.length)];
 
     this.baseShape = {
       hue: baseHue,
-      silhouette: baseKey,
       rotation: 0,
       inset: 8,
+      offsetX: 0,
+      offsetY: 0,
       hostile: false,
     };
 
@@ -6040,16 +6029,31 @@ const Crowd = {
     if (this.roundType === "find") {
       this.oddIndex = Math.floor(Math.random() * totalCells);
 
-      // 層のaxesから軸を選択
+      // 層のaxesから軸を選択（offsetは必ず含め、補助軸を追加）
       var axes = layer.axes.slice();
       var numAxes = layer.diffStrength > 0.5 ? (Math.random() < 0.5 ? 2 : 1) : 1;
-      for (var i = axes.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var tmp = axes[i]; axes[i] = axes[j]; axes[j] = tmp;
+      // offsetを優先的に選ぶ
+      var hasOffset = axes.indexOf("offset") >= 0;
+      var chosenAxes = [];
+      if (hasOffset && numAxes >= 1) {
+        chosenAxes.push("offset");
+        var rest = axes.filter(function(a) { return a !== "offset"; });
+        for (var i = rest.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = rest[i]; rest[i] = rest[j]; rest[j] = tmp;
+        }
+        for (var i = 0; i < numAxes - 1 && i < rest.length; i++) {
+          chosenAxes.push(rest[i]);
+        }
+      } else {
+        for (var i = axes.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = axes[i]; axes[i] = axes[j]; axes[j] = tmp;
+        }
+        chosenAxes = axes.slice(0, numAxes);
       }
-      var chosenAxes = axes.slice(0, numAxes);
 
-      var diff = { hue: baseHue, silhouette: baseKey, rotation: 0, inset: 8, hostile: false };
+      var diff = { hue: baseHue, rotation: 0, inset: 8, offsetX: 0, offsetY: 0, hostile: false };
 
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
@@ -6057,18 +6061,22 @@ const Crowd = {
         var sign = Math.random() < 0.5 ? 1 : -1;
 
         if (axis === "hue") {
-          var range = 8 + (40 - 8) * s;
+          // 微弱な色差（序盤のみ使用）
+          var range = 5 + (15 - 5) * s;
           diff.hue = baseHue + sign * range;
-        } else if (axis === "silhouette") {
-          var diffKey;
-          do { diffKey = keys[Math.floor(Math.random() * keys.length)]; } while (diffKey === baseKey);
-          diff.silhouette = diffKey;
+        } else if (axis === "offset") {
+          // 内部の位置ズレ（メイン差異）
+          var range = 3 + (12 - 3) * s;
+          diff.offsetX = sign * range;
+          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (2 + (8 - 2) * s);
         } else if (axis === "rotation") {
-          var range = 8 + (45 - 8) * s;
+          // 軽微な回転
+          var range = 4 + (15 - 4) * s;
           diff.rotation = sign * range;
         } else if (axis === "scale") {
-          var range = 3 + (10 - 3) * s;
-          diff.inset = Math.max(2, Math.min(20, 8 + sign * range));
+          // 内部のサイズ差
+          var range = 2 + (6 - 2) * s;
+          diff.inset = Math.max(3, Math.min(16, 8 + sign * range));
         }
       }
 
@@ -6136,26 +6144,22 @@ const Crowd = {
 
   applyShapeStyle(cell, shape, cellSize) {
     var h = shape.hue;
-    var def = CW_SILHOUETTES[shape.silhouette];
+    var ox = shape.offsetX || 0;
+    var oy = shape.offsetY || 0;
 
     // .cw-shape生成
     var el = document.createElement("div");
     el.className = "cw-shape";
     el.style.inset = shape.inset + "%";
 
-    // シルエット適用
-    if (def.clip) {
-      el.style.clipPath = def.clip;
-      el.style.webkitClipPath = def.clip;
-    } else {
-      el.style.borderRadius = def.radius;
-    }
+    // 外形は常に丸
+    el.style.borderRadius = "50%";
 
     // 背景色
     el.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",35%,52%), hsl(" + h + ",45%,22%))";
 
-    // 回転
-    el.style.transform = "rotate(" + shape.rotation + "deg)";
+    // 位置ズレ + 回転
+    el.style.transform = "translate(" + ox + "%, " + oy + "%) rotate(" + shape.rotation + "deg)";
 
     // 敵意
     if (shape.hostile) {
