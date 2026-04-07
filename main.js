@@ -361,6 +361,41 @@ const SoundSystem = {
     sg.gain.setValueAtTime(0.08, t);
     sg.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
     sub.start(t); sub.stop(t + 2.0);
+    // 6. シマー（ビブラート付き高音のきらめき）
+    var shimmer = ctx.createOscillator();
+    var shG = ctx.createGain();
+    shimmer.type = "sine";
+    shimmer.frequency.setValueAtTime(1320, t + 0.4);
+    shimmer.connect(shG); shG.connect(master);
+    shG.gain.setValueAtTime(0.03, t + 0.4);
+    shG.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+    // ビブラートLFO
+    var shLFO = ctx.createOscillator();
+    var shLG = ctx.createGain();
+    shLFO.type = "sine";
+    shLFO.frequency.value = 6;
+    shLG.gain.value = 15;
+    shLFO.connect(shLG);
+    shLG.connect(shimmer.frequency);
+    shLFO.start(t + 0.4);
+    shimmer.start(t + 0.4);
+    shLFO.stop(t + 2.0);
+    shimmer.stop(t + 2.0);
+    // 7. ノイズウォッシュ（空間の広がり）
+    var nwBufSize = Math.floor(ctx.sampleRate * 1.5);
+    var nwBuf = ctx.createBuffer(1, nwBufSize, ctx.sampleRate);
+    var nwD = nwBuf.getChannelData(0);
+    for (var ni = 0; ni < nwBufSize; ni++) nwD[ni] = (Math.random() * 2 - 1);
+    var nwNoise = ctx.createBufferSource();
+    nwNoise.buffer = nwBuf;
+    var nwLPF = ctx.createBiquadFilter();
+    nwLPF.type = "lowpass";
+    nwLPF.frequency.value = 400;
+    var nwG = ctx.createGain();
+    nwNoise.connect(nwLPF); nwLPF.connect(nwG); nwG.connect(master);
+    nwG.gain.setValueAtTime(0.02, t + 0.2);
+    nwG.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    nwNoise.start(t + 0.2); nwNoise.stop(t + 1.5);
   },
 
   // --- 最終斬撃SE: 通常slash + 衝撃波 + 残響 ---
@@ -459,6 +494,33 @@ const SoundSystem = {
     ng.gain.setValueAtTime(0.1, t);
     ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
     noise.start(t); noise.stop(t + 0.3);
+    // ライジングノイズ（逆シンバル風シュワッ）
+    var rBufSize = Math.floor(ctx.sampleRate * 0.35);
+    var rBuf = ctx.createBuffer(1, rBufSize, ctx.sampleRate);
+    var rd = rBuf.getChannelData(0);
+    for (var ri = 0; ri < rBufSize; ri++) rd[ri] = (Math.random() * 2 - 1) * 0.4;
+    var rNoise = ctx.createBufferSource();
+    rNoise.buffer = rBuf;
+    var hpf = ctx.createBiquadFilter();
+    hpf.type = "highpass";
+    hpf.frequency.setValueAtTime(200, t);
+    hpf.frequency.exponentialRampToValueAtTime(2000, t + 0.3);
+    var rg = ctx.createGain();
+    rNoise.connect(hpf); hpf.connect(rg); rg.connect(ctx.destination);
+    rg.gain.setValueAtTime(0.001, t);
+    rg.gain.linearRampToValueAtTime(0.08, t + 0.15);
+    rg.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    rNoise.start(t); rNoise.stop(t + 0.35);
+    // セカンドサブ（厚み追加）
+    var sub2 = ctx.createOscillator();
+    var s2g = ctx.createGain();
+    sub2.connect(s2g); s2g.connect(ctx.destination);
+    sub2.type = "sine";
+    sub2.frequency.setValueAtTime(35, t + 0.05);
+    sub2.frequency.exponentialRampToValueAtTime(20, t + 0.5);
+    s2g.gain.setValueAtTime(0.12, t + 0.05);
+    s2g.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+    sub2.start(t + 0.05); sub2.stop(t + 0.55);
   },
 
   // --- 不正解音: 短い不快な下降音 ---
@@ -651,6 +713,22 @@ const SoundSystem = {
       sub.start(t);
       sub.stop(t + 0.15);
     }
+    // エアテール（斬撃後の空気の余韻）
+    const atBufSize = Math.floor(ctx.sampleRate * 0.2);
+    const atBuf = ctx.createBuffer(1, atBufSize, ctx.sampleRate);
+    const atD = atBuf.getChannelData(0);
+    for (let ai = 0; ai < atBufSize; ai++) atD[ai] = (Math.random() * 2 - 1);
+    const atNoise = ctx.createBufferSource();
+    atNoise.buffer = atBuf;
+    const atLPF = ctx.createBiquadFilter();
+    atLPF.type = "lowpass";
+    atLPF.frequency.value = 600;
+    const atG = ctx.createGain();
+    atNoise.connect(atLPF); atLPF.connect(atG); atG.connect(ctx.destination);
+    atG.gain.setValueAtTime(0.06 * v, t + 0.08);
+    atG.gain.exponentialRampToValueAtTime(0.001, t + 0.23);
+    atNoise.start(t + 0.08);
+    atNoise.stop(t + 0.23);
   },
 
   heartbeat() {
@@ -835,6 +913,203 @@ const SoundSystem = {
     }, 550);
   },
 
+  // --- Slashモード環境音: テンション制御付きドローン ---
+  slashNodes: null,
+  slashGains: null,
+  _slashLPF: null,
+  _slashLFO: null,
+  _slashMaster: null,
+  _slashDroneB: null,
+
+  startSlashAmbient(tension) {
+    if (!this.enabled) return;
+    this.stopSlashAmbient();
+    this.resume();
+    var ctx = this.ctx;
+    var t = tension || 0;
+
+    var master = ctx.createGain();
+    master.gain.value = 0.03 + t * 0.05;
+    master.connect(ctx.destination);
+
+    // ドローンA: 42Hz 地鳴り
+    var droneA = ctx.createOscillator();
+    var daG = ctx.createGain();
+    droneA.type = "sine";
+    droneA.frequency.value = 42;
+    daG.gain.value = 0.04;
+    droneA.connect(daG);
+    daG.connect(master);
+    droneA.start();
+
+    // ドローンB: 44Hz（Aとの2Hzビート）
+    var droneB = ctx.createOscillator();
+    var dbG = ctx.createGain();
+    droneB.type = "sine";
+    droneB.frequency.value = 44;
+    dbG.gain.value = 0.01 + t * 0.03;
+    droneB.connect(dbG);
+    dbG.connect(master);
+    droneB.start();
+
+    // フィルタノイズ
+    var bufSize = ctx.sampleRate * 2;
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1);
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+    var lpf = ctx.createBiquadFilter();
+    lpf.type = "lowpass";
+    lpf.frequency.value = 100 + t * 300;
+    lpf.Q.value = 0.5;
+    var nG = ctx.createGain();
+    nG.gain.value = 0.025;
+    noise.connect(lpf);
+    lpf.connect(nG);
+    nG.connect(master);
+    noise.start();
+
+    // LFO: gainを脈動させる
+    var lfo = ctx.createOscillator();
+    var lfoG = ctx.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.3 + t * 1.2;
+    lfoG.gain.value = 0.015;
+    lfo.connect(lfoG);
+    lfoG.connect(master.gain);
+    lfo.start();
+
+    this.slashNodes = [droneA, droneB, noise, lfo];
+    this.slashGains = [daG, dbG, nG, lfoG, master];
+    this._slashLPF = lpf;
+    this._slashLFO = lfo;
+    this._slashMaster = master;
+    this._slashDroneB = dbG;
+  },
+
+  updateSlashTension(tension) {
+    if (!this.slashNodes || !this.ctx) return;
+    var ctx = this.ctx;
+    var now = ctx.currentTime;
+    var t = Math.min(1.0, Math.max(0, tension));
+
+    // マスターゲイン
+    if (this._slashMaster) {
+      this._slashMaster.gain.cancelScheduledValues(now);
+      this._slashMaster.gain.setValueAtTime(this._slashMaster.gain.value, now);
+      this._slashMaster.gain.linearRampToValueAtTime(0.03 + t * 0.05, now + 0.5);
+    }
+    // LPFカットオフ
+    if (this._slashLPF) {
+      this._slashLPF.frequency.cancelScheduledValues(now);
+      this._slashLPF.frequency.setValueAtTime(this._slashLPF.frequency.value, now);
+      this._slashLPF.frequency.linearRampToValueAtTime(100 + t * 300, now + 0.5);
+    }
+    // LFOレート
+    if (this._slashLFO) {
+      this._slashLFO.frequency.cancelScheduledValues(now);
+      this._slashLFO.frequency.setValueAtTime(this._slashLFO.frequency.value, now);
+      this._slashLFO.frequency.linearRampToValueAtTime(0.3 + t * 1.2, now + 0.5);
+    }
+    // ドローンBゲイン（うねり強調）
+    if (this._slashDroneB) {
+      this._slashDroneB.gain.cancelScheduledValues(now);
+      this._slashDroneB.gain.setValueAtTime(this._slashDroneB.gain.value, now);
+      this._slashDroneB.gain.linearRampToValueAtTime(0.01 + t * 0.03, now + 0.5);
+    }
+  },
+
+  stopSlashAmbient() {
+    if (!this.slashNodes) return;
+    var ctx = this.ctx;
+    if (ctx) {
+      var now = ctx.currentTime;
+      this.slashGains.forEach(function(g) {
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(g.gain.value, now);
+        g.gain.linearRampToValueAtTime(0, now + 0.5);
+      });
+    }
+    var nodes = this.slashNodes;
+    this.slashNodes = null;
+    this.slashGains = null;
+    this._slashLPF = null;
+    this._slashLFO = null;
+    this._slashMaster = null;
+    this._slashDroneB = null;
+    setTimeout(function() {
+      nodes.forEach(function(n) { try { n.stop(); } catch(e) {} });
+    }, 550);
+  },
+
+  // --- タイトル画面環境音: 微かなドローン ---
+  titleNodes: null,
+  titleGains: null,
+
+  startTitleAmbient() {
+    if (!this.enabled) return;
+    this.stopTitleAmbient();
+    this.resume();
+    var ctx = this.ctx;
+
+    var master = ctx.createGain();
+    master.gain.value = 1.0;
+    master.connect(ctx.destination);
+
+    // ドローン: 45Hz
+    var drone = ctx.createOscillator();
+    var dg = ctx.createGain();
+    drone.type = "sine";
+    drone.frequency.value = 45;
+    dg.gain.value = 0.02;
+    drone.connect(dg);
+    dg.connect(master);
+    drone.start();
+
+    // 微かなノイズ
+    var bufSize = ctx.sampleRate * 2;
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1);
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+    var lpf = ctx.createBiquadFilter();
+    lpf.type = "lowpass";
+    lpf.frequency.value = 80;
+    lpf.Q.value = 0.5;
+    var ng = ctx.createGain();
+    ng.gain.value = 0.015;
+    noise.connect(lpf);
+    lpf.connect(ng);
+    ng.connect(master);
+    noise.start();
+
+    this.titleNodes = [drone, noise];
+    this.titleGains = [dg, ng, master];
+  },
+
+  stopTitleAmbient() {
+    if (!this.titleNodes) return;
+    var ctx = this.ctx;
+    if (ctx) {
+      var now = ctx.currentTime;
+      this.titleGains.forEach(function(g) {
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(g.gain.value, now);
+        g.gain.linearRampToValueAtTime(0, now + 0.5);
+      });
+    }
+    var nodes = this.titleNodes;
+    this.titleNodes = null;
+    this.titleGains = null;
+    setTimeout(function() {
+      nodes.forEach(function(n) { try { n.stop(); } catch(e) {} });
+    }, 550);
+  },
+
   // --- フェーズ変更音: 低く不穏なうなり ---
   phaseChange() {
     if (!this.enabled) return;
@@ -952,6 +1227,7 @@ const Game = {
       startLocked = true;
       TitlePrologue.stopAll();
       SoundSystem.init();
+      SoundSystem.stopTitleAmbient();
       SoundSystem.startBoom();
       // タイトル要素フェードアウト + 暗転
       var titleScreen = document.getElementById("screen-title");
@@ -1056,6 +1332,7 @@ const Game = {
     clearTimeout(this.tauntTimeout);
 
     SoundSystem.init();
+    SoundSystem.stopTitleAmbient();
     SoundSystem.startAmbient(false);
     this.currentRound = 0;
     this.score = 0;
@@ -2332,6 +2609,8 @@ const Dungeon = {
   goTitle() {
     this.sessionId++;
     this.cleanup();
+    SoundSystem.stopAmbient();
+    SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
     TitlePrologue.startIdle();
   },
@@ -2957,10 +3236,18 @@ const Slash = {
     });
   },
 
+  calcTension() {
+    var layerBase = [0, 0.15, 0.35, 0.55, 0.75][this.currentLayer] || 0;
+    var livesBonus = this.lives >= 3 ? 0 : this.lives === 2 ? 0.1 : 0.25;
+    return Math.min(1.0, layerBase + livesBonus);
+  },
+
   goTitle() {
     this.sessionId++;
     this.cleanup();
     this.clearEffects();
+    SoundSystem.stopSlashAmbient();
+    SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
     TitlePrologue.startIdle();
   },
@@ -3021,6 +3308,8 @@ const Slash = {
     this.lives = this.maxLives;
     this.lastDecision = "";
     SoundSystem.init();
+    SoundSystem.stopAmbient();
+    SoundSystem.startSlashAmbient(0);
     this.clearEffects();
     // スクロール・transform 確実リセット
     this.el.screen.scrollTop = 0;
@@ -3089,6 +3378,7 @@ const Slash = {
     this.el.layerHint.textContent = "";
     this.el.layerHint.classList.remove("sl-lh-show");
     this.el.layerOverlay.classList.add("sl-lo-show");
+    SoundSystem.updateSlashTension(this.calcTension());
     // 層開始時にラウンドプランを生成
     this.roundPlan = this.buildRoundPlan(layer);
     const sid = this.sessionId;
@@ -3637,6 +3927,7 @@ const Slash = {
     this.lives--;
     this.updateLivesUI(this.lives); // breakIndex = 失われたライフの位置
     SoundSystem.wrong();
+    SoundSystem.updateSlashTension(this.calcTension());
     if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
 
     targetEl.classList.add("sl-wrong-hit");
@@ -3702,6 +3993,7 @@ const Slash = {
     this.lives--;
     this.updateLivesUI(this.lives);
     SoundSystem.wrong();
+    SoundSystem.updateSlashTension(this.calcTension());
     this.el.command.textContent = "…遅い";
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
     if (hadCombo) {
@@ -3771,6 +4063,7 @@ const Slash = {
   showGameOver() {
     const sid = this.sessionId;
     this.cleanup();
+    SoundSystem.stopSlashAmbient();
 
     // 崩壊演出を停止
     if (this.collapseRAF) {
@@ -3806,6 +4099,7 @@ const Slash = {
   },
 
   showClear() {
+    SoundSystem.stopSlashAmbient();
     const sid = this.sessionId;
     const m = this.totalMisses;
     const mc = this.maxCombo;
@@ -4200,6 +4494,7 @@ const JudgeRoom = {
 
   goTitle() {
     this.cleanup();
+    SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
     TitlePrologue.startIdle();
   },
@@ -4552,6 +4847,7 @@ const Corridor = {
 
   goTitle() {
     this.cleanup();
+    SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
     TitlePrologue.startIdle();
   },
