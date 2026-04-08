@@ -6002,12 +6002,17 @@ const Crowd = {
     clearTimeout(this.hintTimeout);
     clearTimeout(this.interferenceTimeout);
     clearTimeout(this.tauntTimeout);
+    clearTimeout(this._jitterTimeout);
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
     this.hintTimeout = null;
     this.interferenceTimeout = null;
     this.tauntTimeout = null;
+    this._jitterTimeout = null;
+    // 揺れ停止 + グリッド回転リセット
+    this._stopCellJitter();
+    this.el.grid.style.transform = "";
     // 妨害要素のリセット
     if (this.el.peek) {
       this.el.peek.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right", "cw-peek-top");
@@ -6220,7 +6225,35 @@ const Crowd = {
     this.generateShapes(layer);
     this.renderGrid(layer);
     this.startTimer(layer.timer);
-    this.playInterferenceSequence(layer);
+
+    // 0.4秒の完全静止 → 揺れ・妨害開始
+    var sid = this.sessionId;
+    var self = this;
+    this._jitterTimeout = setTimeout(function() {
+      if (self.sessionId !== sid || self.answered) return;
+      // Layer2以降: 各セルに微揺れ
+      if (self.currentLayer >= 1) {
+        self._startCellJitter();
+      }
+      self.playInterferenceSequence(layer);
+    }, 400);
+  },
+
+  _startCellJitter() {
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    cells.forEach(function(c) {
+      c.classList.add("cw-jitter");
+      // ランダムな遅延でずらす（自然に見せる）
+      c.style.animationDelay = (Math.random() * 0.6).toFixed(2) + "s";
+    });
+  },
+
+  _stopCellJitter() {
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    cells.forEach(function(c) {
+      c.classList.remove("cw-jitter");
+      c.style.animationDelay = "";
+    });
   },
 
   generateShapes(layer) {
@@ -6311,6 +6344,12 @@ const Crowd = {
     this.el.grid.style.gridTemplateColumns = "repeat(" + layer.cols + ", " + cellSize + "px)";
     this.el.grid.style.gridTemplateRows = "repeat(" + layer.rows + ", " + cellSize + "px)";
 
+    // 全体回転: Layer2以降でランダム角度（層が深いほど大きく）
+    var gridRotRange = [0, 8, 16, 25][this.currentLayer] || 0;
+    var gridRot = gridRotRange > 0 ? ((Math.random() * 2 - 1) * gridRotRange) : 0;
+    this.el.grid.style.transform = gridRot ? ("rotate(" + gridRot.toFixed(1) + "deg)") : "";
+    this._gridRotation = gridRot;
+
     for (var i = 0; i < totalCells; i++) {
       var cell = document.createElement("div");
       cell.className = "cw-cell";
@@ -6392,23 +6431,38 @@ const Crowd = {
   },
 
   // === 視線トラップ（最終ラウンド限定） ===
+  // 差異が一瞬消えて戻る → 「見えたはずなのに…」を誘発
   _fireGazeTrap() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     if (!cells.length || this.oddIndex < 0) return;
 
-    // 正解でないセルからランダムに1つ選ぶ
-    var candidates = [];
-    for (var i = 0; i < cells.length; i++) {
-      if (i !== this.oddIndex) candidates.push(cells[i]);
-    }
-    if (!candidates.length) return;
-    var target = candidates[Math.floor(Math.random() * candidates.length)];
+    var oddCell = cells[this.oddIndex];
+    if (!oddCell) return;
 
-    // 短いハイライト（0.12-0.18s）
-    target.classList.add("cw-gaze-trap");
+    var oddBox = oddCell.querySelector(".cw-box");
+    var oddOrb = oddCell.querySelector(".cw-shape");
+    if (!oddBox || !oddOrb) return;
+
+    // 元のスタイルを保存
+    var origBoxTransform = oddBox.style.transform;
+    var origOrbTransform = oddOrb.style.transform;
+    var origOrbInset = oddOrb.style.inset;
+
+    // 差異を消す（baseShapeと同じにする）
+    oddBox.style.transform = "rotate(" + this.baseShape.rotation + "deg)";
+    var baseOx = this.baseShape.offsetX || 0;
+    var baseOy = this.baseShape.offsetY || 0;
+    var baseTransforms = "translate(" + baseOx + "%, " + baseOy + "%)";
+    if (this.baseShape.flipX) baseTransforms += " scaleX(-1)";
+    oddOrb.style.transform = baseTransforms;
+    oddOrb.style.inset = this.baseShape.inset + "%";
+
+    // 0.12-0.18秒後に差異を復帰
     var dur = 120 + Math.random() * 60;
     setTimeout(function() {
-      target.classList.remove("cw-gaze-trap");
+      oddBox.style.transform = origBoxTransform;
+      oddOrb.style.transform = origOrbTransform;
+      oddOrb.style.inset = origOrbInset;
     }, dur);
   },
 
