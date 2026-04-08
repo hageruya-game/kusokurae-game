@@ -5796,6 +5796,7 @@ const Crowd = {
   heartbeatInterval: null,
   heartbeatSpeed: 600,
   hintTimeout: null,
+  interferenceTimeout: null,
   _dismissFn: null,
   layerTutorialShown: new Set(),
 
@@ -5820,6 +5821,10 @@ const Crowd = {
       clearButtons: document.getElementById("cw-clear-buttons"),
       gameoverOverlay: document.getElementById("cw-gameover-overlay"),
       gameoverMsg: document.getElementById("cw-gameover-msg"),
+      peek: document.getElementById("cw-peek"),
+      peekImg: document.getElementById("cw-peek-img"),
+      hand: document.getElementById("cw-hand"),
+      handImg: document.getElementById("cw-hand-img"),
     };
 
     document.getElementById("cw-back").addEventListener("click", () => this.goTitle());
@@ -5880,10 +5885,21 @@ const Crowd = {
     clearTimeout(this.flinchTimeout);
     clearTimeout(this.heartbeatInterval);
     clearTimeout(this.hintTimeout);
+    clearTimeout(this.interferenceTimeout);
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
     this.hintTimeout = null;
+    this.interferenceTimeout = null;
+    // 妨害要素のリセット
+    if (this.el.peek) {
+      this.el.peek.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right");
+      this.el.peek.style.opacity = "0";
+    }
+    if (this.el.hand) {
+      this.el.hand.classList.remove("cw-hand-show");
+      this.el.hand.style.opacity = "0";
+    }
   },
 
   clearEffects() {
@@ -6010,6 +6026,7 @@ const Crowd = {
     this.generateShapes(layer);
     this.renderGrid(layer);
     this.startTimer(layer.timer);
+    this.scheduleInterference(layer);
   },
 
   generateShapes(layer) {
@@ -6168,6 +6185,83 @@ const Crowd = {
 
     box.appendChild(orb);
     cell.appendChild(box);
+  },
+
+  // === 妨害演出 ===
+  CW_INTRUDERS: [
+    "assets/enemy_rat.png",
+    "assets/enemy_fly.png",
+    "assets/enemy_pig.png",
+    "assets/enemy_spider.png",
+  ],
+
+  scheduleInterference(layer) {
+    // 第一層は出さない、それ以降15%の確率
+    if (this.currentLayer < 1) return;
+    if (Math.random() > 0.15) return;
+
+    var sid = this.sessionId;
+    var delay = 500 + Math.random() * 1500; // 0.5〜2秒後
+
+    this.interferenceTimeout = setTimeout(function() {
+      if (this.sessionId !== sid || this.answered) return;
+      if (Math.random() < 0.5) {
+        this.showPeek();
+      } else {
+        this.showHandCover();
+      }
+    }.bind(this), delay);
+  },
+
+  showPeek() {
+    var el = this.el.peek;
+    var img = this.el.peekImg;
+    if (!el || !img) return;
+
+    var src = this.CW_INTRUDERS[Math.floor(Math.random() * this.CW_INTRUDERS.length)];
+    img.src = src;
+
+    // 左右ランダム
+    var fromLeft = Math.random() < 0.5;
+    el.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right");
+    el.style.opacity = "";
+    el.classList.add(fromLeft ? "cw-peek-left" : "cw-peek-right");
+
+    // 位置を縦方向にランダム化
+    el.style.top = (20 + Math.random() * 40) + "%";
+
+    requestAnimationFrame(function() {
+      el.classList.add("cw-peek-show");
+    });
+  },
+
+  showHandCover() {
+    var el = this.el.hand;
+    var img = this.el.handImg;
+    if (!el || !img) return;
+
+    var src = this.CW_INTRUDERS[Math.floor(Math.random() * this.CW_INTRUDERS.length)];
+    img.src = src;
+
+    // ランダムなセルの上に配置
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    if (cells.length === 0) return;
+    var targetIdx = Math.floor(Math.random() * cells.length);
+    var cell = cells[targetIdx];
+    var rect = cell.getBoundingClientRect();
+    var screenRect = this.el.screen.getBoundingClientRect();
+
+    el.style.left = (rect.left - screenRect.left + rect.width / 2 - 30) + "px";
+    el.style.top = (rect.top - screenRect.top + rect.height / 2 - 30) + "px";
+    el.style.width = rect.width + "px";
+    el.style.height = rect.height + "px";
+
+    el.classList.remove("cw-hand-show");
+    el.style.opacity = "";
+
+    requestAnimationFrame(function() {
+      el.classList.add("cw-hand-show");
+    });
   },
 
   startTimer(dur) {

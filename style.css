@@ -3735,6 +3735,76 @@ body::before {
   transition: filter 0.3s ease-out;
 }
 
+/* === 妨害演出：覗き === */
+.cw-peek {
+  position: absolute;
+  top: 30%;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: none;
+}
+.cw-peek.cw-peek-left {
+  left: -80px;
+}
+.cw-peek.cw-peek-right {
+  right: -80px;
+}
+.cw-peek.cw-peek-show.cw-peek-left {
+  animation: cwPeekLeft 0.9s ease-in-out forwards;
+}
+.cw-peek.cw-peek-show.cw-peek-right {
+  animation: cwPeekRight 0.9s ease-in-out forwards;
+}
+.cw-peek-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
+}
+.cw-peek-right .cw-peek-img {
+  transform: scaleX(-1);
+}
+@keyframes cwPeekLeft {
+  0%   { transform: translateX(0); opacity: 0; }
+  15%  { transform: translateX(70%); opacity: 0.85; }
+  60%  { transform: translateX(70%); opacity: 0.85; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+@keyframes cwPeekRight {
+  0%   { transform: translateX(0); opacity: 0; }
+  15%  { transform: translateX(-70%); opacity: 0.85; }
+  60%  { transform: translateX(-70%); opacity: 0.85; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+/* === 妨害演出：手かぶせ === */
+.cw-hand {
+  position: absolute;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0;
+  width: 60px;
+  height: 60px;
+}
+.cw-hand.cw-hand-show {
+  animation: cwHandCover 0.7s ease-in-out forwards;
+}
+.cw-hand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.4;
+  filter: brightness(0.3) drop-shadow(0 0 6px rgba(0,0,0,0.6));
+}
+@keyframes cwHandCover {
+  0%   { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+  20%  { transform: scale(1.05) rotate(3deg); opacity: 1; }
+  60%  { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(0.8) rotate(5deg); opacity: 0; }
+}
+
 /* --- 下段 --- */
 .cw-zone-bottom {
   width: 100%;
