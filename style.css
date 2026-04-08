@@ -3739,8 +3739,8 @@ body::before {
 .cw-peek {
   position: absolute;
   top: 30%;
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   pointer-events: none;
   z-index: 100;
   opacity: 0;
@@ -3764,21 +3764,22 @@ body::before {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
+  filter: blur(1.5px) brightness(0.35) saturate(0.3)
+          drop-shadow(0 0 12px rgba(80, 0, 120, 0.6));
 }
 .cw-peek-right .cw-peek-img {
   transform: scaleX(-1);
 }
 @keyframes cwPeekLeft {
   0%   { transform: translateX(-100%); opacity: 0; }
-  12%  { transform: translateX(10%); opacity: 1; }
-  55%  { transform: translateX(10%); opacity: 1; }
+  12%  { transform: translateX(15%); opacity: 0.8; }
+  55%  { transform: translateX(12%); opacity: 0.7; }
   100% { transform: translateX(-100%); opacity: 0; }
 }
 @keyframes cwPeekRight {
   0%   { transform: translateX(100%); opacity: 0; }
-  12%  { transform: translateX(-10%); opacity: 1; }
-  55%  { transform: translateX(-10%); opacity: 1; }
+  12%  { transform: translateX(-15%); opacity: 0.8; }
+  55%  { transform: translateX(-12%); opacity: 0.7; }
   100% { transform: translateX(100%); opacity: 0; }
 }
 /* === 妨害演出：手かぶせ === */
@@ -3795,13 +3796,13 @@ body::before {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0.55;
-  filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
+  filter: blur(2px) brightness(0.25) saturate(0.2)
+          drop-shadow(0 0 10px rgba(80, 0, 120, 0.5));
 }
 @keyframes cwHandCover {
   0%   { transform: scale(0.3) rotate(-10deg); opacity: 0; }
-  15%  { transform: scale(1.05) rotate(3deg); opacity: 1; }
-  55%  { transform: scale(1) rotate(0deg); opacity: 1; }
+  15%  { transform: scale(1.05) rotate(3deg); opacity: 0.75; }
+  55%  { transform: scale(1) rotate(0deg); opacity: 0.7; }
   100% { transform: scale(0.8) rotate(5deg); opacity: 0; }
 }
 

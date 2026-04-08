@@ -6252,7 +6252,7 @@ const Crowd = {
     var cell = cells[targetIdx];
     var rect = cell.getBoundingClientRect();
     var screenRect = this.el.screen.getBoundingClientRect();
-    var size = Math.max(rect.width, rect.height) * 1.2;
+    var size = Math.max(rect.width, rect.height) * 1.6;
 
     el.style.left = (rect.left - screenRect.left + rect.width / 2 - size / 2) + "px";
     el.style.top = (rect.top - screenRect.top + rect.height / 2 - size / 2) + "px";
