@@ -2269,6 +2269,7 @@ const Game = {
         if (this.sessionId !== gid) return;
         interImg.classList.remove("dg-interlude-show");
         interImg.style.display = "none";
+        interImg.src = "";
         text.classList.remove("dg-interlude-text-show");
         text.textContent = "";
 
@@ -4450,6 +4451,7 @@ const Slash = {
         if (this.sessionId !== sid) return;
         interImg.classList.remove("dg-interlude-show");
         interImg.style.display = "none";
+        interImg.src = "";
         text.classList.remove("dg-interlude-text-show");
         text.textContent = "";
 
@@ -6465,6 +6467,9 @@ const Crowd = {
       c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d", "cw-jitter-sync");
       c.style.animationDelay = "";
       c.style.animationDuration = "";
+      // 動的回転で設定されたtransitionもクリア
+      var box = c.querySelector(".cw-box");
+      if (box) box.style.transition = "";
     });
   },
 
@@ -6676,10 +6681,12 @@ const Crowd = {
 
     // 元のスタイルを保存
     var origBoxTransform = oddBox.style.transform;
+    var origBoxTransition = oddBox.style.transition;
     var origOrbTransform = oddOrb.style.transform;
     var origOrbInset = oddOrb.style.inset;
 
-    // 正解セルの差異を消す（baseShapeと同じにする）
+    // 正解セルの差異を消す（baseShapeと同じにする）- transition無効にして即座に変更
+    oddBox.style.transition = "none";
     oddBox.style.transform = "rotate(" + this.baseShape.rotation + "deg)";
     var baseOx = this.baseShape.offsetX || 0;
     var baseOy = this.baseShape.offsetY || 0;
@@ -6715,6 +6722,7 @@ const Crowd = {
     // 0.10-0.15秒で全復帰（残像なし）
     var dur = 100 + Math.random() * 50;
     setTimeout(function() {
+      oddBox.style.transition = origBoxTransition;
       oddBox.style.transform = origBoxTransform;
       oddOrb.style.transform = origOrbTransform;
       oddOrb.style.inset = origOrbInset;
