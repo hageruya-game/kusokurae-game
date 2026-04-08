@@ -3221,11 +3221,11 @@ const SLASH_LAYERS = [
 ];
 
 const SLASH_LAYER_HINTS = [
-  "命令の逆を斬れ。",
-  "「従え」が出たら、命令通りに斬れ。",
-  "「待て」が出たら、何も斬るな。\n選択肢が3つになる。",
-  "選択肢が4つになる。見極めろ。",
-  null, // 最深層: ヒントなし
+  "逆を斬れ。",
+  "「従え」なら、そのまま斬れ。",
+  "「待て」なら、動くな。",
+  "見極めろ。",
+  null,
 ];
 
 const SLASH_TARGETS = [
@@ -5439,7 +5439,7 @@ const Tutorial = {
     this.el.skipBtn.style.display = "block";
 
     this.showTextStep(
-      ["このゲームには法則がある。", "命令は、必ずしも正しくない。\n「状態」を見ろ。"],
+      ["命令を疑え。", "「状態」を見ろ。"],
       () => this.startQuestion(0)
     );
   },
@@ -5681,7 +5681,7 @@ const Tutorial = {
 
     var self = this;
     this.showTextStep(
-      ["分かったか？", "「状態」がすべてだ。"],
+      ["覚えたか？", "ここからは自分で判断しろ。"],
       function () {
         self.showStartButton();
       }
@@ -5764,10 +5764,10 @@ const Tutorial = {
 const CW_SHAPES = ["circle", "triangle", "star", "diamond"];
 
 const CROWD_LAYERS = [
-  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation","hue"] },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["offset","scale","rotation"] },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["offset","rotation","scale"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","rotation","scale"] },
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.8, axes: ["offset","scale","rotation"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.6, axes: ["offset","rotation","scale"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.45, axes: ["offset","rotation","scale"] },
 ];
 
 const CROWD_LAYER_TAUNTS = [
@@ -6080,23 +6080,19 @@ const Crowd = {
         var s = layer.diffStrength;
         var sign = Math.random() < 0.5 ? 1 : -1;
 
-        if (axis === "hue") {
-          // 微弱な色差（序盤のみ使用）
-          var range = 5 + (15 - 5) * s;
-          diff.hue = baseHue + sign * range;
-        } else if (axis === "offset") {
+        if (axis === "offset") {
           // 箱の中の図形の位置ズレ（主役）
-          var range = 5 + (14 - 5) * s;
+          var range = 6 + (16 - 6) * s;
           diff.offsetX = sign * range;
-          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (3 + (10 - 3) * s);
+          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (4 + (12 - 4) * s);
         } else if (axis === "rotation") {
-          // 外箱の軽い回転（補助）
-          var range = 3 + (12 - 3) * s;
+          // 外箱の回転（補助）
+          var range = 5 + (18 - 5) * s;
           diff.rotation = sign * range;
         } else if (axis === "scale") {
-          // 図形のサイズ差（弱い補助）
-          var range = 1 + (4 - 1) * s;
-          diff.inset = Math.max(5, Math.min(16, 10 + sign * range));
+          // 図形のサイズ差（補助）
+          var range = 2 + (6 - 2) * s;
+          diff.inset = Math.max(4, Math.min(18, 10 + sign * range));
         }
       }
 
@@ -6209,12 +6205,12 @@ const Crowd = {
   // === 妨害演出 ===
   CW_INTRUDER: "assets/image_0.png",
 
-  // 層ごとの妨害設定
+  // 層ごとの妨害設定（全層100%発動）
   CW_INTERFERENCE: [
-    { chance: 0.25, max: 1, types: ["peek"],          secondChance: 0 },
-    { chance: 0.30, max: 1, types: ["peek"],          secondChance: 0 },
-    { chance: 0.35, max: 2, types: ["peek", "hand"],  secondChance: 0.5 },
-    { chance: 0.40, max: 2, types: ["peek", "hand"],  secondChance: 0.5 },
+    { count: 1, types: ["peek"],          dirs: ["left", "right"] },
+    { count: 1, types: ["peek"],          dirs: ["left", "right"] },
+    { count: 2, types: ["peek", "hand"],  dirs: ["left", "right", "top"] },
+    { count: 2, types: ["peek", "hand"],  dirs: ["left", "right", "top"] },
   ],
 
   // アニメーション尺（ms）
@@ -6222,26 +6218,22 @@ const Crowd = {
 
   getInterferenceCount(layerIdx) {
     var cfg = this.CW_INTERFERENCE[layerIdx];
-    if (!cfg || Math.random() > cfg.chance) return 0;
-    if (cfg.max >= 2 && Math.random() < cfg.secondChance) return 2;
-    return 1;
+    return cfg ? cfg.count : 1;
   },
 
   playInterferenceSequence(layer) {
     var count = this.getInterferenceCount(this.currentLayer);
-    if (count === 0) return;
-
     var sid = this.sessionId;
     var self = this;
-    var delay1 = 300 + Math.random() * 400;
+    var delay1 = 300 + Math.random() * 300;
 
     this.interferenceTimeout = setTimeout(function() {
       if (self.sessionId !== sid || self.answered) return;
       var first = self.showSingleInterference(self.currentLayer, 0);
 
       if (count >= 2) {
-        // 1回目の退場完了後 + 0.8〜1.4秒後に2回目
-        var wait = self.CW_ANIM_DUR[first.type] + 800 + Math.random() * 600;
+        // 2回目: 間隔を極小化（0.15〜0.35秒後、1回目退場前に被せてOK）
+        var wait = 150 + Math.random() * 200;
         setTimeout(function() {
           if (self.sessionId !== sid || self.answered) return;
           self.showSingleInterference(self.currentLayer, 1, first);
@@ -6253,6 +6245,7 @@ const Crowd = {
   showSingleInterference(layerIdx, seqIndex, prev) {
     var cfg = this.CW_INTERFERENCE[layerIdx];
     var types = cfg.types;
+    var dirs = cfg.dirs;
 
     // タイプ選択（2回目は1回目と違うタイプを優先）
     var type;
@@ -6263,18 +6256,24 @@ const Crowd = {
       type = types[Math.floor(Math.random() * types.length)];
     }
 
-    // 方向選択（2回目は1回目と違う方向を優先）
-    var fromLeft;
-    if (prev && prev.fromLeft !== undefined) {
-      fromLeft = !prev.fromLeft;
+    // 方向選択（2回目は縦横を変えて視線を振らせる）
+    var dir;
+    if (prev && prev.dir) {
+      var isHoriz = prev.dir === "left" || prev.dir === "right";
+      var pool = dirs.filter(function(d) {
+        var dHoriz = d === "left" || d === "right";
+        return isHoriz ? !dHoriz : dHoriz; // 縦↔横を優先
+      });
+      if (pool.length === 0) pool = dirs.filter(function(d) { return d !== prev.dir; });
+      dir = pool[Math.floor(Math.random() * pool.length)] || dirs[0];
     } else {
-      fromLeft = Math.random() < 0.5;
+      dir = dirs[Math.floor(Math.random() * dirs.length)];
     }
 
-    var result = { type: type, fromLeft: fromLeft };
+    var result = { type: type, dir: dir };
 
     if (type === "peek") {
-      this.showPeek(fromLeft);
+      this.showPeek(dir);
     } else {
       this.showHandCover();
     }
@@ -6295,7 +6294,7 @@ const Crowd = {
     }
   },
 
-  showPeek(fromLeft) {
+  showPeek(dir) {
     var el = this.el.peek;
     var img = this.el.peekImg;
     if (!el || !img) return;
@@ -6303,10 +6302,22 @@ const Crowd = {
     img.src = this.CW_INTRUDER;
     this.applyKimoVisualPreset(img, "peek");
 
-    el.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right");
+    el.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right", "cw-peek-top");
     el.style.opacity = "";
-    el.classList.add(fromLeft ? "cw-peek-left" : "cw-peek-right");
-    el.style.top = (20 + Math.random() * 40) + "%";
+    el.style.top = "";
+    el.style.left = "";
+    el.style.right = "";
+
+    if (dir === "top") {
+      el.classList.add("cw-peek-top");
+      el.style.left = (15 + Math.random() * 50) + "%";
+    } else if (dir === "left") {
+      el.classList.add("cw-peek-left");
+      el.style.top = (20 + Math.random() * 40) + "%";
+    } else {
+      el.classList.add("cw-peek-right");
+      el.style.top = (20 + Math.random() * 40) + "%";
+    }
 
     requestAnimationFrame(function() {
       el.classList.add("cw-peek-show");

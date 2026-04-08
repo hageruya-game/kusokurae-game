@@ -56,17 +56,23 @@ body {
           drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
 .title-main {
-  font-size: clamp(30px, 9vw, 48px);
+  font-family: "Hiragino Kaku Gothic StdN", "Noto Sans JP", sans-serif;
+  font-size: clamp(32px, 10vw, 52px);
   font-weight: 900;
   text-align: center;
-  line-height: 1.3;
-  color: #f0e8ff;
-  letter-spacing: 0.15em;
-  transform: scale(1.04);
+  line-height: 1.2;
+  color: rgba(255, 240, 240, 0.95);
+  letter-spacing: 0.18em;
+  transform: scale(1.04) skewX(-1deg);
   text-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.7),
-    0 0 30px rgba(180, 120, 255, 0.4),
-    0 0 60px rgba(140, 80, 220, 0.15);
+    0 0 8px rgba(255, 60, 60, 0.5),
+    0 0 24px rgba(200, 30, 50, 0.35),
+    0 3px 12px rgba(0, 0, 0, 0.8);
+  animation: titlePulse 3s ease-in-out infinite alternate;
+}
+@keyframes titlePulse {
+  0%   { text-shadow: 0 0 8px rgba(255,60,60,0.5), 0 0 24px rgba(200,30,50,0.35), 0 3px 12px rgba(0,0,0,0.8); }
+  100% { text-shadow: 0 0 12px rgba(255,60,60,0.6), 0 0 30px rgba(200,30,50,0.45), 0 3px 12px rgba(0,0,0,0.8); }
 }
 .title-accent {
   color: #ff2060;
@@ -2602,24 +2608,24 @@ body::before {
 /* 導入文 */
 .title-intro {
   font-size: 15px;
-  color: #d0c0ea;
+  color: rgba(200, 180, 200, 0.8);
   text-align: center;
   line-height: 1.9;
   font-weight: 700;
-  padding: max(24px, 5vh) 16px 3vh;
+  padding: max(20px, 4vh) 16px 2vh;
   text-shadow:
-    0 1px 8px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(0, 0, 0, 0.3);
+    0 1px 8px rgba(0, 0, 0, 0.7),
+    0 0 12px rgba(150, 30, 50, 0.2);
   letter-spacing: 0.5px;
 }
 
 /* ボタン配置 */
 #screen-title .btn-start {
-  margin-top: max(5vh, 28px);
+  margin-top: max(3vh, 16px);
   box-shadow:
     0 4px 0 #900030,
-    0 6px 18px rgba(255, 0, 80, 0.35),
-    0 0 40px rgba(255, 0, 80, 0.15);
+    0 6px 18px rgba(255, 0, 80, 0.4),
+    0 0 50px rgba(255, 0, 80, 0.2);
 }
 
 /* ルール説明サブボタン */
@@ -2647,13 +2653,10 @@ body::before {
   to   { opacity: 1; transform: translateY(0); }
 }
 .title-intro {
-  animation: titleFadeIn 1.2s ease-out both;
-}
-.title-main {
-  animation: titleFadeIn 1.2s ease-out 0.4s both;
+  animation: titleFadeIn 1.0s ease-out both;
 }
 #screen-title .btn-start {
-  animation: titleFadeIn 0.8s ease-out 1.0s both;
+  animation: titleFadeIn 0.8s ease-out 0.6s both;
 }
 
 /* ===== ルール説明オーバーレイ ===== */
@@ -3796,6 +3799,13 @@ body::before {
 .cw-peek.cw-peek-show.cw-peek-right {
   animation: cwPeekRight 1.2s ease-in-out forwards;
 }
+.cw-peek.cw-peek-top {
+  top: 0;
+  transform: translateY(-100%);
+}
+.cw-peek.cw-peek-show.cw-peek-top {
+  animation: cwPeekTop 1.2s ease-in-out forwards;
+}
 .cw-peek-img {
   width: 100%;
   height: 100%;
@@ -3815,6 +3825,12 @@ body::before {
   12%  { transform: translateX(-15%); opacity: 0.8; }
   55%  { transform: translateX(-12%); opacity: 0.7; }
   100% { transform: translateX(100%); opacity: 0; }
+}
+@keyframes cwPeekTop {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  12%  { transform: translateY(15%); opacity: 0.8; }
+  55%  { transform: translateY(12%); opacity: 0.7; }
+  100% { transform: translateY(-100%); opacity: 0; }
 }
 /* === 妨害演出：手かぶせ === */
 .cw-hand {
