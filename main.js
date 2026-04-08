@@ -5761,11 +5761,13 @@ const Tutorial = {
 // ============================================================
 
 
+const CW_SHAPES = ["circle", "triangle", "star", "diamond"];
+
 const CROWD_LAYERS = [
   { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation","hue"] },
   { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["offset","scale","rotation","hue"] },
   { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["offset","rotation","scale"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","rotation"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","rotation","scale"] },
 ];
 
 const CROWD_LAYER_HINTS = [
@@ -6032,10 +6034,13 @@ const Crowd = {
   generateShapes(layer) {
     var baseHue = 260 + Math.random() * 20; // 260-280 紫系
 
+    // ラウンドごとに図形をランダム選択（全セル統一）
+    this.roundShape = CW_SHAPES[Math.floor(Math.random() * CW_SHAPES.length)];
+
     this.baseShape = {
       hue: baseHue,
       rotation: 0,
-      inset: 8,
+      inset: 10,
       offsetX: 0,
       offsetY: 0,
       hostile: false,
@@ -6046,31 +6051,19 @@ const Crowd = {
     if (this.roundType === "find") {
       this.oddIndex = Math.floor(Math.random() * totalCells);
 
-      // 層のaxesから軸を選択（offset必須＋補助軸）
+      // offset必須＋補助軸を1つ追加
       var axes = layer.axes.slice();
-      var hasOffset = axes.indexOf("offset") >= 0;
-      var chosenAxes = [];
-      if (hasOffset) {
-        chosenAxes.push("offset");
-        var rest = axes.filter(function(a) { return a !== "offset"; });
-        for (var i = rest.length - 1; i > 0; i--) {
-          var j = Math.floor(Math.random() * (i + 1));
-          var tmp = rest[i]; rest[i] = rest[j]; rest[j] = tmp;
-        }
-        // 後半層(diffStrength<=0.5)は補助軸を必ず1つ追加
-        var addSub = layer.diffStrength <= 0.5 ? true : (Math.random() < 0.5);
-        if (addSub && rest.length > 0) {
-          chosenAxes.push(rest[0]);
-        }
-      } else {
-        for (var i = axes.length - 1; i > 0; i--) {
-          var j = Math.floor(Math.random() * (i + 1));
-          var tmp = axes[i]; axes[i] = axes[j]; axes[j] = tmp;
-        }
-        chosenAxes = axes.slice(0, 1);
+      var chosenAxes = ["offset"];
+      var rest = axes.filter(function(a) { return a !== "offset"; });
+      for (var i = rest.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = rest[i]; rest[i] = rest[j]; rest[j] = tmp;
+      }
+      if (rest.length > 0) {
+        chosenAxes.push(rest[0]);
       }
 
-      var diff = { hue: baseHue, rotation: 0, inset: 8, offsetX: 0, offsetY: 0, hostile: false };
+      var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, hostile: false };
 
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
@@ -6082,18 +6075,18 @@ const Crowd = {
           var range = 5 + (15 - 5) * s;
           diff.hue = baseHue + sign * range;
         } else if (axis === "offset") {
-          // 箱の中の丸の位置ズレ
-          var range = 4 + (14 - 4) * s;
+          // 箱の中の図形の位置ズレ（主役）
+          var range = 5 + (14 - 5) * s;
           diff.offsetX = sign * range;
           diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (3 + (10 - 3) * s);
         } else if (axis === "rotation") {
-          // 外箱の回転（四角なので小さくても見える）
-          var range = 5 + (22 - 5) * s;
+          // 外箱の軽い回転（補助）
+          var range = 3 + (12 - 3) * s;
           diff.rotation = sign * range;
         } else if (axis === "scale") {
-          // 丸のサイズ差（箱との隙間で分かる）
-          var range = 3 + (8 - 3) * s;
-          diff.inset = Math.max(3, Math.min(18, 8 + sign * range));
+          // 図形のサイズ差（弱い補助）
+          var range = 1 + (4 - 1) * s;
+          diff.inset = Math.max(5, Math.min(16, 10 + sign * range));
         }
       }
 
@@ -6159,6 +6152,13 @@ const Crowd = {
     });
   },
 
+  CW_CLIP: {
+    circle:   null,
+    triangle: "polygon(50% 8%, 93% 88%, 7% 88%)",
+    star:     "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+    diamond:  "polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)",
+  },
+
   applyShapeStyle(cell, shape, cellSize) {
     var h = shape.hue;
     var ox = shape.offsetX || 0;
@@ -6169,11 +6169,20 @@ const Crowd = {
     box.className = "cw-box";
     box.style.transform = "rotate(" + shape.rotation + "deg)";
 
-    // innerOrb（紫の丸）
+    // inner図形
     var orb = document.createElement("div");
     orb.className = "cw-shape";
     orb.style.inset = shape.inset + "%";
-    orb.style.borderRadius = "50%";
+
+    // 図形に応じたclip-path
+    var clip = this.CW_CLIP[this.roundShape];
+    if (clip) {
+      orb.style.clipPath = clip;
+      orb.style.webkitClipPath = clip;
+    } else {
+      orb.style.borderRadius = "50%";
+    }
+
     orb.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",35%,52%), hsl(" + h + ",45%,22%))";
     orb.style.transform = "translate(" + ox + "%, " + oy + "%)";
 
@@ -6191,9 +6200,9 @@ const Crowd = {
   CW_INTRUDER: "assets/image_0.png",
 
   scheduleInterference(layer) {
-    // 第一層は出さない、それ以降15%の確率
+    // 第一層は出さない、それ以降50%の確率（テスト用・確認後に下げる）
     if (this.currentLayer < 1) return;
-    if (Math.random() > 0.15) return;
+    if (Math.random() > 0.50) return;
 
     var sid = this.sessionId;
     var doPeek = Math.random() < 0.5;
