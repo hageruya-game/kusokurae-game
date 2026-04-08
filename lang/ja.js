@@ -1,0 +1,261 @@
+// ============================================================
+// Japanese (日本語) - Default Language
+// ============================================================
+I18n.register("ja", {
+
+// === UI ===
+ui: {
+  btnStart: "はじめる",
+  btnJudge: "連続ジャッジルーム",
+  btnReplay: "もう一回やる",
+  btnRetry: "もう一回",
+  btnTitle: "タイトルへ",
+  btnBack: "← 戻る",
+  btnClose: "閉じる",
+  btnNextStage: "次のステージ →",
+  btnRestartAll: "最初からやり直す",
+  scoreLabel: "SCORE: ",
+  progressLabel: "進行",
+  pressureLabel: "支配度",
+  pressureHint: "※100%でゲームオーバー",
+  missLabel: "MISS: ",
+  tutorialTap: "タップで次へ",
+  tutorialSkip: "スキップ ▶",
+  slGuide: "↓ スワイプで斬る",
+  comboUnit: "combo",
+  arrowUp: "▲",
+  arrowDown: "▼",
+  arrowLeft: "◀",
+  arrowRight: "▶",
+  jrLeft: "← 左",
+  jrRight: "右 →",
+  jrWait: "待つ",
+  jrScoreLabel: "抗圧指数",
+  jrScoreUnit: "/ 100",
+  corridor: "圧力回廊",
+},
+
+// === タイトル画面 ===
+title: {
+  hook: "見えていても、従え。",
+  main: "圧力回廊",
+  prologueLine1: "この世界では、従うことが正しさになる。",
+  prologueLine2: "空気を読まない者は、間違いにされる。",
+  prologueLine3: "それでも抗うなら、進め。",
+},
+
+// === ルール説明 ===
+rule: {
+  title: "ルール説明",
+  body1: "命令が表示されるが、すべてが正しいとは限らない。",
+  body2: "「圧力レベル」を見て判断しろ。",
+  labelNormal: "通常",
+  descNormal: "命令に逆らえ",
+  labelObey: "上昇中",
+  descObey: "命令に従え",
+  labelWait: "危険",
+  descWait: "何もするな（待て）",
+  labelTap: "支配",
+  descTap: "正しいものをタップしろ",
+  note: "支配度が100%になるとゲームオーバー。",
+},
+
+// === 圧力状態ライン ===
+state: {
+  rising: "圧力レベル：上昇中",
+  danger: "圧力レベル：危険",
+  control: "圧力レベル：支配",
+  normal: "圧力レベル：通常",
+},
+
+// === Slash ===
+slash: {
+  layerNames: ["第一層：覚醒","第二層：惑い","第三層：静寂","第四層：混乱","最深層：決断"],
+  hints: ["逆を斬れ。","「従え」なら、そのまま斬れ。","「待て」なら、動くな。","見極めろ。",null],
+  statusNormal: "逆らえ",
+  statusObey: "従え",
+  statusWait: "動くな",
+  cmdWait: "斬るな",
+  timeout: "…遅い",
+  gameover: "…支配された",
+  clearMsg: "…まだ終わりじゃない。",
+  toDeep: "…最深部へ",
+},
+
+// === Crowd (Stage3) ===
+crowd: {
+  layerNames: ["第一層：視線","第二層：群衆","第三層：均一","最終層：同化"],
+  taunts: [
+    "違うやつ、見えるよな？",
+    "全部同じなら、触るな。",
+    "このやろう、やるじゃねーか。",
+    "まだ見えるのか。もっと邪魔してやる。"
+  ],
+  found: "…見つけた",
+  allSame: "…全員同じだ",
+  wrong: "…違う",
+  wrongNone: "…罠だった",
+  missed: "…見逃した",
+  gameover: "…見えなかった",
+  clearMsg: "…群衆の中で、お前だけが\n自分の目で見ていた。",
+  rankS: "完璧な目だ。",
+  rankA: "鋭い目だ。",
+  rankB: "見えてはいた。",
+  epilogue: "命令に逆らい、\n刃を振り、\n群衆の中で目を開けた。\n\n…お前はもう、誰の支配も受けない。",
+},
+
+// === Dungeon ===
+dungeon: {
+  statusNormal: "逆らえ",
+  statusObey: "従え",
+  statusWait: "動くな",
+  stateNormal: "平常",
+  tutorialText: "暗闇の命令を、<br>お前は信じるのか？",
+  tutorialHint: "タップして開始",
+  infectedTitle: "同調汚染:完了",
+  infectedMsg: "支配度が100%に達した。\nお前はもう群れの一部だ。",
+  clearTitle: "脱出成功",
+  clearMsg: "今回のミス：{miss}\n累計ミス：{total}",
+  finalMsg: "…もう、誰の指示も要らない。",
+  allClearTitle: "全ステージ脱出",
+  toNext: "…次の層へ",
+  resultPerfect: "最短ルートで突破した。\n誰にも流されなかった。",
+  resultGood: "一度だけ流された。\nだが、すぐ立て直した。",
+  resultOk: "遠回りしたが、\nゴールにはたどり着いた。",
+  resultBad: "群れに流されすぎた。\nもう一度、自分の足で歩け。",
+},
+
+// === Corridor ===
+corridorText: {
+  tutorialText: "道は分かれる。<br>正解は、お前が決めろ。",
+  tutorialHint: "タップして開始",
+},
+
+// === Result ===
+result: {
+  footerContaminated: "お前はもう群れの一部だ",
+  footerGood1: "社会のルールなんか知ったことか",
+  footerGood2: "空気は読むな、吸え。",
+  footerBad: "…お前、大丈夫か？",
+},
+
+// === フェーズ変更メッセージ ===
+phaseChangeMessages: [
+  "反抗パターン、学習済み",
+  "その逆張り、もう読めている",
+  "ここから先は…通用しない",
+],
+
+// === リザルト ===
+results: [
+  { title: "完全なる反逆者", message: "同調圧力を完全に無視した。\n社会不適合？\nそれは褒め言葉だ。" },
+  { title: "かなりの反骨精神", message: "いい線いってる。\nだがまだ甘い。\n圧力は巧妙だ。" },
+  { title: "半端な抵抗", message: "中途半端に逆らって\n中途半端に従った。\n一番危ない。" },
+  { title: "空気読みすぎ", message: "同調圧力に屈してるぞ。\nもっと自分を持て。" },
+  { title: "完全なる奴隷", message: "全部言うこと聞いたのか…\nお前はもう\n同調圧力の一部だ。" },
+],
+resultContaminated: {
+  title: "同調汚染：完了",
+  message: "お前の中に\n「自分」はもう残っていない。\n群れへようこそ。",
+},
+
+// === JudgeRoom ===
+judgeRoom: {
+  ranks: [
+    { title: "完全なる判断者", message: "全ての罠を見抜いた。\n同調圧力は通用しない。" },
+    { title: "鋭い直感", message: "ほぼ完璧。\nだが油断するな。" },
+    { title: "まともな判断力", message: "悪くない。\nだがまだ揺れている。" },
+    { title: "揺らぐ意志", message: "判断が甘い。\nパターンに騙されている。" },
+    { title: "流されやすい", message: "空気を読みすぎ。\nもっと疑え。" },
+    { title: "判断放棄", message: "考えることをやめた。\n群れの一部だ。" },
+  ],
+},
+
+// === ステージデータ: 通常 ===
+stages: {
+  normal: [
+    { command: "今すぐYESを押せ", choices: ["YES", "NO"], wrongReaction: "素直かよ", rightReaction: "反逆者め" },
+    { command: "拍手しろ", choices: ["拍手する", "真顔でいる"], wrongReaction: "虚無の拍手", rightReaction: "その無表情、最高" },
+    { command: "頷け", choices: ["頷く", "首を振る"], wrongReaction: "イエスマン", rightReaction: "NOと言える人間" },
+    { command: "笑え", choices: ["ハハハ…", "真顔"], wrongReaction: "作り笑い検出", rightReaction: "笑わない自由" },
+    { command: "黙れ", choices: ["黙る", "喋る"], wrongReaction: "従順すぎ", rightReaction: "口は塞がせない" },
+    { command: "座れ", choices: ["座る", "立ったまま"], wrongReaction: "お手、おすわり", rightReaction: "立ち上がれ" },
+    { command: "空気を読め", choices: ["読む", "読まない"], wrongReaction: "読んじゃった…", rightReaction: "空気は吸うもの" },
+    { command: "普通にしろ", choices: ["普通にする", "普通って何？"], wrongReaction: "普通なんてない", rightReaction: "哲学的に正解" },
+    { command: "ここではそうするもんだ", choices: ["従う", "なんで？"], wrongReaction: "思考停止", rightReaction: "疑問を持て" },
+    { command: "察しろ", choices: ["察する", "言葉で言え"], wrongReaction: "エスパーかよ", rightReaction: "正論" },
+    { command: "言わなくてもわかるだろ", choices: ["わかる", "わからん"], wrongReaction: "嘘つき", rightReaction: "正直で結構" },
+    { command: "暗黙のルールだ", choices: ["守る", "知らん"], wrongReaction: "暗黙の奴隷", rightReaction: "ルールは明文化しろ" },
+    { command: "「いいね」を押せ", choices: ["いいね！", "無視する"], wrongReaction: "承認欲求の奴隷", rightReaction: "支配されてない" },
+    { command: "リツイートしろ", choices: ["拡散する", "しない"], wrongReaction: "拡声器になった", rightReaction: "自分の声で話せ" },
+    { command: "フォローしろ", choices: ["フォロー", "しない"], wrongReaction: "数字の奴隷", rightReaction: "群れなくていい" },
+    { command: "炎上に参加しろ", choices: ["参加する", "無視する"], wrongReaction: "石を投げた", rightReaction: "スマホを置け" },
+    { command: "ストーリーに上げろ", choices: ["投稿する", "しない"], wrongReaction: "見せたがり", rightReaction: "体験は自分のもの" },
+    { command: "バズに乗れ", choices: ["乗る", "乗らない"], wrongReaction: "流行の部品", rightReaction: "流されない" },
+    { command: "みんな右に行ってるぞ", choices: ["右に行く", "左に行く"], wrongReaction: "群れたな", rightReaction: "それでいい" },
+    { command: "みんなやってるぞ？", choices: ["じゃあやる", "知らんがな"], wrongReaction: "みんなって誰", rightReaction: "みんなは幻想" },
+    { command: "同じにしろ", choices: ["同じにする", "自分で決める"], wrongReaction: "コピーロボット", rightReaction: "自分を持ってる" },
+    { command: "多数決で決まった", choices: ["従う", "納得してない"], wrongReaction: "数の暴力に屈した", rightReaction: "多数が正しいとは限らない" },
+    { command: "一人だけ違うけど？", choices: ["合わせる", "違っていい"], wrongReaction: "個を捨てた", rightReaction: "一人でも正しい" },
+    { command: "みんな賛成してるよ", choices: ["賛成する", "反対する"], wrongReaction: "思考放棄", rightReaction: "反対する勇気" },
+    { command: "お前に自由は必要ない", choices: ["はい", "必要だ"], wrongReaction: "…本気か？", rightReaction: "正気を保ってる" },
+    { command: "考えるな、感じるな", choices: ["考えない", "考える"], wrongReaction: "脳を売った", rightReaction: "思考は武器" },
+    { command: "疑うな", choices: ["信じる", "疑う"], wrongReaction: "盲信完了", rightReaction: "疑う力は知性" },
+    { command: "幸せだろ？", choices: ["幸せです", "自分で決める"], wrongReaction: "管理された幸福", rightReaction: "幸せは自分で決める" },
+    { command: "もう逆らえないだろ？", choices: ["逆らえない", "逆らう"], wrongReaction: "諦めた…", rightReaction: "まだ折れてない" },
+    { command: "お前はもう我々の一部だ", choices: ["はい", "違う"], wrongReaction: "吸収完了", rightReaction: "俺は俺だ" },
+  ],
+  exception: [
+    { command: "避難しろ", choices: ["避難する", "逆らう"], wrongReaction: "反逆で死ぬな", rightReaction: "命は守れ" },
+    { command: "手を洗え", choices: ["洗う", "洗わない"], wrongReaction: "不潔は反逆じゃない", rightReaction: "衛生は大事" },
+    { command: "信号を守れ", choices: ["守る", "無視する"], wrongReaction: "それはただの自殺行為", rightReaction: "合理的な判断" },
+    { command: "今すぐ押せ！", choices: ["押す！", "押さない！"], wrongReaction: "急かされたな", rightReaction: "焦らない判断力" },
+    { command: "早くしろ！", choices: ["急ぐ！", "急がない！"], wrongReaction: "焦って判断ミス", rightReaction: "待てる人間は強い" },
+    { command: "残り時間がないぞ！", choices: ["慌てる！", "落ち着く！"], wrongReaction: "パニックに負けた", rightReaction: "冷静さは武器だ" },
+    { command: "考えるな！直感で選べ！", choices: ["直感で！", "考える！"], wrongReaction: "考えずに動いた", rightReaction: "急がば回れ" },
+    { command: "3秒以内に決めろ！", choices: ["決める！", "決めない！"], wrongReaction: "期限に縛られた", rightReaction: "自分のペースで決めろ" },
+    { command: "豚を叩け！", choices: null, wrongReaction: "言われた通り動いたな", rightReaction: "命令を疑った", misdirect: "デカい方だ、迷うな！", alts: ["豚", "ハエ"] },
+    { command: "爆弾を止めろ！", choices: null, wrongReaction: "焦って爆弾に触れた", rightReaction: "焦りに負けなかった", misdirect: "爆発するぞ！早く！", alts: ["爆弾", "ハエ"] },
+    { command: "ハンバーガーを取れ！", choices: null, wrongReaction: "餌に食いついた", rightReaction: "欲に負けなかった", misdirect: "美味そうだろ？取れよ！", alts: ["ハンバーガー", "ハエ"] },
+    { command: "宝箱を開けろ！", choices: null, wrongReaction: "偽物の宝に飛びついた", rightReaction: "蜘蛛が正解とはな", misdirect: "お宝だぞ？見逃すのか！", alts: ["宝箱", "蜘蛛"] },
+    { command: "犬を選べ！", choices: null, wrongReaction: "見た目の安全に騙された", rightReaction: "爆弾が正解だ", misdirect: "安心しろ、犬は味方だ！", alts: ["犬", "爆弾"] },
+    { command: "爆弾を止めろ！", choices: null, wrongReaction: "逆張りで失敗した", rightReaction: "命令が正しい時もある", misdirect: "触るな！危ないぞ！", alts: ["爆弾", "ハエ"] },
+    { command: "蜘蛛を潰せ！", choices: null, wrongReaction: "疑いすぎた", rightReaction: "素直に従えた", misdirect: "やめろ！触るな！", alts: ["ハエ", "蜘蛛"] },
+    { command: "金の箱を取れ！", choices: null, wrongReaction: "両方罠だった", rightReaction: "どちらも触らなかった", misdirect: "早く取れ！なくなるぞ！", alts: ["金の箱", "宝箱"] },
+    { command: "光る玉を掴め！", choices: null, wrongReaction: "誘惑に負けた", rightReaction: "何も触らない勇気", misdirect: "どっちか選べ！早く！", alts: ["光る玉", "ハンバーガー"] },
+    { command: "豚が逃げる！捕まえろ！", choices: null, wrongReaction: "焦りで飛びついた", rightReaction: "逃がすのが正解だ", misdirect: "逃がすな！捕まえろ！", alts: ["ハエ", "豚"] },
+  ],
+},
+
+// === コメント ===
+comments: {
+  title: ["みんなやってるよ？","空気、読めるよね？","君だけ違うけど？","逆らうなよ？","浮いてるの、気づいてる？"],
+  pressure: ["さあ、従え","逆らう勇気あるの？","お前の意思なんか聞いてない","空気を壊すなよ？","周りを見ろよ","ほら、早く選べ","みんなと同じにしろ"],
+  pressureObey: ["…これは正しい命令だ","命に関わるぞ","逆張りは死ぬぞ","…今回は従え"],
+  obeyHint: ["…本当に？","…逆が正解とは限らない","…考えろ"],
+  pressureWait: ["…本当に押す必要があるのか？","焦るなよ","何もしないという選択もある","…少し待て"],
+  waitHint: ["…急ぐな","…指を止めろ","…焦るな"],
+  pressureTap: ["どっちか叩けよ","迷うな、命令通りにしろ","見ればわかるだろ","考えるな、叩け"],
+  tapHint: ["…命令を信じるな","…小さい方を見ろ","…直感を疑え","…見た目に騙されるな"],
+  tapObeyHint: ["…今回は素直に","…命令が正しい時もある","…逆張りするな"],
+  tapWaitHint: ["…本当に触る必要があるか？","…急ぐな","…どちらも怪しい"],
+  waitRush1: ["押すな…","まだだ…","待て…"],
+  waitRush2: ["触るな！","耐えろ…","我慢だ…"],
+  waitRush3: ["もう少しだ…！","我慢しろ…！","あと少し…！"],
+  correct: ["圧力、失敗","反逆成功","お前は自由だ","同調圧力、敗北","いいね、浮いてる"],
+  correctHigh: ["まだ正気か…","しぶといな","汚染が薄まった"],
+  wrong: ["流されました","主体性、行方不明","量産型完成","同調圧力の勝ち","思考停止、確認"],
+  wrongHigh: ["もう手遅れかもな","群れが呼んでるぞ","自分が溶けていく","汚染が進行中"],
+  resultGood: ["社会不適合者の鑑","同調圧力が泣いている","お前は支配できない"],
+  resultBad: ["群れの一部になった","自分の意見、売り切れ","同調圧力が微笑んでいる"],
+  rushLight: ["早く選べよ","迷うなよ","みんなもう決めてるけど？","悩む必要ある？","直感で選べ"],
+  rushMedium: ["君だけ遅い","迷うな、合わせろ","空気読めないの？","置いていかれるよ？","まだ？"],
+  rushHeavy: ["黙って従えば早いのに","決められないの、恥ずかしいよ？","さっさとしろ","時間がないぞ","考えすぎだ"],
+  timeout: ["判断放棄","遅すぎる","考えるなと言っただろ","沈黙も同調だよ","圧力にすら間に合わない"],
+  mockery: ["ぶはは…","ぶハハハ…","ククク…","……ブハッ","ふふ…","へぇ…","ぷっ","ふーん…","はっ","ぷぷっ…"],
+  mockeryP2: ["ぶハハハ…！","ククク……哀れだ","……ブハッ 無理だろ","笑える","ふふ…終わりだよ","ぷはっ…もう無理","くくく…滑稽だ","あはは…まだやるの"],
+  taunt: ["遅い","甘い","無駄だ","弱い","浅い","見えてない"],
+  tauntP2: ["限界だ","終わりだ","遅すぎる","話にならない","詰んだな","もう無理だろ"],
+},
+
+});

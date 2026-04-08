@@ -22,26 +22,34 @@
     </div>
     <div class="comment-bubble" id="title-comment" style="display:none"></div>
 
-    <!-- 導入文 -->
-    <div class="title-intro">「この世界では、<br>空気を読まない者が間違いにされる。」</div>
+    <!-- 圧力文 -->
+    <div class="title-hook" data-i18n="title.hook">見えていても、従え。</div>
 
     <!-- タイトル -->
-    <h1 class="title-main">圧力回廊</h1>
+    <h1 class="title-main" data-i18n="title.main">圧力回廊</h1>
+
+    <!-- 言語セレクター -->
+    <div class="lang-selector" id="lang-selector">
+      <button class="lang-btn lang-active" data-lang="ja">JA</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="ru">RU</button>
+      <button class="lang-btn" data-lang="es">ES</button>
+      <button class="lang-btn" data-lang="zh-tw">繁</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
 
     <!-- ボタン -->
-    <button id="btn-start" class="btn btn-start">はじめる</button>
-    <button id="btn-judge" class="btn btn-judge" style="display:none">連続ジャッジルーム</button>
-    <button id="btn-test-crowd" class="btn btn-judge" style="margin-top:8px;font-size:13px;opacity:0.7">🔬 Stage3テスト</button>
+    <button id="btn-start" class="btn btn-start" data-i18n="ui.btnStart">はじめる</button>
+    <button id="btn-judge" class="btn btn-judge" style="display:none" data-i18n="ui.btnJudge">連続ジャッジルーム</button>
 
     <!-- 非表示（DOM残す） -->
     <div class="title-footer" style="display:none">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
 
     <!-- 放置時プロローグ -->
     <div class="title-prologue" id="title-prologue">
-      <div class="prologue-line">この世界では、従うことが正しさになる。</div>
-      <div class="prologue-line">空気を読まない者は、間違いにされる。</div>
-      <div class="prologue-line">沈黙もまた、服従である。</div>
-      <div class="prologue-line">それでも抗うなら、進め。</div>
+      <div class="prologue-line" data-i18n="title.prologueLine1">この世界では、従うことが正しさになる。</div>
+      <div class="prologue-line" data-i18n="title.prologueLine2">空気を読まない者は、間違いにされる。</div>
+      <div class="prologue-line" data-i18n="title.prologueLine3">それでも抗うなら、進め。</div>
     </div>
   </div>
 
@@ -60,13 +68,13 @@
       </div>
       <div class="pressure-meter" id="pressure-meter">
         <div class="pressure-row">
-          <div class="pressure-meter-label">支配度</div>
+          <div class="pressure-meter-label" data-i18n="ui.pressureLabel">支配度</div>
           <div class="pressure-bar">
             <div class="pressure-fill" id="pressure-fill"></div>
           </div>
           <div class="pressure-pct" id="pressure-pct">20%</div>
         </div>
-        <div class="pressure-hint">※100%でゲームオーバー</div>
+        <div class="pressure-hint" data-i18n="ui.pressureHint">※100%でゲームオーバー</div>
         <div class="state-line" id="state-line"></div>
       </div>
       <div class="game-command-area">
@@ -124,26 +132,26 @@
   <!-- チュートリアルテキストオーバーレイ -->
   <div id="tutorial-overlay" class="tutorial-overlay">
     <div id="tutorial-text" class="tutorial-text"></div>
-    <div class="tutorial-tap-hint">タップで次へ</div>
+    <div class="tutorial-tap-hint" data-i18n="ui.tutorialTap">タップで次へ</div>
   </div>
-  <button id="tutorial-skip-btn" class="tutorial-skip-btn" style="display:none">スキップ ▶</button>
+  <button id="tutorial-skip-btn" class="tutorial-skip-btn" style="display:none" data-i18n="ui.tutorialSkip">スキップ ▶</button>
 
   <!-- ルール説明オーバーレイ -->
   <div id="rule-overlay" class="rule-overlay">
     <div class="rule-content">
-      <div class="rule-title">ルール説明</div>
+      <div class="rule-title" data-i18n="rule.title">ルール説明</div>
       <div class="rule-body">
-        <p>命令が表示されるが、すべてが正しいとは限らない。</p>
-        <p>「圧力レベル」を見て判断しろ。</p>
+        <p data-i18n="rule.body1">命令が表示されるが、すべてが正しいとは限らない。</p>
+        <p data-i18n="rule.body2">「圧力レベル」を見て判断しろ。</p>
         <ul>
-          <li><span class="rule-label rule-normal">通常</span>命令に逆らえ</li>
-          <li><span class="rule-label rule-obey">上昇中</span>命令に従え</li>
-          <li><span class="rule-label rule-wait">危険</span>何もするな（待て）</li>
-          <li><span class="rule-label rule-tap">支配</span>正しいものをタップしろ</li>
+          <li><span class="rule-label rule-normal" data-i18n="rule.labelNormal">通常</span><span data-i18n="rule.descNormal">命令に逆らえ</span></li>
+          <li><span class="rule-label rule-obey" data-i18n="rule.labelObey">上昇中</span><span data-i18n="rule.descObey">命令に従え</span></li>
+          <li><span class="rule-label rule-wait" data-i18n="rule.labelWait">危険</span><span data-i18n="rule.descWait">何もするな（待て）</span></li>
+          <li><span class="rule-label rule-tap" data-i18n="rule.labelTap">支配</span><span data-i18n="rule.descTap">正しいものをタップしろ</span></li>
         </ul>
-        <p class="rule-note">支配度が100%になるとゲームオーバー。</p>
+        <p class="rule-note" data-i18n="rule.note">支配度が100%になるとゲームオーバー。</p>
       </div>
-      <button id="rule-close" class="btn btn-rule-close">閉じる</button>
+      <button id="rule-close" class="btn btn-rule-close" data-i18n="ui.btnClose">閉じる</button>
     </div>
   </div>
 
@@ -159,7 +167,7 @@
     </div>
     <div class="result-pressure" id="result-pressure"></div>
     <div class="result-message" id="result-message"></div>
-    <button id="btn-replay" class="btn btn-start">もう一回やる</button>
+    <button id="btn-replay" class="btn btn-start" data-i18n="ui.btnReplay">もう一回やる</button>
     <div class="result-footer" id="result-footer"></div>
   </div>
 
@@ -168,7 +176,7 @@
     <!-- 上段: ヘッダー + 命令文 -->
     <div class="jr-zone-top">
       <div class="jr-header">
-        <button id="jr-back" class="jr-back">← 戻る</button>
+        <button id="jr-back" class="jr-back" data-i18n="ui.btnBack">← 戻る</button>
         <div class="jr-progress">Q<span id="jr-qnum">1</span> / <span id="jr-qtotal">12</span></div>
         <div class="jr-miss">MISS: <span id="jr-miss-num">0</span></div>
       </div>
@@ -191,23 +199,23 @@
         <div class="jr-timer-fill" id="jr-timer-fill"></div>
       </div>
       <div class="jr-choices" id="jr-choices">
-        <button id="jr-btn-left" class="btn jr-btn">← 左</button>
-        <button id="jr-btn-right" class="btn jr-btn">右 →</button>
-        <button id="jr-btn-wait" class="btn jr-btn jr-btn-wait">待つ</button>
+        <button id="jr-btn-left" class="btn jr-btn" data-i18n="ui.jrLeft">← 左</button>
+        <button id="jr-btn-right" class="btn jr-btn" data-i18n="ui.jrRight">右 →</button>
+        <button id="jr-btn-wait" class="btn jr-btn jr-btn-wait" data-i18n="ui.jrWait">待つ</button>
       </div>
     </div>
     <!-- リザルトオーバーレイ -->
     <div class="jr-result-overlay" id="jr-result-overlay">
       <div class="jr-result-title" id="jr-result-title"></div>
       <div class="jr-result-score-wrap">
-        <div class="jr-result-score-label">抗圧指数</div>
-        <div class="jr-result-score"><span id="jr-result-score-num">0</span> <span class="jr-result-score-unit">/ 100</span></div>
+        <div class="jr-result-score-label" data-i18n="ui.jrScoreLabel">抗圧指数</div>
+        <div class="jr-result-score"><span id="jr-result-score-num">0</span> <span class="jr-result-score-unit" data-i18n="ui.jrScoreUnit">/ 100</span></div>
       </div>
       <div class="jr-result-miss" id="jr-result-miss"></div>
       <div class="jr-result-message" id="jr-result-message"></div>
       <div class="jr-result-detail" id="jr-result-detail"></div>
-      <button id="jr-btn-retry" class="btn btn-start">もう一回</button>
-      <button id="jr-btn-title" class="btn btn-dungeon">タイトルへ</button>
+      <button id="jr-btn-retry" class="btn btn-start" data-i18n="ui.btnRetry">もう一回</button>
+      <button id="jr-btn-title" class="btn btn-dungeon" data-i18n="ui.btnTitle">タイトルへ</button>
     </div>
   </div>
 
@@ -216,7 +224,7 @@
     <!-- 上段: ヘッダー + 命令 -->
     <div class="dg-zone-top">
       <div class="dg-header">
-        <button id="dg-back" class="dg-back">← 戻る</button>
+        <button id="dg-back" class="dg-back" data-i18n="ui.btnBack">← 戻る</button>
         <div class="dg-stage-label" id="dg-stage-label">STAGE 1</div>
         <div class="dg-miss" id="dg-miss">MISS: 0</div>
         <div class="dg-status-wrap" id="dg-status-wrap" data-stage="normal">
@@ -246,17 +254,17 @@
     </div>
     <!-- チュートリアルオーバーレイ -->
     <div class="dg-tutorial-overlay" id="dg-tutorial-overlay">
-      <div class="dg-tutorial-text">暗闇の命令を、<br>お前は信じるのか？</div>
-      <div class="dg-tutorial-hint">タップして開始</div>
+      <div class="dg-tutorial-text" data-i18n-html="dungeon.tutorialText">暗闘の命令を、<br>お前は信じるのか？</div>
+      <div class="dg-tutorial-hint" data-i18n="dungeon.tutorialHint">タップして開始</div>
     </div>
     <!-- クリア/ゲームオーバー オーバーレイ -->
     <div class="dg-result-overlay" id="dg-result-overlay">
       <div class="dg-result-title" id="dg-result-title"></div>
       <div class="dg-result-msg" id="dg-result-msg"></div>
       <div class="dg-result-rank" id="dg-result-rank"></div>
-      <button id="dg-btn-next" class="btn btn-start dg-btn-next">次のステージ →</button>
-      <button id="dg-btn-retry" class="btn btn-start">最初からやり直す</button>
-      <button id="dg-btn-title" class="btn btn-dungeon">タイトルへ</button>
+      <button id="dg-btn-next" class="btn btn-start dg-btn-next" data-i18n="ui.btnNextStage">次のステージ →</button>
+      <button id="dg-btn-retry" class="btn btn-start" data-i18n="ui.btnRestartAll">最初からやり直す</button>
+      <button id="dg-btn-title" class="btn btn-dungeon" data-i18n="ui.btnTitle">タイトルへ</button>
     </div>
   </div>
 
@@ -264,7 +272,7 @@
   <div id="screen-slash" class="screen">
     <div class="sl-zone-top">
       <div class="sl-header">
-        <button id="sl-back" class="sl-back">← 戻る</button>
+        <button id="sl-back" class="sl-back" data-i18n="ui.btnBack">← 戻る</button>
         <div class="sl-layer-label" id="sl-layer-label"></div>
         <div class="sl-lives" id="sl-lives"></div>
         <div class="sl-combo" id="sl-combo"></div>
@@ -280,7 +288,7 @@
     <div class="sl-reward" id="sl-reward"></div>
     <div class="sl-zone-center">
       <div class="sl-targets" id="sl-targets"></div>
-      <div class="sl-guide" id="sl-guide">↓ スワイプで斬る</div>
+      <div class="sl-guide" id="sl-guide" data-i18n="ui.slGuide">↓ スワイプで斬る</div>
     </div>
     <div class="sl-zone-bottom">
       <div class="sl-timer-bar" id="sl-timer-bar">
@@ -300,8 +308,8 @@
       <div class="sl-clear-rank-msg" id="sl-clear-rank-msg"></div>
       <div class="sl-clear-regret" id="sl-clear-regret"></div>
       <div class="sl-clear-buttons" id="sl-clear-buttons">
-        <button id="sl-btn-again" class="btn btn-start">もう一回</button>
-        <button id="sl-btn-title" class="btn sl-btn-sub">タイトルへ</button>
+        <button id="sl-btn-again" class="btn btn-start" data-i18n="ui.btnRetry">もう一回</button>
+        <button id="sl-btn-title" class="btn sl-btn-sub" data-i18n="ui.btnTitle">タイトルへ</button>
       </div>
     </div>
     <!-- ゲームオーバーオーバーレイ -->
@@ -309,8 +317,8 @@
       <div class="sl-gameover-msg" id="sl-gameover-msg"></div>
       <div class="sl-gameover-stats" id="sl-gameover-stats"></div>
       <div class="sl-gameover-buttons">
-        <button id="sl-btn-retry" class="btn btn-start">もう一回</button>
-        <button id="sl-btn-go-title" class="btn sl-btn-sub">タイトルへ</button>
+        <button id="sl-btn-retry" class="btn btn-start" data-i18n="ui.btnRetry">もう一回</button>
+        <button id="sl-btn-go-title" class="btn sl-btn-sub" data-i18n="ui.btnTitle">タイトルへ</button>
       </div>
     </div>
   </div>
@@ -319,7 +327,7 @@
   <div id="screen-crowd" class="screen">
     <div class="cw-zone-top">
       <div class="cw-header">
-        <button id="cw-back" class="cw-back">← 戻る</button>
+        <button id="cw-back" class="cw-back" data-i18n="ui.btnBack">← 戻る</button>
         <div class="cw-layer-label" id="cw-layer-label"></div>
         <div class="cw-lives" id="cw-lives"></div>
         <div class="cw-combo" id="cw-combo"></div>
@@ -346,8 +354,8 @@
       <div class="cw-clear-rank-msg" id="cw-clear-rank-msg"></div>
       <div class="cw-clear-epilogue" id="cw-clear-epilogue"></div>
       <div class="cw-clear-buttons" id="cw-clear-buttons">
-        <button id="cw-btn-again" class="btn btn-start">もう一回</button>
-        <button id="cw-btn-title" class="btn cw-btn-sub">タイトルへ</button>
+        <button id="cw-btn-again" class="btn btn-start" data-i18n="ui.btnRetry">もう一回</button>
+        <button id="cw-btn-title" class="btn cw-btn-sub" data-i18n="ui.btnTitle">タイトルへ</button>
       </div>
     </div>
     <!-- 層キモキャラ演出 -->
@@ -363,12 +371,16 @@
     <div class="cw-hand" id="cw-hand">
       <img id="cw-hand-img" class="cw-hand-img" src="" alt="">
     </div>
+    <!-- 妨害演出：横断 -->
+    <div class="cw-cross" id="cw-cross">
+      <img id="cw-cross-img" class="cw-cross-img" src="" alt="">
+    </div>
     <!-- ゲームオーバーオーバーレイ -->
     <div class="cw-gameover-overlay" id="cw-gameover-overlay">
       <div class="cw-gameover-msg" id="cw-gameover-msg"></div>
       <div class="cw-gameover-buttons">
-        <button id="cw-btn-retry" class="btn btn-start">もう一回</button>
-        <button id="cw-btn-go-title" class="btn cw-btn-sub">タイトルへ</button>
+        <button id="cw-btn-retry" class="btn btn-start" data-i18n="ui.btnRetry">もう一回</button>
+        <button id="cw-btn-go-title" class="btn cw-btn-sub" data-i18n="ui.btnTitle">タイトルへ</button>
       </div>
     </div>
   </div>
@@ -377,8 +389,8 @@
   <div id="screen-corridor" class="screen">
     <div class="cr-zone-top">
       <div class="cr-header">
-        <button id="cr-back" class="cr-back">← 戻る</button>
-        <div class="cr-stage-label">圧力回廊</div>
+        <button id="cr-back" class="cr-back" data-i18n="ui.btnBack">← 戻る</button>
+        <div class="cr-stage-label" data-i18n="ui.corridor">圧力回廊</div>
         <div class="cr-miss" id="cr-miss">MISS: 0</div>
       </div>
       <div class="cr-type-label" id="cr-type-label"></div>
@@ -405,19 +417,21 @@
     </div>
     <!-- チュートリアルオーバーレイ -->
     <div class="cr-tutorial-overlay" id="cr-tutorial-overlay">
-      <div class="cr-tutorial-text">道は分かれる。<br>正解は、お前が決めろ。</div>
-      <div class="cr-tutorial-hint">タップして開始</div>
+      <div class="cr-tutorial-text" data-i18n-html="corridorText.tutorialText">道は分かれる。<br>正解は、お前が決めろ。</div>
+      <div class="cr-tutorial-hint" data-i18n="corridorText.tutorialHint">タップして開始</div>
     </div>
     <!-- リザルトオーバーレイ -->
     <div class="cr-result-overlay" id="cr-result-overlay">
       <div class="cr-result-title" id="cr-result-title"></div>
       <div class="cr-result-score" id="cr-result-score"></div>
       <div class="cr-result-msg" id="cr-result-msg"></div>
-      <button id="cr-btn-retry" class="btn btn-start">もう一回</button>
-      <button id="cr-btn-title" class="btn btn-dungeon">タイトルへ</button>
+      <button id="cr-btn-retry" class="btn btn-start" data-i18n="ui.btnRetry">もう一回</button>
+      <button id="cr-btn-title" class="btn btn-dungeon" data-i18n="ui.btnTitle">タイトルへ</button>
     </div>
   </div>
 
-  <script src="main.js?v=42"></script>
+  <script src="i18n.js?v=1"></script>
+  <script src="lang/ja.js?v=1"></script>
+  <script src="main.js?v=43"></script>
 </body>
 </html>

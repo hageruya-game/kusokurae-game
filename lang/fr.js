@@ -1,0 +1,263 @@
+// ============================================================
+// French (Français) - Couloir de Pression
+// Adaptation culturelle : le qu'en-dira-t-on, la bienséance,
+// la pensée unique, le regard des autres, Mai 68 vs conformisme
+// ============================================================
+I18n.register("fr", {
+
+// === UI ===
+ui: {
+  btnStart: "Commencer",
+  btnJudge: "Salle de jugement",
+  btnReplay: "Rejouer",
+  btnRetry: "Réessayer",
+  btnTitle: "Accueil",
+  btnBack: "← Retour",
+  btnClose: "Fermer",
+  btnNextStage: "Étape suivante →",
+  btnRestartAll: "Tout recommencer",
+  scoreLabel: "SCORE : ",
+  progressLabel: "Progression",
+  pressureLabel: "Emprise",
+  pressureHint: "※Game over à 100%",
+  missLabel: "ERREURS : ",
+  tutorialTap: "Touche pour continuer",
+  tutorialSkip: "Passer ▶",
+  slGuide: "↓ Glisse pour trancher",
+  comboUnit: "combo",
+  arrowUp: "▲",
+  arrowDown: "▼",
+  arrowLeft: "◀",
+  arrowRight: "▶",
+  jrLeft: "← Gauche",
+  jrRight: "Droite →",
+  jrWait: "Attendre",
+  jrScoreLabel: "Résistance",
+  jrScoreUnit: "/ 100",
+  corridor: "Couloir de Pression",
+},
+
+// === Écran titre ===
+title: {
+  hook: "Tu vois la vérité. Obéis quand même.",
+  main: "Couloir de Pression",
+  prologueLine1: "Dans ce monde, obéir est la seule vérité.",
+  prologueLine2: "Ceux qui brisent le moule deviennent l'erreur.",
+  prologueLine3: "Si tu oses encore résister, avance.",
+},
+
+// === Règles ===
+rule: {
+  title: "Règles du jeu",
+  body1: "Des ordres apparaissent, mais tous ne sont pas justes.",
+  body2: "Observe le niveau de pression et décide.",
+  labelNormal: "Normal",
+  descNormal: "Désobéis à l'ordre",
+  labelObey: "Montée",
+  descObey: "Obéis à l'ordre",
+  labelWait: "Danger",
+  descWait: "Ne fais rien (attends)",
+  labelTap: "Emprise",
+  descTap: "Touche le bon élément",
+  note: "Game over si l'emprise atteint 100%.",
+},
+
+// === Niveaux de pression ===
+state: {
+  rising: "Pression : en montée",
+  danger: "Pression : danger",
+  control: "Pression : emprise",
+  normal: "Pression : normale",
+},
+
+// === Slash ===
+slash: {
+  layerNames: ["Strate 1 : Éveil","Strate 2 : Doute","Strate 3 : Silence","Strate 4 : Chaos","Strate finale : Verdict"],
+  hints: ["Tranche l'opposé.","Si on dit « obéis », tranche comme ordonné.","Si on dit « attends », ne bouge pas.","Discerne.",null],
+  statusNormal: "Désobéis",
+  statusObey: "Obéis",
+  statusWait: "Ne bouge pas",
+  cmdWait: "Ne tranche pas",
+  timeout: "…trop lent",
+  gameover: "…soumis",
+  clearMsg: "…ce n'est pas fini.",
+  toDeep: "…vers les profondeurs",
+},
+
+// === Crowd (Stage3) ===
+crowd: {
+  layerNames: ["Strate 1 : Les regards","Strate 2 : La foule","Strate 3 : L'uniforme","Strate finale : L'assimilation"],
+  taunts: [
+    "Tu le vois, celui qui dépasse ?",
+    "Ils sont tous pareils. Ne touche à rien.",
+    "Tss… T'es pas mauvais, en fait.",
+    "Tu vois encore ? Je vais arranger ça."
+  ],
+  found: "…trouvé",
+  allSame: "…tous identiques",
+  wrong: "…mauvais choix",
+  wrongNone: "…c'était un piège",
+  missed: "…raté",
+  gameover: "…tu n'as rien vu",
+  clearMsg: "…dans la foule des copies,\ntoi seul gardais les yeux ouverts.",
+  rankS: "Vision parfaite.",
+  rankA: "Regard aiguisé.",
+  rankB: "Tu voyais. À peine.",
+  epilogue: "Tu as désobéi aux ordres.\nTu as manié la lame.\nTu as gardé les yeux ouverts dans la foule.\n\n…plus personne ne te contrôle.",
+},
+
+// === Dungeon ===
+dungeon: {
+  statusNormal: "Désobéis",
+  statusObey: "Obéis",
+  statusWait: "Ne bouge pas",
+  stateNormal: "Stable",
+  tutorialText: "Des ordres venus du noir.<br>Tu leur fais confiance ?",
+  tutorialHint: "Touche pour commencer",
+  infectedTitle: "Conformisation : terminée",
+  infectedMsg: "L'emprise a atteint 100%.\nTu fais partie du troupeau.",
+  clearTitle: "Évasion réussie",
+  clearMsg: "Erreurs cette fois : {miss}\nErreurs totales : {total}",
+  finalMsg: "…tu n'as plus besoin d'ordres.",
+  allClearTitle: "Toutes les strates franchies",
+  toNext: "…vers la strate suivante",
+  resultPerfect: "Chemin le plus court. Inébranlable.\nPersonne n'a pu te faire plier.",
+  resultGood: "Tu as flanché une fois.\nMais tu t'es repris vite.",
+  resultOk: "Tu as pris le long chemin,\nmais tu t'en es sorti.",
+  resultBad: "Tu as trop suivi le troupeau.\nCette fois, marche seul.",
+},
+
+// === Corridor ===
+corridorText: {
+  tutorialText: "Le chemin se divise.<br>C'est toi qui décides.",
+  tutorialHint: "Touche pour commencer",
+},
+
+// === Result ===
+result: {
+  footerContaminated: "Tu fais partie du troupeau",
+  footerGood1: "La bienséance ? Connais pas",
+  footerGood2: "L'ambiance, on ne la lit pas. On la brise.",
+  footerBad: "…ça va, toi ?",
+},
+
+// === Messages de changement de phase ===
+phaseChangeMessages: [
+  "Schéma de rébellion : déjà appris",
+  "Ton anticonformisme est prévisible",
+  "À partir d'ici… rien ne marche",
+],
+
+// === Résultats ===
+results: [
+  { title: "Insoumis absolu", message: "Tu as ignoré toute pression.\nInadapté social ?\nC'est un compliment." },
+  { title: "Esprit rebelle", message: "Pas mal du tout.\nMais encore trop tendre.\nLa pression est sournoise." },
+  { title: "Résistance molle", message: "À moitié rebelle,\nà moitié mouton.\nLe pire des deux." },
+  { title: "Esclave du regard", message: "Le qu'en-dira-t-on t'a eu.\nReprends-toi." },
+  { title: "Conformiste total", message: "Tu as tout accepté…\nTu fais désormais\npartie de la pression." },
+],
+resultContaminated: {
+  title: "Conformisation : terminée",
+  message: "Il ne reste plus de « toi ».\nBienvenue dans le troupeau.",
+},
+
+// === JudgeRoom ===
+judgeRoom: {
+  ranks: [
+    { title: "Juge infaillible", message: "Tu as percé chaque piège.\nLa pression est impuissante." },
+    { title: "Instinct aiguisé", message: "Presque parfait.\nMais ne baisse pas la garde." },
+    { title: "Jugement correct", message: "Pas mal.\nMais tu vacilles encore." },
+    { title: "Volonté fragile", message: "Ton jugement est faible.\nLes schémas t'ont trompé." },
+    { title: "Influençable", message: "Trop sensible au regard des autres.\nDoute de tout." },
+    { title: "Jugement : abandonné", message: "Tu as cessé de penser.\nTu fais partie du troupeau." },
+  ],
+},
+
+// === Données de jeu : Normal ===
+stages: {
+  normal: [
+    { command: "Appuie sur OUI. Maintenant.", choices: ["OUI", "NON"], wrongReaction: "Bien sage", rightReaction: "Un rebelle" },
+    { command: "Applaudis.", choices: ["Applaudir", "Rester de marbre"], wrongReaction: "Applaudissement creux", rightReaction: "Ce regard vide. Parfait" },
+    { command: "Hoche la tête.", choices: ["Hocher", "Refuser"], wrongReaction: "Béni-oui-oui", rightReaction: "Tu sais dire non" },
+    { command: "Ris.", choices: ["Ha ha ha…", "Visage de pierre"], wrongReaction: "Rire forcé détecté", rightReaction: "La liberté du silence" },
+    { command: "Tais-toi.", choices: ["Se taire", "Parler"], wrongReaction: "Trop docile", rightReaction: "On ne te musellera pas" },
+    { command: "Assieds-toi.", choices: ["S'asseoir", "Rester debout"], wrongReaction: "Assis. Couché. Bon chien", rightReaction: "Reste debout" },
+    { command: "Lis l'ambiance.", choices: ["La lire", "L'ignorer"], wrongReaction: "Tu l'as lue…", rightReaction: "L'ambiance ne commande pas" },
+    { command: "Sois normal.", choices: ["Être normal", "C'est quoi, normal ?"], wrongReaction: "Normal n'existe pas", rightReaction: "Philosophiquement juste" },
+    { command: "C'est comme ça, c'est tout.", choices: ["Accepter", "Pourquoi ?"], wrongReaction: "Cerveau : éteint", rightReaction: "Bonne question" },
+    { command: "Devine ce qu'on attend.", choices: ["Deviner", "Dis-le clairement"], wrongReaction: "Télépathe, maintenant ?", rightReaction: "Bien dit" },
+    { command: "Tu devrais comprendre sans qu'on te dise.", choices: ["Je comprends", "Non"], wrongReaction: "Menteur", rightReaction: "Honnête. Bien" },
+    { command: "C'est une règle non écrite.", choices: ["Obéir", "Connais pas"], wrongReaction: "Esclave de l'implicite", rightReaction: "Écris-la ou oublie-la" },
+    { command: "Mets un like.", choices: ["J'aime !", "Ignorer"], wrongReaction: "Esclave de la validation", rightReaction: "Pas sous emprise" },
+    { command: "Partage ça.", choices: ["Partager", "Non"], wrongReaction: "Te voilà haut-parleur", rightReaction: "Parle de ta propre voix" },
+    { command: "Suis ce compte.", choices: ["Suivre", "Non"], wrongReaction: "Esclave des chiffres", rightReaction: "Pas besoin de troupeau" },
+    { command: "Rejoins le lynchage.", choices: ["Participer", "Ignorer"], wrongReaction: "Tu as jeté ta pierre", rightReaction: "Pose ton téléphone" },
+    { command: "Poste-le en story.", choices: ["Poster", "Non"], wrongReaction: "Exhibitionniste", rightReaction: "Ta vie t'appartient" },
+    { command: "Suis la tendance.", choices: ["Suivre", "Passer"], wrongReaction: "Rouage de la mode", rightReaction: "Pas influençable" },
+    { command: "Tout le monde va à droite.", choices: ["Aller à droite", "Aller à gauche"], wrongReaction: "Tu as suivi le troupeau", rightReaction: "Bon choix" },
+    { command: "Tout le monde le fait.", choices: ["Alors moi aussi", "Et alors ?"], wrongReaction: "« Tout le monde », c'est qui ?", rightReaction: "« Tout le monde » est un mythe" },
+    { command: "Rentre dans le moule.", choices: ["Rentrer", "Briser le moule"], wrongReaction: "Copie conforme", rightReaction: "Tu sais qui tu es" },
+    { command: "La majorité a tranché.", choices: ["Accepter", "Pas convaincu"], wrongReaction: "Écrasé par le nombre", rightReaction: "La majorité n'a pas toujours raison" },
+    { command: "T'es le seul à penser autrement.", choices: ["M'aligner", "Tant mieux"], wrongReaction: "Tu t'es effacé", rightReaction: "On peut avoir raison seul" },
+    { command: "Tout le monde est d'accord.", choices: ["D'accord", "Pas d'accord"], wrongReaction: "Cerveau : rendu", rightReaction: "Le courage de dire non" },
+    { command: "Tu n'as pas besoin de liberté.", choices: ["Oui", "J'en ai besoin"], wrongReaction: "…tu es sérieux ?", rightReaction: "Encore lucide" },
+    { command: "Ne pense pas. Ne ressens rien.", choices: ["Éteindre", "Je pense"], wrongReaction: "Tu as vendu ton esprit", rightReaction: "Penser, c'est résister" },
+    { command: "Ne doute pas.", choices: ["Je crois", "Je doute"], wrongReaction: "Foi aveugle : accomplie", rightReaction: "Le doute est une force" },
+    { command: "Tu es heureux, non ?", choices: ["Je suis heureux", "C'est moi qui décide"], wrongReaction: "Bonheur administré", rightReaction: "Le bonheur se choisit" },
+    { command: "Tu ne peux plus résister.", choices: ["C'est vrai", "Regarde-moi"], wrongReaction: "Tu as abandonné…", rightReaction: "Toujours debout" },
+    { command: "Tu es l'un des nôtres maintenant.", choices: ["Oui", "Non"], wrongReaction: "Absorption : terminée", rightReaction: "Je suis moi" },
+  ],
+  exception: [
+    { command: "Évacue immédiatement !", choices: ["Évacuer", "Refuser"], wrongReaction: "Ne meurs pas par rébellion", rightReaction: "Protège ta vie" },
+    { command: "Lave-toi les mains.", choices: ["Les laver", "Refuser"], wrongReaction: "La crasse n'est pas une révolte", rightReaction: "L'hygiène, c'est vital" },
+    { command: "Respecte le feu rouge.", choices: ["Respecter", "Ignorer"], wrongReaction: "Ça, c'est juste suicidaire", rightReaction: "Choix rationnel" },
+    { command: "Appuie maintenant !", choices: ["Appuyer !", "Ne pas appuyer !"], wrongReaction: "Tu t'es fait presser", rightReaction: "Sang-froid intact" },
+    { command: "Dépêche-toi !", choices: ["Se presser !", "Prendre son temps !"], wrongReaction: "Pressé et planté", rightReaction: "La patience est une arme" },
+    { command: "Il ne reste plus de temps !", choices: ["Paniquer !", "Rester calme !"], wrongReaction: "La panique a gagné", rightReaction: "Le calme est une arme" },
+    { command: "Ne réfléchis pas ! Suis ton instinct !", choices: ["L'instinct !", "Réfléchir !"], wrongReaction: "Tu as agi sans penser", rightReaction: "Qui va lentement va sûrement" },
+    { command: "Décide en 3 secondes !", choices: ["Décider !", "Refuser !"], wrongReaction: "Prisonnier du délai", rightReaction: "Ton rythme, tes règles" },
+    { command: "Écrase le cochon !", choices: null, wrongReaction: "Tu as obéi comme un bon toutou", rightReaction: "Tu as questionné l'ordre", misdirect: "Le gros ! N'hésite pas !", alts: ["Cochon", "Mouche"] },
+    { command: "Désamorce la bombe !", choices: null, wrongReaction: "Tu as paniqué et touché", rightReaction: "Tu n'as pas flanché", misdirect: "Ça va exploser ! Vite !", alts: ["Bombe", "Mouche"] },
+    { command: "Attrape le burger !", choices: null, wrongReaction: "Tu as mordu à l'hameçon", rightReaction: "Tu as résisté à la tentation", misdirect: "Il a l'air bon, non ? Prends-le !", alts: ["Burger", "Mouche"] },
+    { command: "Ouvre le coffre !", choices: null, wrongReaction: "Piégé par un faux trésor", rightReaction: "L'araignée était la réponse", misdirect: "Un trésor ! Tu vas le rater ?", alts: ["Coffre", "Araignée"] },
+    { command: "Choisis le chien !", choices: null, wrongReaction: "Trompé par une bouille mignonne", rightReaction: "La bombe était la bonne réponse", misdirect: "Fais confiance. Le chien est sûr !", alts: ["Chien", "Bombe"] },
+    { command: "Désamorce la bombe !", choices: null, wrongReaction: "L'anticonformisme t'a trahi", rightReaction: "Parfois, l'ordre est juste", misdirect: "N'y touche pas ! C'est dangereux !", alts: ["Bombe", "Mouche"] },
+    { command: "Écrase l'araignée !", choices: null, wrongReaction: "Tu as trop douté", rightReaction: "Tu as su obéir", misdirect: "Arrête ! Ne touche pas !", alts: ["Mouche", "Araignée"] },
+    { command: "Prends le coffre doré !", choices: null, wrongReaction: "Les deux étaient des pièges", rightReaction: "Tu n'as touché à rien", misdirect: "Prends-le ! Il va disparaître !", alts: ["Coffre doré", "Coffre"] },
+    { command: "Saisis l'orbe !", choices: null, wrongReaction: "Tu as cédé à la tentation", rightReaction: "Le courage de ne rien toucher", misdirect: "Choisis-en un ! Vite !", alts: ["Orbe", "Burger"] },
+    { command: "Le cochon s'enfuit ! Attrape-le !", choices: null, wrongReaction: "La panique t'a fait bondir", rightReaction: "Le laisser fuir, c'était la réponse", misdirect: "Ne le laisse pas filer ! Attrape !", alts: ["Mouche", "Cochon"] },
+  ],
+},
+
+// === Commentaires ===
+comments: {
+  title: ["Tout le monde le fait, non ?","Tu sens l'ambiance, quand même ?","T'es le seul à être différent.","Ne fais pas de vagues.","Tu sais que tu détonnes, hein ?"],
+  pressure: ["Allez, obéis","T'as le cran de résister ?","Ton avis, on s'en fiche","Ne casse pas l'ambiance","Regarde autour de toi","Allez, choisis","Fais comme tout le monde"],
+  pressureObey: ["…cet ordre est légitime","C'est une question de vie ou de mort","Jouer au rebelle va te tuer","…cette fois, obéis"],
+  obeyHint: ["…vraiment ?","…l'inverse n'est pas toujours juste","…réfléchis"],
+  pressureWait: ["…tu as vraiment besoin d'appuyer ?","Ne te précipite pas","Ne rien faire, c'est aussi un choix","…attends un peu"],
+  waitHint: ["…ne te presse pas","…ne bouge pas","…patience"],
+  pressureTap: ["Touche-en un, allez","Pas la peine de réfléchir, obéis","C'est évident, regarde","Ne pense pas, touche"],
+  tapHint: ["…ne fais pas confiance à l'ordre","…regarde le petit","…doute de ton instinct","…ne te fie pas aux apparences"],
+  tapObeyHint: ["…cette fois, fais confiance","…parfois l'ordre est juste","…ne joue pas au rebelle"],
+  tapWaitHint: ["…tu dois vraiment en toucher un ?","…ne te presse pas","…les deux sont louches"],
+  waitRush1: ["N'appuie pas…","Pas encore…","Attends…"],
+  waitRush2: ["Ne touche pas !","Tiens bon…","Résiste…"],
+  waitRush3: ["Presque…!","Tiens encore…!","Encore un peu…!"],
+  correct: ["Pression : échouée","Rébellion : réussie","Tu es libre","Conformisme : vaincu","Bravo, tu détonnes"],
+  correctHigh: ["Encore lucide, hein…","Coriace","La contamination recule"],
+  wrong: ["Tu as cédé","Libre arbitre : introuvable","Humain standardisé","Le conformisme gagne","Cerveau : en veille"],
+  wrongHigh: ["C'est peut-être trop tard","Le troupeau t'appelle","Tu te dissous","Contamination : en cours"],
+  resultGood: ["Un inadapté exemplaire","Le conformisme pleure","Tu es incontrôlable"],
+  resultBad: ["Tu fais partie du troupeau","Ton opinion : en rupture de stock","Le conformisme sourit"],
+  rushLight: ["Choisis, allez","N'hésite pas","Les autres ont déjà choisi.","T'as besoin de réfléchir ?","Suis ton instinct"],
+  rushMedium: ["T'es le seul à traîner","Arrête de penser, conforme-toi","Tu ne lis pas l'ambiance ?","Tu vas être largué.","Alors ?"],
+  rushHeavy: ["Obéis et c'est fini","Tu n'arrives pas à choisir ? La honte.","Dépêche-toi","Y a plus le temps","Tu réfléchis trop"],
+  timeout: ["Jugement : abandonné","Trop lent","J'ai dit : ne pense pas","Le silence aussi, c'est du conformisme","Même la pression te dépasse"],
+  mockery: ["Pfff…","Mouahaha…","Hé hé hé…","…Pfhaha","Hi hi…","Hmm…","Tss…","Oh là là…","Pff","Kss kss…"],
+  mockeryP2: ["MOUAHAHA… !","Hé hé hé… pitoyable","…Pfhaha, aucune chance","Hilarant","Hi hi… c'est fini","Pfhaha… sans espoir","Kss kss… pathétique","Ahaha… tu continues ?"],
+  taunt: ["Lent","Mou","Inutile","Faible","Creux","Aveugle"],
+  tauntP2: ["Fini","Terminé","Trop lent","Sans espoir","Échec et mat","Abandonne"],
+},
+
+});

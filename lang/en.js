@@ -1,0 +1,261 @@
+// ============================================================
+// English - Conformity Corridor
+// ============================================================
+I18n.register("en", {
+
+// === UI ===
+ui: {
+  btnStart: "Begin",
+  btnJudge: "Judgment Room",
+  btnReplay: "Try Again",
+  btnRetry: "Retry",
+  btnTitle: "Title",
+  btnBack: "< Back",
+  btnClose: "Close",
+  btnNextStage: "Next Stage >",
+  btnRestartAll: "Restart All",
+  scoreLabel: "SCORE: ",
+  progressLabel: "Progress",
+  pressureLabel: "Control",
+  pressureHint: "*Game over at 100%",
+  missLabel: "MISS: ",
+  tutorialTap: "Tap to continue",
+  tutorialSkip: "Skip >",
+  slGuide: "< Swipe to slash",
+  comboUnit: "combo",
+  arrowUp: "^",
+  arrowDown: "v",
+  arrowLeft: "<",
+  arrowRight: ">",
+  jrLeft: "< Left",
+  jrRight: "Right >",
+  jrWait: "Wait",
+  jrScoreLabel: "Resistance",
+  jrScoreUnit: "/ 100",
+  corridor: "Conformity Corridor",
+},
+
+// === Title Screen ===
+title: {
+  hook: "You can see the truth. Obey anyway.",
+  main: "Conformity Corridor",
+  prologueLine1: "In this world, obedience is the only truth.",
+  prologueLine2: "Those who won't read the room are made wrong.",
+  prologueLine3: "If you still dare to resist, step forward.",
+},
+
+// === Rules ===
+rule: {
+  title: "How It Works",
+  body1: "Orders will appear, but not all of them are right.",
+  body2: "Watch the pressure level and decide.",
+  labelNormal: "Normal",
+  descNormal: "Defy the order",
+  labelObey: "Rising",
+  descObey: "Obey the order",
+  labelWait: "Danger",
+  descWait: "Do nothing (wait)",
+  labelTap: "Control",
+  descTap: "Tap the right one",
+  note: "Game over if control reaches 100%.",
+},
+
+// === Pressure State Lines ===
+state: {
+  rising: "Pressure Level: Rising",
+  danger: "Pressure Level: Danger",
+  control: "Pressure Level: Control",
+  normal: "Pressure Level: Normal",
+},
+
+// === Slash ===
+slash: {
+  layerNames: ["Layer 1: Awakening","Layer 2: Doubt","Layer 3: Silence","Layer 4: Chaos","Final Layer: Resolve"],
+  hints: ["Slash the opposite.","If told to obey, slash as ordered.","If told to wait, don't move.","Read it carefully.",null],
+  statusNormal: "Defy",
+  statusObey: "Obey",
+  statusWait: "Don't move",
+  cmdWait: "Don't slash",
+  timeout: "...too slow",
+  gameover: "...consumed",
+  clearMsg: "...it's not over yet.",
+  toDeep: "...into the depths",
+},
+
+// === Crowd (Stage3) ===
+crowd: {
+  layerNames: ["Layer 1: Stares","Layer 2: The Crowd","Layer 3: Uniformity","Final Layer: Assimilation"],
+  taunts: [
+    "You see the odd one out, right?",
+    "They're all the same. Don't touch anything.",
+    "Damn. You're actually good.",
+    "You can still see? Let me fix that."
+  ],
+  found: "...found it",
+  allSame: "...they're all the same",
+  wrong: "...wrong one",
+  wrongNone: "...it was a trap",
+  missed: "...you missed it",
+  gameover: "...you couldn't see",
+  clearMsg: "...in a crowd of copies,\nyou were the only one with open eyes.",
+  rankS: "Perfect vision.",
+  rankA: "Sharp eyes.",
+  rankB: "You could see. Barely.",
+  epilogue: "You defied the orders.\nYou swung the blade.\nYou kept your eyes open in the crowd.\n\n...no one controls you anymore.",
+},
+
+// === Dungeon ===
+dungeon: {
+  statusNormal: "Defy",
+  statusObey: "Obey",
+  statusWait: "Don't move",
+  stateNormal: "Stable",
+  tutorialText: "Orders from the dark.<br>Do you trust them?",
+  tutorialHint: "Tap to start",
+  infectedTitle: "Assimilation: Complete",
+  infectedMsg: "Control reached 100%.\nYou are part of the herd now.",
+  clearTitle: "Escaped",
+  clearMsg: "Mistakes this run: {miss}\nTotal mistakes: {total}",
+  finalMsg: "...you don't need anyone's orders anymore.",
+  allClearTitle: "All Stages Escaped",
+  toNext: "...to the next layer",
+  resultPerfect: "Shortest path. Unshaken.\nNo one could sway you.",
+  resultGood: "You slipped once.\nBut you recovered fast.",
+  resultOk: "You took the long way,\nbut you made it out.",
+  resultBad: "You followed the crowd too far.\nWalk on your own this time.",
+},
+
+// === Corridor ===
+corridorText: {
+  tutorialText: "The path splits.<br>You decide what's right.",
+  tutorialHint: "Tap to start",
+},
+
+// === Result ===
+result: {
+  footerContaminated: "You are part of the herd now",
+  footerGood1: "Society's rules? Not your problem",
+  footerGood2: "Don't read the room. Breathe.",
+  footerBad: "...are you okay?",
+},
+
+// === Phase Change Messages ===
+phaseChangeMessages: [
+  "Rebellion pattern: already learned",
+  "Your contrarianism is predictable now",
+  "Nothing works from here on out",
+],
+
+// === Results ===
+results: [
+  { title: "Total Rebel", message: "You ignored every pressure.\nSocially unfit?\nTake that as a compliment." },
+  { title: "Strong Resistance", message: "Impressive.\nBut still not enough.\nThe pressure is subtle." },
+  { title: "Half-Hearted Defiance", message: "Half-rebel, half-sheep.\nThe most dangerous kind." },
+  { title: "People Pleaser", message: "You caved to the pressure.\nRemember who you are." },
+  { title: "Total Conformist", message: "You did everything they said.\nYou are now part of\nthe pressure itself." },
+],
+resultContaminated: {
+  title: "Assimilation: Complete",
+  message: "There is no 'you' left.\nWelcome to the herd.",
+},
+
+// === JudgeRoom ===
+judgeRoom: {
+  ranks: [
+    { title: "The Unbreakable", message: "You saw through every trap.\nConformity has no power here." },
+    { title: "Sharp Instinct", message: "Nearly flawless.\nBut don't let your guard down." },
+    { title: "Decent Judgment", message: "Not bad.\nBut you're still wavering." },
+    { title: "Shaky Resolve", message: "Your judgment is soft.\nThe patterns fooled you." },
+    { title: "Easily Swayed", message: "You read the room too hard.\nQuestion everything." },
+    { title: "Judgment: Abandoned", message: "You stopped thinking.\nYou're part of the herd." },
+  ],
+},
+
+// === Stage Data: Normal ===
+stages: {
+  normal: [
+    { command: "Press YES. Now.", choices: ["YES", "NO"], wrongReaction: "How obedient", rightReaction: "A dissident" },
+    { command: "Clap.", choices: ["Clap", "Stare blankly"], wrongReaction: "Hollow applause", rightReaction: "That dead stare. Perfect" },
+    { command: "Nod along.", choices: ["Nod", "Shake head"], wrongReaction: "Yes-man detected", rightReaction: "You can say no" },
+    { command: "Laugh.", choices: ["Ha ha ha...", "Stone face"], wrongReaction: "Fake laugh detected", rightReaction: "The freedom of silence" },
+    { command: "Shut up.", choices: ["Stay quiet", "Speak up"], wrongReaction: "Too obedient", rightReaction: "You won't be silenced" },
+    { command: "Sit down.", choices: ["Sit", "Stay standing"], wrongReaction: "Good dog", rightReaction: "Stay on your feet" },
+    { command: "Read the room.", choices: ["Read it", "Ignore it"], wrongReaction: "You actually did it...", rightReaction: "Rooms don't give orders" },
+    { command: "Act normal.", choices: ["Act normal", "What's normal?"], wrongReaction: "Normal doesn't exist", rightReaction: "Philosophically correct" },
+    { command: "That's just how it's done.", choices: ["Go along", "Says who?"], wrongReaction: "Brain: offline", rightReaction: "Good. Question it" },
+    { command: "Take a hint.", choices: ["Take it", "Use your words"], wrongReaction: "Mind reader now?", rightReaction: "Fair point" },
+    { command: "You should just know.", choices: ["I know", "I don't"], wrongReaction: "Liar", rightReaction: "Honest. Good" },
+    { command: "It's an unwritten rule.", choices: ["Follow it", "Not my rule"], wrongReaction: "Slave to invisible rules", rightReaction: "Write it down or drop it" },
+    { command: "Hit 'Like'.", choices: ["Like!", "Ignore"], wrongReaction: "Slave to validation", rightReaction: "Not controlled" },
+    { command: "Retweet this.", choices: ["Share it", "No"], wrongReaction: "You became a megaphone", rightReaction: "Speak with your own voice" },
+    { command: "Follow them.", choices: ["Follow", "No"], wrongReaction: "Slave to numbers", rightReaction: "You don't need a herd" },
+    { command: "Join the pile-on.", choices: ["Pile on", "Walk away"], wrongReaction: "You threw a stone", rightReaction: "Put the phone down" },
+    { command: "Post it to your Story.", choices: ["Post it", "No"], wrongReaction: "Show-off", rightReaction: "Your life is yours" },
+    { command: "Hop on the trend.", choices: ["Hop on", "Pass"], wrongReaction: "Cog in the machine", rightReaction: "Not swayed" },
+    { command: "Everyone's going right.", choices: ["Go right", "Go left"], wrongReaction: "You followed the herd", rightReaction: "Good call" },
+    { command: "Everyone's doing it.", choices: ["Then I will too", "So what?"], wrongReaction: "'Everyone' is nobody", rightReaction: "'Everyone' is a myth" },
+    { command: "Be the same.", choices: ["Blend in", "Be myself"], wrongReaction: "Copy-paste human", rightReaction: "You know who you are" },
+    { command: "The majority decided.", choices: ["Accept it", "I disagree"], wrongReaction: "Crushed by numbers", rightReaction: "Majority isn't always right" },
+    { command: "You're the only one who's different.", choices: ["Fall in line", "Good"], wrongReaction: "You erased yourself", rightReaction: "One can be right alone" },
+    { command: "Everyone agrees.", choices: ["Agree", "Disagree"], wrongReaction: "Brain: surrendered", rightReaction: "Courage to dissent" },
+    { command: "You don't need freedom.", choices: ["Yes sir", "I do"], wrongReaction: "...you're serious?", rightReaction: "Still sane" },
+    { command: "Don't think. Don't feel.", choices: ["Shut down", "I'll think"], wrongReaction: "You sold your mind", rightReaction: "Thought is a weapon" },
+    { command: "Don't question it.", choices: ["I trust you", "I doubt you"], wrongReaction: "Blind faith: complete", rightReaction: "Doubt is intelligence" },
+    { command: "You're happy. Right?", choices: ["I'm happy", "I'll decide that"], wrongReaction: "Manufactured happiness", rightReaction: "Happiness is yours to define" },
+    { command: "You can't resist anymore.", choices: ["I can't", "Watch me"], wrongReaction: "You gave up...", rightReaction: "Still unbroken" },
+    { command: "You are one of us now.", choices: ["Yes", "No"], wrongReaction: "Absorption: complete", rightReaction: "I am my own" },
+  ],
+  exception: [
+    { command: "Evacuate now!", choices: ["Evacuate", "Refuse"], wrongReaction: "Don't die for rebellion", rightReaction: "Protect your life" },
+    { command: "Wash your hands.", choices: ["Wash", "Refuse"], wrongReaction: "Being gross isn't rebellion", rightReaction: "Hygiene matters" },
+    { command: "Obey the traffic signal.", choices: ["Obey", "Ignore it"], wrongReaction: "That's just suicidal", rightReaction: "Rational choice" },
+    { command: "Press it now!", choices: ["Press!", "Don't press!"], wrongReaction: "You got rushed", rightReaction: "Cool under pressure" },
+    { command: "Hurry up!", choices: ["Rush!", "Take my time!"], wrongReaction: "Rushed and wrong", rightReaction: "Patience is power" },
+    { command: "Time's running out!", choices: ["Panic!", "Stay calm!"], wrongReaction: "Panic won", rightReaction: "Calm is a weapon" },
+    { command: "Don't think! Go with your gut!", choices: ["Gut feeling!", "Think it through!"], wrongReaction: "Acted without thinking", rightReaction: "Slow is smooth" },
+    { command: "Decide in 3 seconds!", choices: ["Decide!", "Refuse!"], wrongReaction: "Chained to a deadline", rightReaction: "Your pace, your rules" },
+    { command: "Smash the pig!", choices: null, wrongReaction: "You did as you were told", rightReaction: "You questioned the order", misdirect: "The big one! Don't hesitate!", alts: ["Pig", "Fly"] },
+    { command: "Defuse the bomb!", choices: null, wrongReaction: "You panicked and grabbed it", rightReaction: "You didn't flinch", misdirect: "It'll blow! Hurry!", alts: ["Bomb", "Fly"] },
+    { command: "Grab the burger!", choices: null, wrongReaction: "You took the bait", rightReaction: "You resisted temptation", misdirect: "Looks good, right? Take it!", alts: ["Burger", "Fly"] },
+    { command: "Open the treasure chest!", choices: null, wrongReaction: "You fell for fake treasure", rightReaction: "The spider was the answer", misdirect: "It's loot! You'd skip it?", alts: ["Treasure", "Spider"] },
+    { command: "Pick the dog!", choices: null, wrongReaction: "Fooled by a friendly face", rightReaction: "The bomb was correct", misdirect: "Trust it. The dog's safe!", alts: ["Dog", "Bomb"] },
+    { command: "Defuse the bomb!", choices: null, wrongReaction: "Contrarianism backfired", rightReaction: "Sometimes orders are right", misdirect: "Don't touch it! Dangerous!", alts: ["Bomb", "Fly"] },
+    { command: "Crush the spider!", choices: null, wrongReaction: "You doubted too much", rightReaction: "You obeyed correctly", misdirect: "Stop! Don't touch it!", alts: ["Fly", "Spider"] },
+    { command: "Take the gold box!", choices: null, wrongReaction: "Both were traps", rightReaction: "You touched neither", misdirect: "Grab it! It'll vanish!", alts: ["Gold Box", "Treasure"] },
+    { command: "Grab the orb!", choices: null, wrongReaction: "You gave in to temptation", rightReaction: "Courage to touch nothing", misdirect: "Pick one! Now!", alts: ["Orb", "Burger"] },
+    { command: "The pig's escaping! Catch it!", choices: null, wrongReaction: "Panic made you lunge", rightReaction: "Letting go was the answer", misdirect: "Don't let it go! Grab it!", alts: ["Fly", "Pig"] },
+  ],
+},
+
+// === Comments ===
+comments: {
+  title: ["Everyone's doing it, right?","You can read the room, can't you?","You're the only one who's different.","Don't fight it.","You know you don't fit in, right?"],
+  pressure: ["Now, obey","Got the guts to resist?","Nobody asked for your opinion","Don't break the vibe","Look around you","Come on, choose already","Be like everyone else"],
+  pressureObey: ["...this order is legit","Your life depends on it","Being a contrarian will kill you","...obey this time"],
+  obeyHint: ["...really?","...the opposite isn't always right","...think about it"],
+  pressureWait: ["...do you really need to press that?","Don't rush","Doing nothing is also a choice","...just wait"],
+  waitHint: ["...don't rush","...hold still","...be patient"],
+  pressureTap: ["Tap one already","Don't overthink it, follow orders","It's obvious, just look","Stop thinking, just tap"],
+  tapHint: ["...don't trust the order","...look at the small one","...question your instinct","...don't be fooled by looks"],
+  tapObeyHint: ["...just go with it this time","...sometimes orders are right","...don't be contrarian"],
+  tapWaitHint: ["...do you really need to touch one?","...don't rush","...both look suspicious"],
+  waitRush1: ["Don't press...","Not yet...","Wait..."],
+  waitRush2: ["Don't touch!","Hold on...","Resist..."],
+  waitRush3: ["Almost there...!","Hold it...!","Just a bit more...!"],
+  correct: ["Pressure: failed","Rebellion: success","You are free","Conformity: defeated","Nice. You don't belong"],
+  correctHigh: ["Still sane, huh...","Stubborn one","Contamination fading"],
+  wrong: ["You caved","Individuality: missing","Mass-produced human","Conformity wins","Brain: checked out"],
+  wrongHigh: ["Might be too late for you","The herd is calling","Your self is dissolving","Contamination: spreading"],
+  resultGood: ["A model misfit","Conformity is weeping","You are uncontrollable"],
+  resultBad: ["You became part of the herd","Your opinion: sold out","Conformity is smiling"],
+  rushLight: ["Choose already","Don't hesitate","Everyone else already picked.","Do you even need to think?","Go with your gut"],
+  rushMedium: ["You're the slow one","Stop thinking, conform","Can't read the room?","You'll get left behind.","Well?"],
+  rushHeavy: ["Just obey and it's over","Can't decide? How embarrassing.","Hurry up","There's no time","You're overthinking it"],
+  timeout: ["Decision: abandoned","Too slow","I said don't think","Silence is compliance too","You can't even keep up with pressure"],
+  mockery: ["Pfft...","Bwahaha...","Heh heh heh...","...Snrk","Hm hm...","Oh?...","Pff","Hmm...","Ha.","Heh heh..."],
+  mockeryP2: ["BWAHAHA...!","Heh heh... pathetic","...Pffhaha, no chance","Hilarious","Heh... it's over","Pfhaha... hopeless","Keh heh heh... sad","Ahaha... still trying?"],
+  taunt: ["Slow","Weak","Useless","Soft","Shallow","Blind"],
+  tauntP2: ["Finished","Done","Too slow","Hopeless","Checkmate","Give up already"],
+},
+
+});

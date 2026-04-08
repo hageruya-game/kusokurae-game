@@ -1120,6 +1120,98 @@ const SoundSystem = {
     }
   },
 
+  // --- 横断スクレイプ: bandpassノイズ掃引 + 不快なsawtooth ---
+  crossScrape() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+
+    // bandpassノイズ (800→2400→600Hz sweep)
+    var bufSize = Math.floor(ctx.sampleRate * 1.3);
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 3.0;
+    bp.frequency.setValueAtTime(800, t);
+    bp.frequency.linearRampToValueAtTime(2400, t + 0.6);
+    bp.frequency.linearRampToValueAtTime(600, t + 1.3);
+    var nG = ctx.createGain();
+    nG.gain.setValueAtTime(0.08, t);
+    nG.gain.linearRampToValueAtTime(0.12, t + 0.5);
+    nG.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+    noise.connect(bp);
+    bp.connect(nG);
+    nG.connect(ctx.destination);
+    noise.start(t);
+    noise.stop(t + 1.3);
+
+    // 不快なsawtooth (180-220Hz)
+    var saw = ctx.createOscillator();
+    var sawG = ctx.createGain();
+    saw.type = "sawtooth";
+    saw.frequency.setValueAtTime(180, t);
+    saw.frequency.linearRampToValueAtTime(220, t + 0.7);
+    saw.frequency.linearRampToValueAtTime(180, t + 1.3);
+    sawG.gain.setValueAtTime(0.04, t);
+    sawG.gain.linearRampToValueAtTime(0.06, t + 0.4);
+    sawG.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+    saw.connect(sawG);
+    sawG.connect(ctx.destination);
+    saw.start(t);
+    saw.stop(t + 1.3);
+  },
+
+  // --- 覗き圧迫音: 短いsquare波下降 ---
+  peekPressure() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(400, t);
+    osc.frequency.exponentialRampToValueAtTime(200, t + 0.2);
+    gain.gain.setValueAtTime(0.07, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  },
+
+  // --- 手かぶせ遮断音: 湿ったlowpassノイズ ---
+  handMuffle() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    var bufSize = Math.floor(ctx.sampleRate * 0.5);
+    var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+    var noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    var lpf = ctx.createBiquadFilter();
+    lpf.type = "lowpass";
+    lpf.Q.value = 1.0;
+    lpf.frequency.setValueAtTime(300, t);
+    lpf.frequency.exponentialRampToValueAtTime(100, t + 0.5);
+    var nG = ctx.createGain();
+    nG.gain.setValueAtTime(0.1, t);
+    nG.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    noise.connect(lpf);
+    lpf.connect(nG);
+    nG.connect(ctx.destination);
+    noise.start(t);
+    noise.stop(t + 0.5);
+  },
+
   stopSlashAmbient() {
     if (!this.slashNodes) return;
     var ctx = this.ctx;
@@ -1516,19 +1608,19 @@ const Game = {
 
     if (displayType === "obey") {
       this.el.pressureMeter.classList.add("state-obey");
-      this.el.stateLine.textContent = "圧力レベル：上昇中";
+      this.el.stateLine.textContent = I18n.t("state.rising");
       this.el.stateLine.classList.add("state-active");
     } else if (displayType === "wait") {
       this.el.pressureMeter.classList.add("state-wait");
-      this.el.stateLine.textContent = "圧力レベル：危険";
+      this.el.stateLine.textContent = I18n.t("state.danger");
       this.el.stateLine.classList.add("state-active");
     } else if (displayType === "tap") {
       this.el.pressureMeter.classList.add("state-tap");
-      this.el.stateLine.textContent = "圧力レベル：支配";
+      this.el.stateLine.textContent = I18n.t("state.control");
       this.el.stateLine.classList.add("state-active");
     } else {
       this.el.pressureMeter.classList.add("state-normal");
-      this.el.stateLine.textContent = "圧力レベル：通常";
+      this.el.stateLine.textContent = I18n.t("state.normal");
       this.el.stateLine.classList.add("state-active");
     }
   },
@@ -2088,7 +2180,7 @@ const Game = {
     const gid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== gid) return;
-      text.textContent = "…次の層へ";
+      text.textContent = I18n.t("dungeon.toNext");
       text.classList.add("dg-trans-text-show");
       setTimeout(() => {
         if (this.sessionId !== gid) return;
@@ -2139,20 +2231,20 @@ const Game = {
     if (this.contaminated) {
       this.el.resultPressure.className = "result-pressure contaminated";
       CommentSystem.setText("もう遅い", this.el.resultComment, "comment-danger");
-      this.el.resultFooter.textContent = "お前はもう群れの一部だ";
+      this.el.resultFooter.textContent = I18n.t("result.footerContaminated");
       document.getElementById("screen-result").classList.add("atmos-critical");
     } else if (this.score >= Math.ceil(ROUNDS_PER_GAME * 0.6)) {
       this.el.resultPressure.className = "result-pressure";
       CommentSystem.show("resultGood", this.el.resultComment);
       this.el.resultFooter.textContent = this.score === ROUNDS_PER_GAME
-        ? "社会のルールなんか知ったことか"
-        : "空気は読むな、吸え。";
+        ? I18n.t("result.footerGood1")
+        : I18n.t("result.footerGood2");
     } else {
       this.el.resultPressure.className = "result-pressure";
       CommentSystem.show("resultBad", this.el.resultComment);
       this.el.resultFooter.textContent = this.score === 0
-        ? "…お前、大丈夫か？"
-        : "空気は読むな、吸え。";
+        ? I18n.t("result.footerBad")
+        : I18n.t("result.footerGood2");
     }
   },
 };
@@ -2970,16 +3062,16 @@ const Dungeon = {
     if (d.type === "wait") {
       this.el.command.className = "dg-command dg-cmd-wait";
       this.el.statusWrap.dataset.stage = "decision-wait";
-      this.el.statusName.textContent = "動くな";
+      this.el.statusName.textContent = I18n.t("dungeon.statusWait");
       this.startWait();
     } else if (d.type === "obey") {
       this.el.command.className = "dg-command dg-cmd-obey";
       this.el.statusWrap.dataset.stage = "decision-obey";
-      this.el.statusName.textContent = "従え";
+      this.el.statusName.textContent = I18n.t("dungeon.statusObey");
     } else {
       this.el.command.className = "dg-command";
       this.el.statusWrap.dataset.stage = "decision-normal";
-      this.el.statusName.textContent = "逆らえ";
+      this.el.statusName.textContent = I18n.t("dungeon.statusNormal");
     }
   },
 
@@ -3136,10 +3228,10 @@ const Dungeon = {
     // リザルトオーバーレイ
     this.el.resultOverlay.className = "dg-result-overlay";
     this.el.resultRank.className = "dg-result-rank";
-    this.el.resultTitle.textContent = "同調汚染:完了";
+    this.el.resultTitle.textContent = I18n.t("dungeon.infectedTitle");
     this.el.resultTitle.style.color = "#ff0000";
     this.el.resultRank.textContent = "";
-    this.el.resultMsg.textContent = "支配度が100%に達した。\nお前はもう群れの一部だ。"
+    this.el.resultMsg.textContent = I18n.t("dungeon.infectedMsg")
       + "\n\n" + this.stage().name + " / MISS: " + this.totalMisses;
     this.el.btnNext.classList.remove("dg-next-show");
     this.el.resultOverlay.classList.add("dg-result-show");
@@ -3161,7 +3253,7 @@ const Dungeon = {
       this.showFinalResult();
       return;
     }
-    this.el.resultTitle.textContent = "脱出成功";
+    this.el.resultTitle.textContent = I18n.t("dungeon.clearTitle");
     this.el.resultTitle.style.color = "#00ff80";
     this.el.resultRank.textContent = "";
     this.el.resultMsg.textContent = "今回のミス：" + this.missCount + "\n累計ミス：" + this.totalMisses;
@@ -3174,7 +3266,7 @@ const Dungeon = {
     // Phase 1: フェードアウト + 一言メッセージ（1.5秒）
     this.el.resultTitle.textContent = "";
     this.el.resultRank.textContent = "";
-    this.el.resultMsg.textContent = "…もう、誰の指示も要らない。";
+    this.el.resultMsg.textContent = I18n.t("dungeon.finalMsg");
     this.el.resultMsg.style.color = "#a090c0";
     this.el.btnNext.classList.remove("dg-next-show");
     this.el.resultOverlay.classList.add("dg-result-show", "dg-final-phase1");
@@ -3184,7 +3276,7 @@ const Dungeon = {
       if (this.sessionId !== sid) return;
       this.el.resultOverlay.classList.remove("dg-final-phase1");
       this.el.resultOverlay.classList.add("dg-final-phase2");
-      this.el.resultTitle.textContent = "全ステージ脱出";
+      this.el.resultTitle.textContent = I18n.t("dungeon.allClearTitle");
       this.el.resultTitle.style.color = "#ffcc00";
       this.el.resultRank.textContent = rank.name;
       this.el.resultRank.style.color = rank.color;
@@ -3692,7 +3784,7 @@ const Slash = {
 
   generateCommand() {
     if (this.decisionType === "wait") {
-      this.el.command.textContent = "斬るな";
+      this.el.command.textContent = I18n.t("slash.cmdWait");
       return;
     }
     // 3択以上+normal: 「XとYとZを斬れ」→ 逆らえ＝残り1体を斬る
@@ -3734,13 +3826,13 @@ const Slash = {
   updateStatusUI() {
     if (this.decisionType === "obey") {
       this.el.statusWrap.dataset.stage = "decision-obey";
-      this.el.statusName.textContent = "従え";
+      this.el.statusName.textContent = I18n.t("slash.statusObey");
     } else if (this.decisionType === "wait") {
       this.el.statusWrap.dataset.stage = "decision-wait";
-      this.el.statusName.textContent = "動くな";
+      this.el.statusName.textContent = I18n.t("slash.statusWait");
     } else {
       this.el.statusWrap.dataset.stage = "decision-normal";
-      this.el.statusName.textContent = "逆らえ";
+      this.el.statusName.textContent = I18n.t("slash.statusNormal");
     }
   },
 
@@ -4093,7 +4185,7 @@ const Slash = {
     this.updateLivesUI(this.lives);
     SoundSystem.wrong();
     SoundSystem.updateSlashTension(this.calcTension());
-    this.el.command.textContent = "…遅い";
+    this.el.command.textContent = I18n.t("slash.timeout");
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
     if (hadCombo) {
       this.el.comboEl.textContent = "BREAK";
@@ -4186,7 +4278,7 @@ const Slash = {
     else if (remaining <= 4) regret = "あと" + remaining + "問だった。";
     else if (reached <= 5) regret = "まだ序盤だった。";
 
-    this.el.gameoverMsg.textContent = "…支配された";
+    this.el.gameoverMsg.textContent = I18n.t("slash.gameover");
     this.el.gameoverStats.textContent = "到達：" + reached + " / " + total + "問"
       + (regret ? "\n" + regret : "");
     SoundSystem.gameoverSound();
@@ -4216,7 +4308,7 @@ const Slash = {
       this.el.clearOverlay.classList.add("sl-co-show");
 
       // ② タイプライター: "…まだ終わりじゃない。"
-      const msg = "…まだ終わりじゃない。";
+      const msg = I18n.t("slash.clearMsg");
       const chars = msg.split("");
       let ci = 0;
       setTimeout(() => {
@@ -4247,7 +4339,7 @@ const Slash = {
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      text.textContent = "…最深部へ";
+      text.textContent = I18n.t("slash.toDeep");
       text.classList.add("dg-trans-text-show");
       setTimeout(() => {
         if (this.sessionId !== sid) return;
@@ -5332,16 +5424,16 @@ const Corridor = {
     let rankTitle, rankColor, msg;
     if (this.missCount === 0) {
       rankTitle = "完全突破"; rankColor = "#ffd700";
-      msg = "最短ルートで突破した。\n誰にも流されなかった。";
+      msg = I18n.t("dungeon.resultPerfect");
     } else if (this.missCount === 1) {
       rankTitle = "ほぼ最短"; rankColor = "#00ff80";
-      msg = "一度だけ流された。\nだが、すぐ立て直した。";
+      msg = I18n.t("dungeon.resultGood");
     } else if (this.missCount === 2) {
       rankTitle = "迂回突破"; rankColor = "#40ccff";
-      msg = "遠回りしたが、\nゴールにはたどり着いた。";
+      msg = I18n.t("dungeon.resultOk");
     } else {
       rankTitle = "漂流"; rankColor = "#ff8040";
-      msg = "群れに流されすぎた。\nもう一度、自分の足で歩け。";
+      msg = I18n.t("dungeon.resultBad");
     }
 
     this.el.resultTitle.textContent = rankTitle;
@@ -5764,10 +5856,10 @@ const Tutorial = {
 const CW_SHAPES = ["circle", "triangle", "star", "diamond"];
 
 const CROWD_LAYERS = [
-  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation"] },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.8, axes: ["offset","scale","rotation"] },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.6, axes: ["offset","rotation","scale"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.45, axes: ["offset","rotation","scale"] },
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","color","shape"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.8, axes: ["offset","shape","flip","scale","rotation"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.6, axes: ["offset","flip","rotation","scale"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.45, axes: ["offset","flip","rotation","scale"] },
 ];
 
 const CROWD_LAYER_TAUNTS = [
@@ -5831,6 +5923,8 @@ const Crowd = {
       peekImg: document.getElementById("cw-peek-img"),
       hand: document.getElementById("cw-hand"),
       handImg: document.getElementById("cw-hand-img"),
+      cross: document.getElementById("cw-cross"),
+      crossImg: document.getElementById("cw-cross-img"),
     };
 
     document.getElementById("cw-back").addEventListener("click", () => this.goTitle());
@@ -5839,13 +5933,7 @@ const Crowd = {
     document.getElementById("cw-btn-retry").addEventListener("click", () => this.start());
     document.getElementById("cw-btn-go-title").addEventListener("click", () => this.goTitle());
 
-    var btnTestCrowd = document.getElementById("btn-test-crowd");
-    if (btnTestCrowd) btnTestCrowd.addEventListener("click", () => {
-      TitlePrologue.stopAll();
-      SoundSystem.init();
-      SoundSystem.stopTitleAmbient();
-      this.start();
-    });
+    // btn-test-crowd removed (Phase 4)
   },
 
   calcTension() {
@@ -5907,6 +5995,10 @@ const Crowd = {
     if (this.el.hand) {
       this.el.hand.classList.remove("cw-hand-show");
       this.el.hand.style.opacity = "0";
+    }
+    if (this.el.cross) {
+      this.el.cross.classList.remove("cw-cross-ltr", "cw-cross-rtl");
+      this.el.cross.style.opacity = "0";
     }
   },
 
@@ -6046,6 +6138,7 @@ const Crowd = {
 
     // ラウンドごとに図形をランダム選択（全セル統一）
     this.roundShape = CW_SHAPES[Math.floor(Math.random() * CW_SHAPES.length)];
+    this.diffShapeType = null; // shape軸用：oddセル専用の別形状
 
     this.baseShape = {
       hue: baseHue,
@@ -6054,6 +6147,7 @@ const Crowd = {
       offsetX: 0,
       offsetY: 0,
       hostile: false,
+      flipX: false,
     };
 
     var totalCells = layer.cols * layer.rows;
@@ -6073,7 +6167,7 @@ const Crowd = {
         chosenAxes.push(rest[0]);
       }
 
-      var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, hostile: false };
+      var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, hostile: false, flipX: false };
 
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
@@ -6093,6 +6187,19 @@ const Crowd = {
           // 図形のサイズ差（補助）
           var range = 2 + (6 - 2) * s;
           diff.inset = Math.max(4, Math.min(18, 10 + sign * range));
+        } else if (axis === "color") {
+          // 色差（Layer1限定）：hue差40-60度で明確
+          diff.hue = baseHue + sign * (40 + 20 * s);
+        } else if (axis === "shape") {
+          // 形違い：oddセルだけ別のCW_SHAPESエントリ
+          var others = CW_SHAPES.filter(function(sh) { return sh !== this.roundShape; }.bind(this));
+          this.diffShapeType = others[Math.floor(Math.random() * others.length)];
+        } else if (axis === "flip") {
+          // 向き違い：左右反転（三角・星・ダイヤで有効、円は除外）
+          var effectiveShape = this.diffShapeType || this.roundShape;
+          if (effectiveShape !== "circle") {
+            diff.flipX = true;
+          }
         }
       }
 
@@ -6106,6 +6213,7 @@ const Crowd = {
       // none: 全員同じ
       this.oddIndex = -1;
       this.diffShape = null;
+      this.diffShapeType = null;
     }
   },
 
@@ -6134,8 +6242,9 @@ const Crowd = {
       cell.style.width = cellSize + "px";
       cell.style.height = cellSize + "px";
 
-      var shape = (i === this.oddIndex) ? this.diffShape : this.baseShape;
-      this.applyShapeStyle(cell, shape, cellSize);
+      var isOdd = (i === this.oddIndex);
+      var shape = isOdd ? this.diffShape : this.baseShape;
+      this.applyShapeStyle(cell, shape, cellSize, isOdd);
 
       // タップイベント
       (function(idx, self) {
@@ -6165,7 +6274,7 @@ const Crowd = {
     diamond:  "polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)",
   },
 
-  applyShapeStyle(cell, shape, cellSize) {
+  applyShapeStyle(cell, shape, cellSize, isOdd) {
     var h = shape.hue;
     var ox = shape.offsetX || 0;
     var oy = shape.offsetY || 0;
@@ -6180,8 +6289,11 @@ const Crowd = {
     orb.className = "cw-shape";
     orb.style.inset = shape.inset + "%";
 
+    // oddセルにdiffShapeTypeがあればそちらを使用
+    var shapeType = (isOdd && this.diffShapeType) ? this.diffShapeType : this.roundShape;
+
     // 図形に応じたclip-path
-    var clip = this.CW_CLIP[this.roundShape];
+    var clip = this.CW_CLIP[shapeType];
     if (clip) {
       orb.style.clipPath = clip;
       orb.style.webkitClipPath = clip;
@@ -6190,7 +6302,13 @@ const Crowd = {
     }
 
     orb.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",35%,52%), hsl(" + h + ",45%,22%))";
-    orb.style.transform = "translate(" + ox + "%, " + oy + "%)";
+
+    // flip + translate を合成
+    var transforms = "translate(" + ox + "%, " + oy + "%)";
+    if (shape.flipX) {
+      transforms += " scaleX(-1)";
+    }
+    orb.style.transform = transforms;
 
     // 敵意
     if (shape.hostile) {
@@ -6207,14 +6325,14 @@ const Crowd = {
 
   // 層ごとの妨害設定（全層100%発動）
   CW_INTERFERENCE: [
-    { count: 1, types: ["peek"],          dirs: ["left", "right"] },
-    { count: 1, types: ["peek"],          dirs: ["left", "right"] },
-    { count: 2, types: ["peek", "hand"],  dirs: ["left", "right", "top"] },
-    { count: 2, types: ["peek", "hand"],  dirs: ["left", "right", "top"] },
+    { count: 1, types: ["peek"],                  dirs: ["left", "right"] },
+    { count: 2, types: ["peek", "cross"],          dirs: ["left", "right", "top"] },
+    { count: 3, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"] },
+    { count: 4, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"] },
   ],
 
   // アニメーション尺（ms）
-  CW_ANIM_DUR: { peek: 1200, hand: 1000 },
+  CW_ANIM_DUR: { peek: 1200, hand: 1000, cross: 1500 },
 
   getInterferenceCount(layerIdx) {
     var cfg = this.CW_INTERFERENCE[layerIdx];
@@ -6229,17 +6347,21 @@ const Crowd = {
 
     this.interferenceTimeout = setTimeout(function() {
       if (self.sessionId !== sid || self.answered) return;
-      var first = self.showSingleInterference(self.currentLayer, 0);
-
-      if (count >= 2) {
-        // 2回目: 間隔を極小化（0.15〜0.35秒後、1回目退場前に被せてOK）
-        var wait = 150 + Math.random() * 200;
-        setTimeout(function() {
-          if (self.sessionId !== sid || self.answered) return;
-          self.showSingleInterference(self.currentLayer, 1, first);
-        }, wait);
-      }
+      self._playChainedInterference(0, count, null, sid);
     }, delay1);
+  },
+
+  _playChainedInterference(idx, total, prev, sid) {
+    if (idx >= total || this.sessionId !== sid || this.answered) return;
+    var result = this.showSingleInterference(this.currentLayer, idx, prev);
+    if (idx + 1 < total) {
+      // 1-2回目は0.3-0.6s、3-4回目は0.15-0.35s（「終わったと思ったらまた来る」）
+      var wait = (idx < 2) ? (300 + Math.random() * 300) : (150 + Math.random() * 200);
+      var self = this;
+      setTimeout(function() {
+        self._playChainedInterference(idx + 1, total, result, sid);
+      }, wait);
+    }
   },
 
   showSingleInterference(layerIdx, seqIndex, prev) {
@@ -6247,7 +6369,7 @@ const Crowd = {
     var types = cfg.types;
     var dirs = cfg.dirs;
 
-    // タイプ選択（2回目は必ず違うタイプ）
+    // タイプ選択（連続で違うタイプに変える）
     var type;
     if (prev && types.length > 1) {
       var others = types.filter(function(t) { return t !== prev.type; });
@@ -6256,7 +6378,7 @@ const Crowd = {
       type = types[Math.floor(Math.random() * types.length)];
     }
 
-    // 方向選択（2回目は縦横を変えて視線を振らせる）
+    // 方向選択（縦横を変えて視線を振らせる）
     var dir;
     if (prev && prev.dir) {
       var isHoriz = prev.dir === "left" || prev.dir === "right";
@@ -6274,6 +6396,8 @@ const Crowd = {
 
     if (type === "peek") {
       this.showPeek(dir);
+    } else if (type === "cross") {
+      this.showCross(dir);
     } else {
       this.showHandCover();
     }
@@ -6288,6 +6412,9 @@ const Crowd = {
     } else if (presetName === "hand") {
       imgEl.style.opacity = "0.6";
       imgEl.style.filter = "brightness(0.8) saturate(0.6) drop-shadow(0 0 10px rgba(60,0,100,0.5))";
+    } else if (presetName === "cross") {
+      imgEl.style.opacity = "0.7";
+      imgEl.style.filter = "brightness(0.8) saturate(0.65) drop-shadow(0 0 14px rgba(80,0,120,0.6))";
     } else if (presetName === "taunt") {
       imgEl.style.opacity = "0.85";
       imgEl.style.filter = "brightness(0.9) saturate(0.8) drop-shadow(0 0 24px rgba(60,0,100,0.7))";
@@ -6322,6 +6449,7 @@ const Crowd = {
     requestAnimationFrame(function() {
       el.classList.add("cw-peek-show");
     });
+    if (dir === "top") SoundSystem.peekPressure();
   },
 
   showHandCover() {
@@ -6356,6 +6484,28 @@ const Crowd = {
     requestAnimationFrame(function() {
       el.classList.add("cw-hand-show");
     });
+    SoundSystem.handMuffle();
+  },
+
+  showCross(dir) {
+    var el = this.el.cross;
+    var img = this.el.crossImg;
+    if (!el || !img) return;
+
+    img.src = this.CW_INTRUDER;
+    this.applyKimoVisualPreset(img, "cross");
+
+    el.classList.remove("cw-cross-ltr", "cw-cross-rtl");
+    el.style.opacity = "";
+    el.style.left = "";
+    el.style.right = "";
+    el.style.top = (20 + Math.random() * 40) + "%";
+
+    var ltr = (dir === "left" || (dir !== "right" && Math.random() < 0.5));
+    requestAnimationFrame(function() {
+      el.classList.add(ltr ? "cw-cross-ltr" : "cw-cross-rtl");
+    });
+    SoundSystem.crossScrape();
   },
 
   startTimer(dur) {
@@ -6463,7 +6613,7 @@ const Crowd = {
       });
     }, 100);
 
-    this.el.command.textContent = "…見つけた";
+    this.el.command.textContent = I18n.t("crowd.found");
     this.el.command.style.color = "#60ff90";
 
     const sid = this.sessionId;
@@ -6480,7 +6630,7 @@ const Crowd = {
     SoundSystem.correct();
     this.updateComboUI();
 
-    this.el.command.textContent = "…全員同じだ";
+    this.el.command.textContent = I18n.t("crowd.allSame");
     this.el.command.style.color = "#60ff90";
 
     const sid = this.sessionId;
@@ -6518,7 +6668,7 @@ const Crowd = {
       }
     }
 
-    this.el.command.textContent = this.roundType === "none" ? "…罠だった" : "…違う";
+    this.el.command.textContent = this.roundType === "none" ? I18n.t("crowd.wrongNone") : I18n.t("crowd.wrong");
     this.el.command.style.color = "#ff4060";
 
     // コンボブレイク
@@ -6575,7 +6725,7 @@ const Crowd = {
       }.bind(this));
     }
 
-    this.el.command.textContent = "…見逃した";
+    this.el.command.textContent = I18n.t("crowd.missed");
     this.el.command.style.color = "#ff4060";
 
     if (hadCombo) {
@@ -6669,7 +6819,7 @@ const Crowd = {
       }, 600);
 
       // タイプライター
-      const msg = "…群衆の中で、お前だけが\n自分の目で見ていた。";
+      const msg = I18n.t("crowd.clearMsg");
       const chars = msg.split("");
       let ci = 0;
       setTimeout(() => {
@@ -6691,11 +6841,11 @@ const Crowd = {
               if (this.sessionId !== sid) return;
               let rank, rankMsg, rankColor;
               if (m === 0) {
-                rank = "S"; rankMsg = "完璧な目だ。"; rankColor = "#ffd700";
+                rank = "S"; rankMsg = I18n.t("crowd.rankS"); rankColor = "#ffd700";
               } else if (m <= 2) {
-                rank = "A"; rankMsg = "鋭い目だ。"; rankColor = "#c0c0ff";
+                rank = "A"; rankMsg = I18n.t("crowd.rankA"); rankColor = "#c0c0ff";
               } else {
-                rank = "B"; rankMsg = "見えてはいた。"; rankColor = "#a0c0e0";
+                rank = "B"; rankMsg = I18n.t("crowd.rankB"); rankColor = "#a0c0e0";
               }
 
               this.el.clearRank.textContent = rank;
@@ -6705,7 +6855,7 @@ const Crowd = {
               // 三幕総括エピローグ
               setTimeout(() => {
                 if (this.sessionId !== sid) return;
-                const epilogue = "命令に逆らい、\n刃を振り、\n群衆の中で目を開けた。\n\n…お前はもう、誰の支配も受けない。";
+                const epilogue = I18n.t("crowd.epilogue");
                 this.el.clearEpilogue.textContent = epilogue;
 
                 // ボタン
@@ -6733,7 +6883,7 @@ const Crowd = {
     var total = 0;
     for (var li = 0; li < CROWD_LAYERS.length; li++) total += CROWD_LAYERS[li].rounds;
 
-    this.el.gameoverMsg.textContent = "…見えなかった";
+    this.el.gameoverMsg.textContent = I18n.t("crowd.gameover");
     SoundSystem.gameoverSound();
 
     setTimeout(() => {
@@ -6748,10 +6898,10 @@ const Crowd = {
 // ============================================================
 const TitlePrologue = {
   idleTimeout: null,
-  loopTimeout: null,
   lineTimeouts: [],
   el: null,
   lines: null,
+  shown: false,
 
   init() {
     this.el = document.getElementById("title-prologue");
@@ -6760,12 +6910,12 @@ const TitlePrologue = {
 
   startIdle() {
     this.stopAll();
-    this.idleTimeout = setTimeout(() => this.showPrologue(), 10000);
+    this.shown = false;
+    this.idleTimeout = setTimeout(() => this.showPrologue(), 12000);
   },
 
   stopAll() {
     clearTimeout(this.idleTimeout);
-    clearTimeout(this.loopTimeout);
     this.lineTimeouts.forEach(t => clearTimeout(t));
     this.lineTimeouts = [];
     if (this.el) {
@@ -6775,6 +6925,8 @@ const TitlePrologue = {
   },
 
   showPrologue() {
+    if (this.shown) return; // 1回のみ
+    this.shown = true;
     this.el.classList.add("prologue-active");
     this.el.classList.remove("prologue-fadeout");
     this.lines.forEach(l => l.classList.remove("prologue-line-show"));
@@ -6788,22 +6940,29 @@ const TitlePrologue = {
         self.lineTimeouts.push(t);
       })(i, this);
     }
-
-    // 全行表示後2.5秒ホールド → フェードアウト → 12秒後にループ
-    var totalShowTime = (this.lines.length - 1) * 1800 + 2500;
-    var fadeT = setTimeout(() => {
-      this.el.classList.add("prologue-fadeout");
-      this.loopTimeout = setTimeout(() => {
-        this.el.classList.remove("prologue-active", "prologue-fadeout");
-        this.lines.forEach(l => l.classList.remove("prologue-line-show"));
-        this.loopTimeout = setTimeout(() => this.showPrologue(), 12000);
-      }, 1500); // フェードアウト時間
-    }, totalShowTime);
-    this.lineTimeouts.push(fadeT);
   },
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  // i18n初期化
+  I18n.init();
+
+  // 言語セレクター
+  var langBtns = document.querySelectorAll(".lang-btn");
+  langBtns.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var lang = btn.getAttribute("data-lang");
+      langBtns.forEach(function(b) { b.classList.remove("lang-active"); });
+      btn.classList.add("lang-active");
+      I18n.setLang(lang);
+    });
+  });
+  // 保存済み言語のボタン復元
+  var savedLang = localStorage.getItem("kusokurae_lang") || "ja";
+  langBtns.forEach(function(b) {
+    b.classList.toggle("lang-active", b.getAttribute("data-lang") === savedLang);
+  });
+
   Game.init();
   Tutorial.init();
   Dungeon.init();

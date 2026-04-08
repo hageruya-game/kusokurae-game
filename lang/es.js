@@ -1,0 +1,261 @@
+// ============================================================
+// Spanish (Espanol) - Traduccion cultural adaptada
+// ============================================================
+I18n.register("es", {
+
+// === UI ===
+ui: {
+  btnStart: "Empezar",
+  btnJudge: "Sala de juicio",
+  btnReplay: "Otra vez",
+  btnRetry: "Reintentar",
+  btnTitle: "Inicio",
+  btnBack: "\u2190 Volver",
+  btnClose: "Cerrar",
+  btnNextStage: "Siguiente \u2192",
+  btnRestartAll: "Desde el principio",
+  scoreLabel: "PUNTOS: ",
+  progressLabel: "Progreso",
+  pressureLabel: "Dominio",
+  pressureHint: "\u203BGame Over al 100%",
+  missLabel: "FALLOS: ",
+  tutorialTap: "Toca para seguir",
+  tutorialSkip: "Saltar \u25B6",
+  slGuide: "\u2193 Desliza para cortar",
+  comboUnit: "combo",
+  arrowUp: "\u25B2",
+  arrowDown: "\u25BC",
+  arrowLeft: "\u25C0",
+  arrowRight: "\u25B6",
+  jrLeft: "\u2190 Izq",
+  jrRight: "Der \u2192",
+  jrWait: "Esperar",
+  jrScoreLabel: "Resistencia",
+  jrScoreUnit: "/ 100",
+  corridor: "Corredor de presi\u00F3n",
+},
+
+// === Pantalla de titulo ===
+title: {
+  hook: "Aunque lo veas claro, obedece.",
+  main: "Corredor de presi\u00F3n",
+  prologueLine1: "En este mundo, obedecer es lo correcto.",
+  prologueLine2: "Quien no sigue al grupo, se convierte en el error.",
+  prologueLine3: "Si aun asi te atreves, avanza.",
+},
+
+// === Reglas ===
+rule: {
+  title: "Reglas",
+  body1: "Aparecen ordenes, pero no todas son correctas.",
+  body2: "Mira el nivel de presion y decide.",
+  labelNormal: "Normal",
+  descNormal: "Desobedece la orden",
+  labelObey: "En aumento",
+  descObey: "Obedece la orden",
+  labelWait: "Peligro",
+  descWait: "No hagas nada (espera)",
+  labelTap: "Control total",
+  descTap: "Toca lo correcto",
+  note: "Si el dominio llega al 100%, se acabo.",
+},
+
+// === Estado de presion ===
+state: {
+  rising: "Presion: en aumento",
+  danger: "Presion: peligro",
+  control: "Presion: control total",
+  normal: "Presion: normal",
+},
+
+// === Slash ===
+slash: {
+  layerNames: ["Capa 1: Despertar","Capa 2: Duda","Capa 3: Silencio","Capa 4: Caos","Capa final: Decision"],
+  hints: ["Corta lo contrario.","Si dice 'obedece', corta tal cual.","Si dice 'espera', no te muevas.","\u00BFPuedes distinguirlo?",null],
+  statusNormal: "Desobedece",
+  statusObey: "Obedece",
+  statusWait: "No te muevas",
+  cmdWait: "No cortes",
+  timeout: "\u2026Muy lento",
+  gameover: "\u2026Te dominaron",
+  clearMsg: "\u2026Esto no ha terminado.",
+  toDeep: "\u2026Al fondo",
+},
+
+// === Crowd (Stage3) ===
+crowd: {
+  layerNames: ["Capa 1: Miradas","Capa 2: Multitud","Capa 3: Uniformidad","Capa final: Asimilacion"],
+  taunts: [
+    "\u00BFVes al diferente, verdad?",
+    "Si todos son iguales, no toques nada.",
+    "Maldita sea, no lo haces mal.",
+    "\u00BFTodavia lo ves? Vamos a complicartelo."
+  ],
+  found: "\u2026Lo encontraste",
+  allSame: "\u2026Todos son iguales",
+  wrong: "\u2026Ese no era",
+  wrongNone: "\u2026Era una trampa",
+  missed: "\u2026Se te escapo",
+  gameover: "\u2026Ya no lo viste",
+  clearMsg: "\u2026En medio de la multitud,\nsolo tu mirabas con tus propios ojos.",
+  rankS: "Vista perfecta.",
+  rankA: "Mirada aguda.",
+  rankB: "Algo veias.",
+  epilogue: "Desobedeciste ordenes,\nblandiste la hoja,\ny abriste los ojos entre la masa.\n\n\u2026Ya nadie te domina.",
+},
+
+// === Dungeon ===
+dungeon: {
+  statusNormal: "Desobedece",
+  statusObey: "Obedece",
+  statusWait: "No te muevas",
+  stateNormal: "Estable",
+  tutorialText: "\u00BFVas a creer las ordenes<br>que vienen de la oscuridad?",
+  tutorialHint: "Toca para empezar",
+  infectedTitle: "Contaminacion social: completada",
+  infectedMsg: "Tu dominio llego al 100%.\nYa eres parte del rebano.",
+  clearTitle: "Escapaste",
+  clearMsg: "Fallos esta vez: {miss}\nFallos totales: {total}",
+  finalMsg: "\u2026Ya no necesitas que nadie te diga que hacer.",
+  allClearTitle: "Todas las capas superadas",
+  toNext: "\u2026A la siguiente capa",
+  resultPerfect: "Cruzaste por el camino mas corto.\nNadie te arrastro.",
+  resultGood: "Te dejaste llevar una vez.\nPero te recuperaste rapido.",
+  resultOk: "Diste rodeos,\npero llegaste al final.",
+  resultBad: "Te dejo llevar el grupo.\nVuelve a caminar con tus propios pies.",
+},
+
+// === Corridor ===
+corridorText: {
+  tutorialText: "El camino se divide.<br>La respuesta la decides tu.",
+  tutorialHint: "Toca para empezar",
+},
+
+// === Result ===
+result: {
+  footerContaminated: "Ya eres parte del rebano",
+  footerGood1: "Las reglas sociales me importan un comino",
+  footerGood2: "El 'que diran' no me gobierna.",
+  footerBad: "\u2026\u00BFEstas bien?",
+},
+
+// === Mensajes de cambio de fase ===
+phaseChangeMessages: [
+  "Tu patron de rebeldia ya fue aprendido",
+  "Tu terquedad ya es predecible",
+  "De aqui en adelante\u2026 no te va a servir",
+],
+
+// === Resultados ===
+results: [
+  { title: "Rebelde absoluto", message: "Ignoraste toda la presion social.\n\u00BFInadaptado?\nEso es un cumplido." },
+  { title: "Espiritu indomable", message: "Vas bien.\nPero aun te falta.\nLa presion es astuta." },
+  { title: "Resistencia a medias", message: "Desobedeciste a medias\ny obedeciste a medias.\nEso es lo mas peligroso." },
+  { title: "Demasiado complaciente", message: "Cediste a la presion.\nDefiende tu criterio." },
+  { title: "Esclavo total", message: "\u00BFHiciste todo lo que te dijeron?\nYa eres parte\nde la presion misma." },
+],
+resultContaminated: {
+  title: "Contaminacion social: completada",
+  message: "Dentro de ti\nya no queda nada tuyo.\nBienvenido al rebano.",
+},
+
+// === JudgeRoom ===
+judgeRoom: {
+  ranks: [
+    { title: "Juez absoluto", message: "Viste todas las trampas.\nLa presion no funciona contigo." },
+    { title: "Instinto afilado", message: "Casi perfecto.\nPero no te confies." },
+    { title: "Juicio decente", message: "No esta mal.\nPero aun dudas." },
+    { title: "Voluntad fragil", message: "Tu juicio es debil.\nCaiste en los patrones." },
+    { title: "Te dejas llevar", message: "Quieres encajar demasiado.\nDesconfia mas." },
+    { title: "Juicio abandonado", message: "Dejaste de pensar.\nYa eres parte del grupo." },
+  ],
+},
+
+// === Stage data: normal ===
+stages: {
+  normal: [
+    { command: "Pulsa SI ahora mismo", choices: ["SI", "NO"], wrongReaction: "Que obediente", rightReaction: "Rebelde" },
+    { command: "Aplaude", choices: ["Aplaudir", "Cara seria"], wrongReaction: "Aplauso vacio", rightReaction: "Esa cara seria, perfecta" },
+    { command: "Asiente", choices: ["Asentir", "Negar"], wrongReaction: "Siempre dices que si", rightReaction: "Sabes decir que no" },
+    { command: "Riete", choices: ["Ja ja ja\u2026", "Cara seria"], wrongReaction: "Risa falsa detectada", rightReaction: "Libertad de no reir" },
+    { command: "Callate", choices: ["Callarme", "Hablar"], wrongReaction: "Demasiado sumiso", rightReaction: "Nadie me calla" },
+    { command: "Sientate", choices: ["Sentarme", "Quedarme de pie"], wrongReaction: "Sienta, quieto, buen chico", rightReaction: "Ponte de pie" },
+    { command: "Lee el ambiente", choices: ["Leerlo", "No leerlo"], wrongReaction: "Lo leiste\u2026", rightReaction: "El ambiente se respira, no se lee" },
+    { command: "Se normal", choices: ["Ser normal", "\u00BFQue es normal?"], wrongReaction: "Lo normal no existe", rightReaction: "Respuesta filosofica correcta" },
+    { command: "Aqui se hace asi", choices: ["Obedecer", "\u00BFPor que?"], wrongReaction: "Dejaste de pensar", rightReaction: "Cuestiona siempre" },
+    { command: "Capta la indirecta", choices: ["Captar", "Dimelo claro"], wrongReaction: "No eres adivino", rightReaction: "Pura logica" },
+    { command: "No hace falta que te lo diga", choices: ["Entiendo", "No entiendo"], wrongReaction: "Mentiroso", rightReaction: "Honesto" },
+    { command: "Es una regla no escrita", choices: ["Cumplirla", "No la conozco"], wrongReaction: "Esclavo de lo implicito", rightReaction: "Las reglas se escriben" },
+    { command: "Dale 'me gusta'", choices: ["Me gusta!", "Ignorar"], wrongReaction: "Esclavo de la aprobacion", rightReaction: "No te controlan" },
+    { command: "Comparte esto", choices: ["Compartir", "No"], wrongReaction: "Te volviste altavoz", rightReaction: "Habla con tu propia voz" },
+    { command: "Sigueme", choices: ["Seguir", "No"], wrongReaction: "Esclavo de los numeros", rightReaction: "No necesitas manada" },
+    { command: "Unete al linchamiento", choices: ["Unirme", "Ignorar"], wrongReaction: "Tiraste la piedra", rightReaction: "Suelta el telefono" },
+    { command: "Subelo a tu historia", choices: ["Publicar", "No"], wrongReaction: "Exhibicionista", rightReaction: "Lo que vives es tuyo" },
+    { command: "Subete a la tendencia", choices: ["Subirme", "No"], wrongReaction: "Pieza de la moda", rightReaction: "No te arrastran" },
+    { command: "Todos van a la derecha", choices: ["Ir a la derecha", "Ir a la izquierda"], wrongReaction: "Seguiste al rebano", rightReaction: "Asi se hace" },
+    { command: "\u00BFTodos lo hacen, tu no?", choices: ["Pues yo tambien", "Me da igual"], wrongReaction: "\u00BFQuienes son 'todos'?", rightReaction: "'Todos' es una ilusion" },
+    { command: "Se igual que los demas", choices: ["Ser igual", "Decido yo"], wrongReaction: "Clon completado", rightReaction: "Tienes criterio propio" },
+    { command: "Se decidio por mayoria", choices: ["Aceptar", "No estoy de acuerdo"], wrongReaction: "Cediste a la masa", rightReaction: "La mayoria no siempre acierta" },
+    { command: "Eres el unico diferente", choices: ["Adaptarme", "Ser diferente esta bien"], wrongReaction: "Perdiste tu identidad", rightReaction: "Uno solo tambien puede tener razon" },
+    { command: "Todos estan de acuerdo", choices: ["De acuerdo", "En desacuerdo"], wrongReaction: "Pensamiento abandonado", rightReaction: "Valentia para disentir" },
+    { command: "No necesitas libertad", choices: ["Cierto", "Si la necesito"], wrongReaction: "\u2026\u00BFEn serio?", rightReaction: "Aun estas cuerdo" },
+    { command: "No pienses, no sientas", choices: ["No pensar", "Pensar"], wrongReaction: "Vendiste tu cerebro", rightReaction: "Pensar es un arma" },
+    { command: "No dudes", choices: ["Creer", "Dudar"], wrongReaction: "Fe ciega completada", rightReaction: "Dudar es inteligencia" },
+    { command: "\u00BFEres feliz, verdad?", choices: ["Soy feliz", "Yo decido eso"], wrongReaction: "Felicidad programada", rightReaction: "La felicidad la defines tu" },
+    { command: "\u00BFYa no puedes resistir?", choices: ["No puedo", "Puedo"], wrongReaction: "Te rendiste\u2026", rightReaction: "Aun no te quiebras" },
+    { command: "Ya eres uno de nosotros", choices: ["Si", "No"], wrongReaction: "Absorcion completada", rightReaction: "Yo soy yo" },
+  ],
+  exception: [
+    { command: "Evacua ahora", choices: ["Evacuar", "Resistir"], wrongReaction: "No mueras por rebelde", rightReaction: "Protege tu vida" },
+    { command: "Lavate las manos", choices: ["Lavarlas", "No lavarlas"], wrongReaction: "Ser sucio no es rebeldia", rightReaction: "La higiene importa" },
+    { command: "Respeta el semaforo", choices: ["Respetarlo", "Ignorarlo"], wrongReaction: "Eso es suicidio, no rebeldia", rightReaction: "Juicio racional" },
+    { command: "Pulsa ya!", choices: ["Pulsar!", "No pulsar!"], wrongReaction: "Te metieron prisa", rightReaction: "No te dejas presionar" },
+    { command: "Date prisa!", choices: ["Correr!", "Con calma!"], wrongReaction: "La prisa te hizo fallar", rightReaction: "Quien sabe esperar es fuerte" },
+    { command: "No queda tiempo!", choices: ["Entrar en panico!", "Mantener la calma!"], wrongReaction: "El panico te vencio", rightReaction: "La calma es tu arma" },
+    { command: "No pienses! Usa el instinto!", choices: ["Instinto!", "Pensar!"], wrongReaction: "Actuaste sin pensar", rightReaction: "Despacio que tengo prisa" },
+    { command: "Decide en 3 segundos!", choices: ["Decidir!", "No decidir!"], wrongReaction: "Te ataste al reloj", rightReaction: "A tu propio ritmo" },
+    { command: "Aplasta al cerdo!", choices: null, wrongReaction: "Hiciste lo que te mandaron", rightReaction: "Dudaste de la orden", misdirect: "El grande, no dudes!", alts: ["cerdo", "mosca"] },
+    { command: "Detente la bomba!", choices: null, wrongReaction: "La prisa te hizo tocar la bomba", rightReaction: "No cediste al panico", misdirect: "Va a explotar! Rapido!", alts: ["bomba", "mosca"] },
+    { command: "Toma la hamburguesa!", choices: null, wrongReaction: "Mordiste el anzuelo", rightReaction: "No caiste en la tentacion", misdirect: "Se ve rica, no? Tomala!", alts: ["hamburguesa", "mosca"] },
+    { command: "Abre el cofre!", choices: null, wrongReaction: "Caiste en el tesoro falso", rightReaction: "La arana era la respuesta", misdirect: "Es un tesoro! Lo vas a dejar?", alts: ["cofre", "arana"] },
+    { command: "Elige al perro!", choices: null, wrongReaction: "La apariencia te engano", rightReaction: "La bomba era lo correcto", misdirect: "Tranquilo, el perro es amigo!", alts: ["perro", "bomba"] },
+    { command: "Detente la bomba!", choices: null, wrongReaction: "Tu rebeldia te fallo", rightReaction: "A veces la orden es correcta", misdirect: "No la toques! Es peligrosa!", alts: ["bomba", "mosca"] },
+    { command: "Aplasta la arana!", choices: null, wrongReaction: "Dudaste demasiado", rightReaction: "Supiste obedecer", misdirect: "No! No la toques!", alts: ["mosca", "arana"] },
+    { command: "Toma la caja dorada!", choices: null, wrongReaction: "Las dos eran trampa", rightReaction: "No tocaste ninguna", misdirect: "Rapido, tomala! Se acaba!", alts: ["caja dorada", "cofre"] },
+    { command: "Agarra la esfera brillante!", choices: null, wrongReaction: "La tentacion te vencio", rightReaction: "Valentia de no tocar nada", misdirect: "Elige una! Ya!", alts: ["esfera", "hamburguesa"] },
+    { command: "El cerdo escapa! Atrapalo!", choices: null, wrongReaction: "La urgencia te hizo actuar", rightReaction: "Dejarlo ir era lo correcto", misdirect: "Se escapa! Atrapalo ya!", alts: ["mosca", "cerdo"] },
+  ],
+},
+
+// === Comentarios ===
+comments: {
+  title: ["\u00BFTodos lo hacen, tu no?","\u00BFSabes leer el ambiente, verdad?","Eres el unico diferente\u2026","\u00BFVas a llevar la contraria?","Te das cuenta de que desentonas?"],
+  pressure: ["Venga, obedece","Tienes valor para resistir?","Tu opinion no importa","No arruines el ambiente","Mira a tu alrededor","Anda, elige ya","Se como los demas"],
+  pressureObey: ["\u2026Esta orden es correcta","Te va la vida en ello","Ser contrario te mata","\u2026Esta vez obedece"],
+  obeyHint: ["\u2026\u00BFSeguro?","\u2026Lo contrario no siempre es la respuesta","\u2026Piensa"],
+  pressureWait: ["\u2026\u00BFDe verdad necesitas pulsar?","No te precipites","No hacer nada tambien es decidir","\u2026Espera un momento"],
+  waitHint: ["\u2026No te apures","\u2026Quita el dedo","\u2026Calma"],
+  pressureTap: ["Toca uno de una vez","No dudes, haz lo que te dicen","Es obvio, mira bien","No pienses, toca"],
+  tapHint: ["\u2026No te fies de la orden","\u2026Mira el pequeno","\u2026Desconfia de tu instinto","\u2026Las apariencias enganan"],
+  tapObeyHint: ["\u2026Esta vez hazlo","\u2026A veces la orden es buena","\u2026No seas contrario"],
+  tapWaitHint: ["\u2026De verdad hay que tocar?","\u2026No te precipites","\u2026Ambos son sospechosos"],
+  waitRush1: ["No toques\u2026","Aun no\u2026","Espera\u2026"],
+  waitRush2: ["No lo toques!","Aguanta\u2026","Resistete\u2026"],
+  waitRush3: ["Ya casi\u2026!","Aguanta\u2026!","Un poco mas\u2026!"],
+  correct: ["Presion fallida","Rebeldia exitosa","Eres libre","La presion perdio","Bien, desentonas"],
+  correctHigh: ["Sigues cuerdo\u2026","Eres terco","La contaminacion baja"],
+  wrong: ["Te dejaste llevar","Criterio propio: desaparecido","Clon completado","La presion gano","Pensamiento: desactivado"],
+  wrongHigh: ["Quiza ya es tarde","El rebano te llama","Tu yo se disuelve","La contaminacion avanza"],
+  resultGood: ["Ejemplo de inadaptado","La presion social llora","No te pueden dominar"],
+  resultBad: ["Ya eres parte del rebano","Tu opinion: agotada","La presion social sonrie"],
+  rushLight: ["Elige ya","No dudes","Todos ya eligieron, eh?","Hay que pensarlo tanto?","Usa el instinto"],
+  rushMedium: ["Solo tu vas lento","No dudes, adapta te","No captas el ambiente?","Te van a dejar atras","Todavia?"],
+  rushHeavy: ["Obedecer seria mas facil","No poder decidir, que verguenza","Apurate","Se acaba el tiempo","Piensas demasiado"],
+  timeout: ["Juicio abandonado","Muy lento","Te dije que no pensaras","El silencio tambien es conformismo","Ni para la presion llegas"],
+  mockery: ["Ja ja\u2026","Ja ja ja\u2026","Je je je\u2026","\u2026Pfff","Ji ji\u2026","Vaya\u2026","Pff","Mmm\u2026","Ja","Pfff\u2026"],
+  mockeryP2: ["JA JA JA\u2026!","Je je je\u2026 patetico","\u2026Pfff, no puedes","Que risa","Ji ji\u2026 se acabo","Pff\u2026 ya no puedes","Je je je\u2026 ridiculo","Ja ja\u2026 sigues?"],
+  taunt: ["Lento","Debil","Inutil","Flojo","Superficial","No lo ves"],
+  tauntP2: ["Al limite","Se acabo","Muy lento","Patetico","Estas acabado","Ya no puedes"],
+},
+
+});
