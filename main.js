@@ -516,6 +516,63 @@ const SoundSystem = {
     nwNoise.start(t + 0.2); nwNoise.stop(t + 1.5);
   },
 
+  // --- ランク出現SE: 溜め→解放三和音 ---
+  rankReveal(isS) {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    var master = ctx.createGain();
+    master.gain.value = 1.0;
+    master.connect(ctx.destination);
+
+    // 溜め: 低音ビルドアップ
+    var build = ctx.createOscillator();
+    var bg = ctx.createGain();
+    build.connect(bg); bg.connect(master);
+    build.type = "sine";
+    build.frequency.setValueAtTime(80, t);
+    build.frequency.exponentialRampToValueAtTime(200, t + 0.15);
+    bg.gain.setValueAtTime(0.1, t);
+    bg.gain.setValueAtTime(0.15, t + 0.12);
+    bg.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    build.start(t); build.stop(t + 0.2);
+
+    // 解放: C5 + E5 + G5 三和音
+    var freqs = [523, 659, 784];
+    for (var i = 0; i < freqs.length; i++) {
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.connect(g); g.connect(master);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freqs[i], t + 0.15);
+      g.gain.setValueAtTime(0.1, t + 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      osc.start(t + 0.15); osc.stop(t + 1.2);
+    }
+
+    // Sランク: 高域スパークル
+    if (isS) {
+      var spark = ctx.createOscillator();
+      var sg = ctx.createGain();
+      spark.connect(sg); sg.connect(master);
+      spark.type = "sine";
+      spark.frequency.setValueAtTime(1320, t + 0.25);
+      sg.gain.setValueAtTime(0.05, t + 0.25);
+      sg.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+      spark.start(t + 0.25); spark.stop(t + 1.5);
+
+      var spark2 = ctx.createOscillator();
+      var sg2 = ctx.createGain();
+      spark2.connect(sg2); sg2.connect(master);
+      spark2.type = "sine";
+      spark2.frequency.setValueAtTime(1760, t + 0.35);
+      sg2.gain.setValueAtTime(0.03, t + 0.35);
+      sg2.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+      spark2.start(t + 0.35); spark2.stop(t + 1.3);
+    }
+  },
+
   // --- 最終斬撃SE: 通常slash + 衝撃波 + 残響 ---
   finalSlash() {
     if (!this.enabled) return;
@@ -2195,25 +2252,46 @@ const Game = {
     SoundSystem.stopAmbient();
     const overlay = document.getElementById("dungeon-transition");
     const text = document.getElementById("dg-transition-text");
+    const interImg = document.getElementById("dg-interlude-img");
     overlay.classList.add("dg-trans-active");
     const gid = this.sessionId;
+
+    // キモキャラ割り込み演出
     setTimeout(() => {
       if (this.sessionId !== gid) return;
-      text.textContent = I18n.t("dungeon.toNext");
-      text.classList.add("dg-trans-text-show");
+      interImg.src = "assets/image_0.png";
+      interImg.style.display = "";
+      interImg.classList.add("dg-interlude-show");
+      text.textContent = I18n.t("crowd.interlude1");
+      text.classList.add("dg-interlude-text-show");
+
       setTimeout(() => {
         if (this.sessionId !== gid) return;
-        text.classList.remove("dg-trans-text-show");
+        interImg.classList.remove("dg-interlude-show");
+        interImg.style.display = "none";
+        text.classList.remove("dg-interlude-text-show");
+        text.textContent = "";
+
+        // 通常遷移テキスト
         setTimeout(() => {
           if (this.sessionId !== gid) return;
-          Slash.pressure = this.pressureLevel;
-          Slash.currentLayer = 0;
-          Slash.totalMisses = 0;
-          Slash.start();
-          overlay.classList.remove("dg-trans-active");
-          text.textContent = "";
-        }, 400);
-      }, 800);
+          text.textContent = I18n.t("dungeon.toNext");
+          text.classList.add("dg-trans-text-show");
+          setTimeout(() => {
+            if (this.sessionId !== gid) return;
+            text.classList.remove("dg-trans-text-show");
+            setTimeout(() => {
+              if (this.sessionId !== gid) return;
+              Slash.pressure = this.pressureLevel;
+              Slash.currentLayer = 0;
+              Slash.totalMisses = 0;
+              Slash.start();
+              overlay.classList.remove("dg-trans-active");
+              text.textContent = "";
+            }, 400);
+          }, 800);
+        }, 300);
+      }, 1500);
     }, 400);
   },
 
@@ -4355,22 +4433,43 @@ const Slash = {
   transitionToCrowd() {
     const overlay = document.getElementById("dungeon-transition");
     const text = document.getElementById("dg-transition-text");
+    const interImg = document.getElementById("dg-interlude-img");
     overlay.classList.add("dg-trans-active");
     const sid = this.sessionId;
+
+    // キモキャラ割り込み演出
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      text.textContent = I18n.t("slash.toDeep");
-      text.classList.add("dg-trans-text-show");
+      interImg.src = "assets/image_0.png";
+      interImg.style.display = "";
+      interImg.classList.add("dg-interlude-show");
+      text.textContent = I18n.t("crowd.interlude2");
+      text.classList.add("dg-interlude-text-show");
+
       setTimeout(() => {
         if (this.sessionId !== sid) return;
-        text.classList.remove("dg-trans-text-show");
+        interImg.classList.remove("dg-interlude-show");
+        interImg.style.display = "none";
+        text.classList.remove("dg-interlude-text-show");
+        text.textContent = "";
+
+        // 通常遷移テキスト
         setTimeout(() => {
           if (this.sessionId !== sid) return;
-          Crowd.start();
-          overlay.classList.remove("dg-trans-active");
-          text.textContent = "";
-        }, 400);
-      }, 800);
+          text.textContent = I18n.t("slash.toDeep");
+          text.classList.add("dg-trans-text-show");
+          setTimeout(() => {
+            if (this.sessionId !== sid) return;
+            text.classList.remove("dg-trans-text-show");
+            setTimeout(() => {
+              if (this.sessionId !== sid) return;
+              Crowd.start();
+              overlay.classList.remove("dg-trans-active");
+              text.textContent = "";
+            }, 400);
+          }, 800);
+        }, 300);
+      }, 1500);
     }, 400);
   },
 
@@ -5999,10 +6098,19 @@ const Crowd = {
       void self.el.command.offsetWidth;
       self.el.command.textContent = I18n.t("crowd.tutorialLine2");
       self.el.command.classList.add("cw-tutorial-text-in");
-    }, 1200);
+    }, 1000);
+
+    var line3Timeout = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.classList.remove("cw-tutorial-text-in");
+      void self.el.command.offsetWidth;
+      self.el.command.textContent = I18n.t("crowd.tutorialLine3");
+      self.el.command.classList.add("cw-tutorial-text-in");
+    }, 2000);
 
     var dismiss = function() {
       clearTimeout(line2Timeout);
+      clearTimeout(line3Timeout);
       clearTimeout(self._tutorialDismissTimeout);
       self._tutorialDismissTimeout = null;
       self.el.screen.classList.remove("cw-tutorial-intro");
@@ -6013,7 +6121,7 @@ const Crowd = {
     };
 
     this.el.screen.addEventListener("click", dismiss);
-    this._tutorialDismissTimeout = setTimeout(dismiss, 2400);
+    this._tutorialDismissTimeout = setTimeout(dismiss, 3000);
   },
 
   goTitle() {
@@ -6074,9 +6182,10 @@ const Crowd = {
     }
     this.el.layerHint.classList.remove("cw-lh-show");
     this.el.layerHint.textContent = "";
-    this.el.clearOverlay.classList.remove("cw-co-show");
+    this.el.clearOverlay.classList.remove("cw-co-show", "cw-rank-flash");
     this.el.clearMsg.textContent = "";
     this.el.clearRank.textContent = "";
+    this.el.clearRank.classList.remove("cw-rank-reveal", "cw-rank-s");
     this.el.clearRankMsg.textContent = "";
     this.el.clearEpilogue.textContent = "";
     this.el.clearButtons.style.opacity = "0";
@@ -6266,12 +6375,19 @@ const Crowd = {
     this.renderGrid(layer);
     this.startTimer(layer.timer);
 
-    // 0.4秒の完全静止 → 揺れ・妨害開始
+    // 初期マスク: 表示直後は差異を目立たせない
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    cells.forEach(function(c) { c.classList.add("cw-cell-mask"); });
+
+    // 0.4秒の完全静止 → マスク除去 → 揺れ・妨害開始
     var sid = this.sessionId;
     var self = this;
     this._jitterTimeout = setTimeout(function() {
       if (self.sessionId !== sid || self.answered) return;
-      // Layer2以降: 各セルに微揺れ
+      // マスク除去（差異がここから見え始める）
+      var cells2 = self.el.grid.querySelectorAll(".cw-cell");
+      cells2.forEach(function(c) { c.classList.remove("cw-cell-mask"); });
+      // Layer1以降: 各セルに微揺れ
       if (self.currentLayer >= 1) {
         self._startCellJitter();
       }
@@ -6336,10 +6452,12 @@ const Crowd = {
       for (var e = 0; e < extraCount && e < rest.length; e++) {
         chosenAxes.push(rest[e]);
       }
-      // Layer0-1: 回転が唯一の補助軸なら50%でscaleに置換 or 追加
-      if (extraCount === 1 && chosenAxes.length === 2 && chosenAxes[1] === "rotation") {
+      // 全Layer: 回転が唯一の補助軸なら70%でscale置換/追加（初手で見抜かれにくくする）
+      var extraAxes = chosenAxes.filter(function(a) { return a !== "offset"; });
+      if (extraAxes.length === 1 && extraAxes[0] === "rotation" && Math.random() < 0.7) {
+        var rotIdx = chosenAxes.indexOf("rotation");
         if (Math.random() < 0.5) {
-          chosenAxes[1] = "scale"; // 置換
+          chosenAxes[rotIdx] = "scale"; // 置換
         } else {
           chosenAxes.push("scale"); // 追加
         }
@@ -6525,8 +6643,8 @@ const Crowd = {
 
   // 層ごとの妨害設定（全層100%発動）
   CW_INTERFERENCE: [
-    { count: 1, types: ["peek"],                  dirs: ["left", "right"] },
     { count: 2, types: ["peek", "cross"],          dirs: ["left", "right", "top"] },
+    { count: 3, types: ["peek", "cross", "hand"],  dirs: ["left", "right", "top"] },
     { count: 3, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"] },
     { count: 4, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"], sequence: ["peek","cross","peek","hand"] },
   ],
@@ -6586,10 +6704,13 @@ const Crowd = {
     if (idx + 1 < total) {
       var wait;
       if (this.currentLayer >= 2) {
-        // Layer2-3: 圧縮タイミング
+        // Layer2-3: 強圧縮タイミング
         wait = (idx === 0) ? (100 + Math.random() * 80) : (100 + Math.random() * 150);
+      } else if (this.currentLayer === 1) {
+        // Layer1: やや短縮タイミング
+        wait = (idx === 0) ? (130 + Math.random() * 80) : (130 + Math.random() * 130);
       } else {
-        // Layer0-1: 通常タイミング
+        // Layer0: 通常タイミング
         wait = (idx === 0) ? (150 + Math.random() * 100) : (150 + Math.random() * 200);
       }
       var self = this;
@@ -7112,20 +7233,34 @@ const Crowd = {
             ci++;
           } else {
             clearInterval(typeTimer);
-            // ランク
+            // 静寂 → ランク出現
             setTimeout(() => {
               if (this.sessionId !== sid) return;
               let rank, rankMsg, rankColor;
+              var isS = false;
               if (m === 0) {
-                rank = "S"; rankMsg = I18n.t("crowd.rankS"); rankColor = "#ffd700";
+                rank = "S"; rankMsg = I18n.t("crowd.rankS"); rankColor = "#ffd700"; isS = true;
               } else if (m <= 2) {
                 rank = "A"; rankMsg = I18n.t("crowd.rankA"); rankColor = "#c0c0ff";
               } else {
                 rank = "B"; rankMsg = I18n.t("crowd.rankB"); rankColor = "#a0c0e0";
               }
 
+              // ランク出現SE
+              SoundSystem.rankReveal(isS);
+
+              // Sランク: 画面フラッシュ
+              if (isS) {
+                this.el.clearOverlay.classList.add("cw-rank-flash");
+                setTimeout(() => {
+                  this.el.clearOverlay.classList.remove("cw-rank-flash");
+                }, 400);
+              }
+
               this.el.clearRank.textContent = rank;
               this.el.clearRank.style.color = rankColor;
+              this.el.clearRank.classList.add("cw-rank-reveal");
+              if (isS) this.el.clearRank.classList.add("cw-rank-s");
               this.el.clearRankMsg.textContent = rankMsg;
 
               // 三幕総括エピローグ
@@ -7140,8 +7275,8 @@ const Crowd = {
                   this.el.clearButtons.style.opacity = "1";
                   this.el.clearButtons.style.pointerEvents = "auto";
                 }, 1500);
-              }, 500);
-            }, 350);
+              }, 700);
+            }, 500);
           }
         }, 75);
       }, 900);

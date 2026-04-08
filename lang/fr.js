@@ -119,6 +119,9 @@ crowd: {
   tutorialLine1: "Un seul est différent.",
   tutorialLine2: "Trouve-le.",
   postLayer0: "…c'était juste l'échauffement.",
+  tutorialLine3: "Touche.",
+  interlude1: "Ce n'était que l'entrée.",
+  interlude2: "Tu es arrivé jusqu'ici ?",
 },
 
 // === Dungeon ===

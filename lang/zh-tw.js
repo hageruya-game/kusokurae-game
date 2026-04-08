@@ -117,6 +117,9 @@ crowd: {
   tutorialLine1: "只有一個不同。",
   tutorialLine2: "找出來。",
   postLayer0: "…那只是熱身。",
+  tutorialLine3: "點它。",
+  interlude1: "這只是入口。",
+  interlude2: "你竟然走到這裡？",
 },
 
 // === Dungeon ===

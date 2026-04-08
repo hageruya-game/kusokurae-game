@@ -117,6 +117,9 @@ crowd: {
   tutorialLine1: "Один отличается.",
   tutorialLine2: "Найди.",
   postLayer0: "…это была разминка.",
+  tutorialLine3: "Нажми.",
+  interlude1: "Это лишь вход.",
+  interlude2: "Ты добрался сюда?",
 },
 
 // === Dungeon ===

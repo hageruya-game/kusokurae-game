@@ -117,6 +117,9 @@ crowd: {
   tutorialLine1: "1つだけ違う。",
   tutorialLine2: "見つけろ。",
   postLayer0: "…それはウォーミングアップだ。",
+  tutorialLine3: "タップしろ。",
+  interlude1: "まだ入口だ。",
+  interlude2: "ここまで来たのか。",
 },
 
 // === Dungeon ===

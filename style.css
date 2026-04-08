@@ -942,6 +942,37 @@ body {
 .dg-transition-text.dg-trans-text-show {
   opacity: 1;
 }
+/* --- ステージ間キモキャラ割り込み --- */
+.dg-interlude-img {
+  width: clamp(120px, 40vw, 180px);
+  height: clamp(120px, 40vw, 180px);
+  object-fit: contain;
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: brightness(0.6) contrast(1.3) drop-shadow(0 0 20px rgba(180,0,60,0.5));
+}
+.dg-interlude-img.dg-interlude-show {
+  display: block;
+  animation: dgInterludeImg 1.5s ease-in-out forwards;
+}
+@keyframes dgInterludeImg {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  15%  { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  70%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.95); }
+}
+.dg-transition-text.dg-interlude-text-show {
+  opacity: 1;
+  animation: dgInterludeText 1.5s ease-in-out forwards;
+}
+@keyframes dgInterludeText {
+  0%   { opacity: 0; transform: translateY(8px); }
+  20%  { opacity: 1; transform: translateY(0); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
 
 /* ===== デバッグラベル（テストモード用） ===== */
 .debug-label {
@@ -4025,6 +4056,33 @@ body::before {
   20% { opacity: 1; transform: translateY(0); }
   80% { opacity: 1; }
   100% { opacity: 0.7; }
+}
+
+/* --- 初期マスク（差異を最初は見えにくくする） --- */
+.cw-cell.cw-cell-mask { filter: brightness(0.92) blur(0.3px); transition: filter 0.15s ease; }
+
+/* --- ランク出現演出 --- */
+.cw-clear-rank.cw-rank-reveal {
+  animation: cwRankReveal 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes cwRankReveal {
+  0%   { transform: scale(0.3); opacity: 0; filter: brightness(2); }
+  40%  { transform: scale(1.15); opacity: 1; filter: brightness(1.5); }
+  70%  { transform: scale(0.95); filter: brightness(1.1); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+.cw-clear-rank.cw-rank-s {
+  text-shadow: 0 0 40px rgba(255,215,0,0.8), 0 0 80px rgba(255,215,0,0.4);
+  animation: cwRankReveal 0.7s cubic-bezier(0.22,1,0.36,1) forwards, cwRankGlow 2s ease-in-out infinite 0.7s;
+}
+@keyframes cwRankGlow {
+  0%,100% { text-shadow: 0 0 40px rgba(255,215,0,0.8), 0 0 80px rgba(255,215,0,0.4); }
+  50%     { text-shadow: 0 0 60px rgba(255,215,0,1.0), 0 0 100px rgba(255,215,0,0.6); }
+}
+.cw-clear-overlay.cw-rank-flash { animation: cwRankFlash 0.4s ease-out; }
+@keyframes cwRankFlash {
+  0%   { background: rgba(255,255,255,0.3); }
+  100% { background: rgba(26,10,46,0.95); }
 }
 
 /* --- 層タイトルオーバーレイ --- */
