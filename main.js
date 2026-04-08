@@ -6599,19 +6599,47 @@ const Crowd = {
     });
   },
 
-  // 時間差差異: 正解セルだけ動きのタイミングをずらす
+  // 時間差差異: パターン分散で法則を読ませない
   _applyTemporalDiff() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     if (!cells.length) return;
     var self = this;
-    // 全セルにランダム遅延を分散（正解だけが浮かない）
+    // パターン抽選: 遅延/先行/無差/囮ミスリード
+    var roll = Math.random();
+    var pattern; // "delay" | "ahead" | "none" | "decoy"
+    if (roll < 0.35) pattern = "delay";
+    else if (roll < 0.55) pattern = "ahead";
+    else if (roll < 0.75) pattern = "none";
+    else pattern = "decoy";
+
+    // 囮用: 正解以外から1セルを大遅延候補にする
+    var decoyIdx = -1;
+    if (pattern === "decoy") {
+      var pool = [];
+      for (var i = 0; i < cells.length; i++) { if (i !== self.oddIndex) pool.push(i); }
+      decoyIdx = pool[Math.floor(Math.random() * pool.length)];
+    }
+
     cells.forEach(function(c, idx) {
       var delay;
-      if (idx === self.oddIndex && self.oddIndex >= 0) {
-        delay = 0.15 + Math.random() * 0.1; // 正解: 0.15-0.25s
-        if (Math.random() < 0.3) delay = -delay;
+      if (pattern === "none") {
+        // 全セル同じ範囲: 正解も他も区別なし
+        delay = Math.random() * 0.10;
+        if (Math.random() < 0.5) delay = -delay;
+      } else if (pattern === "decoy" && idx === decoyIdx) {
+        // 囮セルに最大遅延（正解と誤認させる）
+        delay = 0.16 + Math.random() * 0.08;
+      } else if (idx === self.oddIndex && self.oddIndex >= 0) {
+        if (pattern === "delay") {
+          delay = 0.10 + Math.random() * 0.08; // 0.10-0.18s
+        } else if (pattern === "ahead") {
+          delay = -(0.05 + Math.random() * 0.10); // 先行（clampで0になる場合あり）
+        } else {
+          delay = Math.random() * 0.06; // decoyパターン: 正解は控えめ
+        }
       } else {
-        delay = Math.random() * 0.12; // 他: 0-0.12s
+        // 他セル: 全パターン共通の広いランダム範囲
+        delay = Math.random() * 0.14;
         if (Math.random() < 0.4) delay = -delay;
       }
       c.style.animationDelay = Math.max(0, delay).toFixed(3) + "s";
@@ -6631,16 +6659,16 @@ const Crowd = {
       // ランダムな周期で完全非同期化
       c.style.animationDuration = (1.6 + Math.random() * 0.4).toFixed(2) + "s";
     });
-    // 動的回転: 全セルにランダム回転を配布（正解だけが浮かない）
+    // 動的回転: 全セルにランダム回転を配布（正解と他セルの範囲が重なる）
     cells.forEach(function(c, idx) {
       var box = c.querySelector(".cw-box");
       if (!box) return;
       var rot;
       if (idx === self.oddIndex && self._motionRotation) {
-        rot = self._motionRotation; // 正解: 差異込みの回転（±8〜25°）
+        rot = self._motionRotation; // 正解: ±6〜15°（generateShapesで決定）
       } else {
-        // 他セル: レイヤーに応じたランダム小回転
-        rot = (Math.random() * 2 - 1) * (3 + self.currentLayer * 2); // ±3〜±11°
+        // 他セル: レイヤーに応じた回転（Layer2-3では正解と同等以上もあり得る）
+        rot = (Math.random() * 2 - 1) * (4 + self.currentLayer * 2.5); // ±4〜±11.5°
       }
       box.style.transition = "transform 0.3s ease";
       box.style.transform = "rotate(" + rot.toFixed(1) + "deg)";
@@ -6659,7 +6687,7 @@ const Crowd = {
     });
   },
 
-  // === フェイク差異（Pattern C）: 正解でないセルにも怪しい挙動を混ぜる ===
+  // === フェイク差異（Pattern C）: 正解でないセルに"正解っぽい"挙動を混ぜる ===
   _applyFakeHints() {
     if (this.currentLayer < 1) return; // Layer0はフェイクなし（ルール理解フェーズ）
     var cells = this.el.grid.querySelectorAll(".cw-cell");
@@ -6673,41 +6701,96 @@ const Crowd = {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = candidates[i]; candidates[i] = candidates[j]; candidates[j] = tmp;
     }
-    var fakeCount = this.currentLayer >= 2 ? 2 : 1;
+    // フェイク数: Layer1=1-2, Layer2=2, Layer3=2-3
+    var fakeCount = this.currentLayer >= 3 ? 2 + (Math.random() < 0.5 ? 1 : 0)
+      : this.currentLayer >= 2 ? 2 : 1 + (Math.random() < 0.4 ? 1 : 0);
     var fakes = candidates.slice(0, Math.min(fakeCount, candidates.length));
     var sid = this.sessionId;
     var self = this;
-    var startDelay = 1000 + Math.random() * 1000;
 
+    // 第1波: 0.8〜1.6秒後
+    var wave1Delay = 800 + Math.random() * 800;
     fakes.forEach(function(fi, fIdx) {
       var tid = setTimeout(function() {
         if (self.sessionId !== sid || self.answered) return;
-        var fakeOrb = cells[fi] ? cells[fi].querySelector(".cw-shape") : null;
-        if (!fakeOrb) return;
-        var origTransform = fakeOrb.style.transform;
-        var origInset = fakeOrb.style.inset;
-        fakeOrb.style.transition = "transform 0.15s ease, inset 0.15s ease";
-        if (Math.random() < 0.5) {
-          // offsetフェイク
-          var fakeOx = (Math.random() * 2 - 1) * 8;
-          var fakeOy = (Math.random() * 2 - 1) * 6;
-          fakeOrb.style.transform = "translate(" + fakeOx.toFixed(1) + "%, " + fakeOy.toFixed(1) + "%)";
-        } else {
-          // scaleフェイク
-          var fakeInset = 10 + (Math.random() * 2 - 1) * 4;
-          fakeOrb.style.inset = fakeInset.toFixed(1) + "%";
-        }
-        // 0.4〜0.8秒後に復帰
-        var restoreTid = setTimeout(function() {
-          if (self.sessionId !== sid) return;
-          fakeOrb.style.transform = origTransform;
-          fakeOrb.style.inset = origInset;
-          setTimeout(function() { fakeOrb.style.transition = ""; }, 200);
-        }, 400 + Math.random() * 400);
-        self._fakeHintTimers.push(restoreTid);
-      }, startDelay + fIdx * (300 + Math.random() * 300));
+        self._applyFakeToCell(cells[fi], sid);
+      }, wave1Delay + fIdx * (200 + Math.random() * 300));
       self._fakeHintTimers.push(tid);
     });
+
+    // 第2波: Layer2+で2.5〜3.5秒後に別のセルにも発動
+    if (this.currentLayer >= 2) {
+      var wave2Candidates = candidates.slice(fakeCount, fakeCount + 2);
+      if (wave2Candidates.length === 0) wave2Candidates = candidates.slice(0, 1);
+      var wave2Delay = 2500 + Math.random() * 1000;
+      wave2Candidates.forEach(function(fi, fIdx) {
+        var tid = setTimeout(function() {
+          if (self.sessionId !== sid || self.answered) return;
+          self._applyFakeToCell(cells[fi], sid);
+        }, wave2Delay + fIdx * (250 + Math.random() * 250));
+        self._fakeHintTimers.push(tid);
+      });
+    }
+  },
+
+  // 1セルに対して複合フェイク効果を適用
+  _applyFakeToCell(cell, sid) {
+    if (!cell) return;
+    var self = this;
+    var fakeOrb = cell.querySelector(".cw-shape");
+    var fakeBox = cell.querySelector(".cw-box");
+    if (!fakeOrb) return;
+
+    var origOrbTransform = fakeOrb.style.transform;
+    var origOrbInset = fakeOrb.style.inset;
+    var origBoxTransform = fakeBox ? fakeBox.style.transform : "";
+
+    // 複合効果: offset + scale + box回転を確率で重ね掛け
+    var effects = [];
+
+    // offset: 70%の確率で適用
+    if (Math.random() < 0.7) {
+      var ox = (Math.random() * 2 - 1) * 10;
+      var oy = (Math.random() * 2 - 1) * 8;
+      effects.push("offset");
+      fakeOrb.style.transition = "transform 0.2s ease";
+      fakeOrb.style.transform = "translate(" + ox.toFixed(1) + "%, " + oy.toFixed(1) + "%)";
+    }
+    // scale(inset): 50%の確率で適用
+    if (Math.random() < 0.5) {
+      var fakeInset = 10 + (Math.random() * 2 - 1) * 5;
+      effects.push("scale");
+      fakeOrb.style.transition = "transform 0.2s ease, inset 0.2s ease";
+      fakeOrb.style.inset = fakeInset.toFixed(1) + "%";
+    }
+    // box回転: 60%の確率で適用（正解セルの回転と同等の角度）
+    if (fakeBox && Math.random() < 0.6) {
+      var fakeRot = (Math.random() * 2 - 1) * (5 + self.currentLayer * 3);
+      effects.push("boxrot");
+      fakeBox.style.transition = "transform 0.25s ease";
+      fakeBox.style.transform = "rotate(" + fakeRot.toFixed(1) + "deg)";
+    }
+    // 最低1つは保証
+    if (effects.length === 0) {
+      var ox = (Math.random() * 2 - 1) * 10;
+      var oy = (Math.random() * 2 - 1) * 8;
+      fakeOrb.style.transition = "transform 0.2s ease";
+      fakeOrb.style.transform = "translate(" + ox.toFixed(1) + "%, " + oy.toFixed(1) + "%)";
+    }
+
+    // 0.6〜1.2秒後に復帰
+    var restoreDur = 600 + Math.random() * 600;
+    var restoreTid = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      fakeOrb.style.transform = origOrbTransform;
+      fakeOrb.style.inset = origOrbInset;
+      if (fakeBox) fakeBox.style.transform = origBoxTransform;
+      setTimeout(function() {
+        fakeOrb.style.transition = "";
+        if (fakeBox) fakeBox.style.transition = "";
+      }, 250);
+    }, restoreDur);
+    self._fakeHintTimers.push(restoreTid);
   },
 
   generateShapes(layer) {
@@ -6777,7 +6860,8 @@ const Crowd = {
         } else if (axis === "rotation") {
           // 外箱の回転（動的のみ: 静止時は0、揺れで差が出る）
           // _motionRotation にストアして jitter フェーズで適用
-          var range = 8 + (25 - 8) * s;
+          // 他セルとの差を縮小: ±6〜15°（他セル ±4〜11.5° と重なる）
+          var range = 6 + (15 - 6) * s;
           this._motionRotation = sign * range;
           diff.rotation = 0; // 静止時は角度差なし
         } else if (axis === "scale") {
