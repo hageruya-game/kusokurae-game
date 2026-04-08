@@ -102,6 +102,7 @@ crowd: {
     "まだ見えるのか。"
   ],
   lastTaunt: "…終わりだ。",
+  lastIntro: "…最後だ。",
   found: "…見つけた",
   allSame: "…全員同じだ",
   wrong: "…違う",

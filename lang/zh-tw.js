@@ -102,6 +102,7 @@ crowd: {
     "還看得見？"
   ],
   lastTaunt: "…結束了。",
+  lastIntro: "…最後一題。",
   found: "…找到了",
   allSame: "…全都一樣",
   wrong: "…不對",

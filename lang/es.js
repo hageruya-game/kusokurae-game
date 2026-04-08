@@ -102,6 +102,7 @@ crowd: {
     "\u00BFA\u00FAn lo ves?"
   ],
   lastTaunt: "\u2026se acabó.",
+  lastIntro: "\u2026el último.",
   found: "\u2026Lo encontraste",
   allSame: "\u2026Todos son iguales",
   wrong: "\u2026Ese no era",

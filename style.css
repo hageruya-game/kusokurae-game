@@ -3981,6 +3981,15 @@ body::before {
   12%  { filter: brightness(1.5); }
   100% { filter: brightness(1); }
 }
+/* 最終ラウンド前フリ暗転 */
+.cw-last-intro {
+  filter: brightness(0.92);
+  transition: filter 0.15s ease;
+}
+/* 視線トラップ: 軽いハイライト */
+.cw-gaze-trap {
+  filter: brightness(1.5) drop-shadow(0 0 6px rgba(200, 180, 255, 0.5));
+}
 
 /* --- 層タイトルオーバーレイ --- */
 .cw-layer-overlay {

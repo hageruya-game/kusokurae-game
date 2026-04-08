@@ -361,6 +361,25 @@ const SoundSystem = {
     ping.stop(t + 0.15);
   },
 
+  // --- 最終ラウンド前フリ: 低い短音 ---
+  lastRoundCue() {
+    if (!this.enabled) return;
+    this.resume();
+    var ctx = this.ctx;
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(65, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.18);
+    gain.gain.setValueAtTime(0.15, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc.start(t);
+    osc.stop(t + 0.25);
+  },
+
   // --- 審眼ミス: 空虚な下降 + 残響テール ---
   crowdMiss() {
     if (!this.enabled) return;
@@ -5952,6 +5971,7 @@ const Crowd = {
     this.maxCombo = 0;
     this.totalMisses = 0;
     this.lives = this.maxLives;
+    this._lastRoundIntroPlayed = false;
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0.3);
@@ -6004,7 +6024,7 @@ const Crowd = {
   },
 
   clearEffects() {
-    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash");
+    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash", "cw-last-intro");
     this.el.layerOverlay.classList.remove("cw-lo-show");
     this.el.layerOverlay.style.pointerEvents = "";
     if (this._dismissFn) {
@@ -6137,6 +6157,7 @@ const Crowd = {
     this._roundDiffScale = 1.0;
     this._roundInterferenceBoost = false;
     this._isLastRound = false;
+    this._gazeTrapFired = false;
     if (this.roundType === "find") {
       var findIndex = 0;
       for (var fi = 0; fi < this.currentRound; fi++) {
@@ -6158,6 +6179,42 @@ const Crowd = {
       this._isLastRound = true;
     }
 
+    // 最終ラウンド前フリ演出
+    if (this._isLastRound && !this._lastRoundIntroPlayed) {
+      this._lastRoundIntroPlayed = true;
+      this._playLastRoundIntro(layer);
+      return;
+    }
+
+    this._startRoundCore(layer);
+  },
+
+  _playLastRoundIntro(layer) {
+    var sid = this.sessionId;
+    var self = this;
+
+    // 画面をわずかに暗く
+    this.el.screen.classList.add("cw-last-intro");
+
+    // 低い短音
+    SoundSystem.lastRoundCue();
+
+    // テキスト表示
+    this.el.command.textContent = I18n.t("crowd.lastIntro");
+    this.el.command.style.color = "#b0a0d0";
+
+    // 0.7秒後に通常画面へ復帰 → 本体開始
+    var dur = 600 + Math.random() * 300;
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.screen.classList.remove("cw-last-intro");
+      self.el.command.textContent = "";
+      self.el.command.style.color = "";
+      self._startRoundCore(layer);
+    }, dur);
+  },
+
+  _startRoundCore(layer) {
     this._roundStartTime = Date.now();
     this._roundTimerDur = layer.timer;
     this.generateShapes(layer);
@@ -6334,6 +6391,27 @@ const Crowd = {
     cell.appendChild(box);
   },
 
+  // === 視線トラップ（最終ラウンド限定） ===
+  _fireGazeTrap() {
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    if (!cells.length || this.oddIndex < 0) return;
+
+    // 正解でないセルからランダムに1つ選ぶ
+    var candidates = [];
+    for (var i = 0; i < cells.length; i++) {
+      if (i !== this.oddIndex) candidates.push(cells[i]);
+    }
+    if (!candidates.length) return;
+    var target = candidates[Math.floor(Math.random() * candidates.length)];
+
+    // 短いハイライト（0.12-0.18s）
+    target.classList.add("cw-gaze-trap");
+    var dur = 120 + Math.random() * 60;
+    setTimeout(function() {
+      target.classList.remove("cw-gaze-trap");
+    }, dur);
+  },
+
   // === 妨害演出 ===
   CW_INTRUDER: "assets/image_0.png",
 
@@ -6375,6 +6453,18 @@ const Crowd = {
     if (remaining < 200) return;
 
     var result = this.showSingleInterference(this.currentLayer, idx, prev);
+
+    // 視線トラップ: 最終ラウンド、妨害2回目以降に1回だけ
+    if (this._isLastRound && !this._gazeTrapFired && idx >= 1 && this.oddIndex >= 0) {
+      this._gazeTrapFired = true;
+      var trapSelf = this;
+      var trapSid = sid;
+      setTimeout(function() {
+        if (trapSelf.sessionId !== trapSid || trapSelf.answered) return;
+        trapSelf._fireGazeTrap();
+      }, 80 + Math.random() * 120);
+    }
+
     if (idx + 1 < total) {
       // 1回目→2回目: 0.15-0.25s、それ以降: 0.15-0.35s
       var wait = (idx === 0) ? (150 + Math.random() * 100) : (150 + Math.random() * 200);

@@ -102,6 +102,7 @@ crowd: {
     "Still see it?"
   ],
   lastTaunt: "...it's over.",
+  lastIntro: "...now it starts.",
   found: "...found it",
   allSame: "...they're all the same",
   wrong: "...wrong one",

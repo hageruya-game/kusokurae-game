@@ -104,6 +104,7 @@ crowd: {
     "Tu vois encore ?"
   ],
   lastTaunt: "\u2026c'est fini.",
+  lastIntro: "\u2026le dernier.",
   found: "…trouvé",
   allSame: "…tous identiques",
   wrong: "…mauvais choix",
