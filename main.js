@@ -5770,10 +5770,10 @@ const CROWD_LAYERS = [
   { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","rotation","scale"] },
 ];
 
-const CROWD_LAYER_HINTS = [
-  "異端を見つけろ。\n違和感のある者をタップしろ。",
-  "「全員同じ」の時がある。\nその時は、何もタップするな。",
-  "違いが小さくなる。よく見ろ。",
+const CROWD_LAYER_TAUNTS = [
+  "違うやつ、見えるよな？",
+  "全部同じなら、触るな。",
+  "もう、見えなくなってきたか？",
   null,
 ];
 
@@ -5823,6 +5823,9 @@ const Crowd = {
       clearButtons: document.getElementById("cw-clear-buttons"),
       gameoverOverlay: document.getElementById("cw-gameover-overlay"),
       gameoverMsg: document.getElementById("cw-gameover-msg"),
+      taunt: document.getElementById("cw-taunt"),
+      tauntImg: document.getElementById("cw-taunt-img"),
+      tauntText: document.getElementById("cw-taunt-text"),
       peek: document.getElementById("cw-peek"),
       peekImg: document.getElementById("cw-peek-img"),
       hand: document.getElementById("cw-hand"),
@@ -5978,42 +5981,39 @@ const Crowd = {
     this.roundPlan = this.buildRoundPlan(layer);
     const sid = this.sessionId;
 
-    const hint = CROWD_LAYER_HINTS[this.currentLayer];
-    const showHint = hint && !this.layerTutorialShown.has(this.currentLayer);
+    // 層タイトル → 1.2秒後にゲーム開始（常に同じテンポ）
+    setTimeout(() => {
+      if (this.sessionId !== sid) return;
+      this.el.layerOverlay.classList.remove("cw-lo-show");
+      this.currentRound = 0;
+      this.startRound();
 
-    if (showHint) {
-      this.layerTutorialShown.add(this.currentLayer);
-      setTimeout(() => {
-        if (this.sessionId !== sid) return;
-        this.el.layerHint.textContent = hint;
-        this.el.layerHint.classList.add("cw-lh-show");
+      // ゲーム開始0.5秒後にキモキャラ演出（非ブロッキング）
+      if (!this.layerTutorialShown.has(this.currentLayer)) {
+        this.layerTutorialShown.add(this.currentLayer);
+        setTimeout(() => {
+          if (this.sessionId !== sid) return;
+          this.showTaunt(this.currentLayer);
+        }, 500);
+      }
+    }, 1200);
+  },
 
-        var dismissed = false;
-        const dismiss = () => {
-          if (dismissed || this.sessionId !== sid) return;
-          dismissed = true;
-          clearTimeout(this.hintTimeout);
-          this.el.layerOverlay.removeEventListener("click", dismiss);
-          this.el.layerOverlay.style.pointerEvents = "";
-          this.el.layerOverlay.classList.remove("cw-lo-show");
-          this.el.layerHint.classList.remove("cw-lh-show");
-          this.currentRound = 0;
-          this.startRound();
-        };
-        this.el.layerOverlay.style.pointerEvents = "auto";
-        if (this._dismissFn) this.el.layerOverlay.removeEventListener("click", this._dismissFn);
-        this._dismissFn = dismiss;
-        this.el.layerOverlay.addEventListener("click", dismiss);
-        this.hintTimeout = setTimeout(dismiss, 3000);
-      }, 1200);
-    } else {
-      setTimeout(() => {
-        if (this.sessionId !== sid) return;
-        this.el.layerOverlay.classList.remove("cw-lo-show");
-        this.currentRound = 0;
-        this.startRound();
-      }, 1200);
-    }
+  showTaunt(layerIdx) {
+    var el = this.el.taunt;
+    if (!el) return;
+
+    // キモキャラ画像
+    this.el.tauntImg.src = this.CW_INTRUDER;
+
+    // セリフ（第4層はnull → 無言で覗くだけ）
+    var text = CROWD_LAYER_TAUNTS[layerIdx];
+    this.el.tauntText.textContent = text || "";
+
+    // リセット＆再生
+    el.classList.remove("cw-taunt-show");
+    void el.offsetWidth; // reflow
+    el.classList.add("cw-taunt-show");
   },
 
   startRound() {
