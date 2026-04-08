@@ -6188,12 +6188,7 @@ const Crowd = {
   },
 
   // === 妨害演出 ===
-  CW_INTRUDERS: [
-    "assets/enemy_rat.png",
-    "assets/enemy_fly.png",
-    "assets/enemy_pig.png",
-    "assets/enemy_spider.png",
-  ],
+  CW_INTRUDER: "assets/image_0.png",
 
   scheduleInterference(layer) {
     // 第一層は出さない、それ以降15%の確率
@@ -6218,8 +6213,7 @@ const Crowd = {
     var img = this.el.peekImg;
     if (!el || !img) return;
 
-    var src = this.CW_INTRUDERS[Math.floor(Math.random() * this.CW_INTRUDERS.length)];
-    img.src = src;
+    img.src = this.CW_INTRUDER;
 
     // 左右ランダム
     var fromLeft = Math.random() < 0.5;
@@ -6240,8 +6234,7 @@ const Crowd = {
     var img = this.el.handImg;
     if (!el || !img) return;
 
-    var src = this.CW_INTRUDERS[Math.floor(Math.random() * this.CW_INTRUDERS.length)];
-    img.src = src;
+    img.src = this.CW_INTRUDER;
 
     // ランダムなセルの上に配置
     var cells = this.el.grid.querySelectorAll(".cw-cell");
