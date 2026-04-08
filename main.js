@@ -6577,8 +6577,14 @@ const Crowd = {
     this._roundStartTime = Date.now();
     this._roundTimerDur = layer.timer;
     this._fakeHintTimers = [];
-    this.generateShapes(layer);
-    this.renderGrid(layer);
+    // 差異なし問題の排除: 生成→検証→不合格なら再生成（最大5回）
+    var DIFF_MIN_DIST = 4.0;
+    var genRetries = 0;
+    do {
+      this.generateShapes(layer);
+      this.renderGrid(layer);
+      genRetries++;
+    } while (this.roundType === "find" && this._lastDiffDist < DIFF_MIN_DIST && genRetries < 5);
     this.startTimer(layer.timer);
 
     // 初期マスク: 表示直後は差異を目立たせない
@@ -6692,9 +6698,10 @@ const Crowd = {
       c.style.animationDelay = (Math.random() * 0.6).toFixed(2) + "s";
       c.style.animationDuration = (1.6 + Math.random() * 0.4).toFixed(2) + "s";
     });
-    // レイヤー別回転上限: Layer3は回転控えめ、translate主体で錯乱
-    var maxRotByLayer = [6, 7, 5, 3.5];
-    var maxRot = maxRotByLayer[self.currentLayer] || 4;
+    // 正解セル用の回転上限（box内回転なので画面はみ出しリスクなし）
+    var answerMaxRot = [8, 9, 8, 8][self.currentLayer] || 8;
+    // 他セルの回転範囲（正解より狭い → 回転差異が成立する）
+    var otherMaxRot = [5, 5, 3.5, 3][self.currentLayer] || 3;
     // Layer2-3: デバイス幅ベースのtranslate shift（はみ出し防止clamp）
     var screenW = window.innerWidth;
     var maxShift = useStrong ? Math.min(5, screenW * 0.013) : 0;
@@ -6704,9 +6711,9 @@ const Crowd = {
       var rot;
       if (idx === self.oddIndex && self._motionRotation) {
         rot = self._motionRotation;
-        rot = rot > 0 ? Math.min(rot, maxRot) : Math.max(rot, -maxRot);
+        rot = rot > 0 ? Math.min(rot, answerMaxRot) : Math.max(rot, -answerMaxRot);
       } else {
-        rot = (Math.random() * 2 - 1) * maxRot;
+        rot = (Math.random() * 2 - 1) * otherMaxRot;
       }
       // Layer2-3: translate offsetで位置ベースの錯乱を追加
       var tx = 0, ty = 0;
@@ -6882,6 +6889,10 @@ const Crowd = {
           chosenAxes.push("scale"); // 追加
         }
       }
+      // circle補強: flipが効かないのでscaleを必ず含める
+      if (this.roundShape === "circle" && chosenAxes.indexOf("scale") === -1) {
+        chosenAxes.push("scale");
+      }
       // Layer3-4: 必ずtemporal（時間差）を追加（まだなければ）
       if (layer.diffStrength <= 0.55) {
         this._forceTemporalDiff = true;
@@ -6951,11 +6962,13 @@ const Crowd = {
     this.el.grid.style.transform = gridRot ? ("rotate(" + gridRot.toFixed(1) + "deg)") : "";
     this._gridRotation = gridRot;
 
-    // 全セルにランダムノイズを配布（単体で"正常"に見えるがバラバラ）
-    var noiseOff = 2 + this.currentLayer * 1.5;  // offset noise: ±2~±6.5%
-    var noiseInset = 1 + this.currentLayer * 0.5; // inset noise: ±1~±2.5%
-    var noiseRot = 1 + this.currentLayer * 0.8;   // rotation noise: ±1~±3.4°
+    // ノイズ: diff > noise を保証するレイヤー別固定値
+    // Layer3: offset diff ±4.4~5.8 > noise ±3, inset diff ±2.2~2.9 > noise ±1.5
+    var noiseOff = [2, 2.5, 3.5, 3][this.currentLayer] || 2;
+    var noiseInset = [1, 1.2, 1.5, 1.5][this.currentLayer] || 1;
+    var noiseRot = [1, 1.2, 1.5, 1.5][this.currentLayer] || 1;
 
+    var cellShapes = [];
     for (var i = 0; i < totalCells; i++) {
       var cell = document.createElement("div");
       cell.className = "cw-cell";
@@ -6976,7 +6989,6 @@ const Crowd = {
       var isOdd = (i === this.oddIndex);
       var shape;
       if (isOdd && this.diffShape) {
-        // 正解: diff + noise（diffがノイズに紛れる）
         shape = {
           hue: this.diffShape.hue,
           offsetX: this.diffShape.offsetX + nox,
@@ -6986,7 +6998,6 @@ const Crowd = {
           flipX: this.diffShape.flipX,
         };
       } else {
-        // 通常: baseShape + noise（全セルが微妙にズレている）
         shape = {
           hue: this.baseShape.hue,
           offsetX: nox,
@@ -6996,6 +7007,7 @@ const Crowd = {
           flipX: false,
         };
       }
+      cellShapes.push(shape);
       this.applyShapeStyle(cell, shape, cellSize, isOdd);
 
       // タップイベント
@@ -7006,6 +7018,24 @@ const Crowd = {
       })(i, this);
 
       this.el.grid.appendChild(cell);
+    }
+
+    // 差異可視性スコア: 正解と最も近い通常セルの距離
+    this._lastDiffDist = 999;
+    if (this.oddIndex >= 0 && this.diffShape) {
+      var odd = cellShapes[this.oddIndex];
+      var minD = Infinity;
+      for (var ci = 0; ci < cellShapes.length; ci++) {
+        if (ci === this.oddIndex) continue;
+        var c = cellShapes[ci];
+        if (odd.flipX !== c.flipX) continue; // flip差異あり→距離∞
+        var dx = odd.offsetX - c.offsetX;
+        var dy = odd.offsetY - c.offsetY;
+        var di = (odd.inset - c.inset) * 2; // サイズ差は目立つのでウェイト2倍
+        var d = Math.sqrt(dx * dx + dy * dy + di * di);
+        if (d < minD) minD = d;
+      }
+      this._lastDiffDist = minD;
     }
 
     // 入場アニメーション
