@@ -2044,7 +2044,7 @@ const Game = {
     this.el.btnChoice1.innerHTML = "";
 
     // リセット
-    this.el.gameCharImg.src = "image_0.png";
+    this.el.gameCharImg.src = "assets/image_0.png";
     this.el.tapGuide.classList.remove("active");
 
     // デバッグラベル
@@ -5867,7 +5867,7 @@ const Tutorial = {
     Game.el.feedback.className = "feedback";
     Game.el.btnChoice0.innerHTML = "";
     Game.el.btnChoice1.innerHTML = "";
-    Game.el.gameCharImg.src = "image_0.png";
+    Game.el.gameCharImg.src = "assets/image_0.png";
     Game.el.gameCharImg.className = "character-img char-enter";
     Game.el.tapGuide.classList.remove("active");
     Game.el.speech.textContent = "";
