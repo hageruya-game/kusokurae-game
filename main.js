@@ -5764,8 +5764,8 @@ const Tutorial = {
 const CROWD_LAYERS = [
   { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation","hue"] },
   { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["offset","scale","rotation","hue"] },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["offset","scale","rotation"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","scale","rotation"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["offset","rotation","scale"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","rotation"] },
 ];
 
 const CROWD_LAYER_HINTS = [
@@ -6046,28 +6046,28 @@ const Crowd = {
     if (this.roundType === "find") {
       this.oddIndex = Math.floor(Math.random() * totalCells);
 
-      // 層のaxesから軸を選択（offsetは必ず含め、補助軸を追加）
+      // 層のaxesから軸を選択（offset必須＋補助軸）
       var axes = layer.axes.slice();
-      var numAxes = layer.diffStrength > 0.5 ? (Math.random() < 0.5 ? 2 : 1) : 1;
-      // offsetを優先的に選ぶ
       var hasOffset = axes.indexOf("offset") >= 0;
       var chosenAxes = [];
-      if (hasOffset && numAxes >= 1) {
+      if (hasOffset) {
         chosenAxes.push("offset");
         var rest = axes.filter(function(a) { return a !== "offset"; });
         for (var i = rest.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
           var tmp = rest[i]; rest[i] = rest[j]; rest[j] = tmp;
         }
-        for (var i = 0; i < numAxes - 1 && i < rest.length; i++) {
-          chosenAxes.push(rest[i]);
+        // 後半層(diffStrength<=0.5)は補助軸を必ず1つ追加
+        var addSub = layer.diffStrength <= 0.5 ? true : (Math.random() < 0.5);
+        if (addSub && rest.length > 0) {
+          chosenAxes.push(rest[0]);
         }
       } else {
         for (var i = axes.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
           var tmp = axes[i]; axes[i] = axes[j]; axes[j] = tmp;
         }
-        chosenAxes = axes.slice(0, numAxes);
+        chosenAxes = axes.slice(0, 1);
       }
 
       var diff = { hue: baseHue, rotation: 0, inset: 8, offsetX: 0, offsetY: 0, hostile: false };
@@ -6196,11 +6196,12 @@ const Crowd = {
     if (Math.random() > 0.15) return;
 
     var sid = this.sessionId;
-    var delay = 500 + Math.random() * 1500; // 0.5〜2秒後
+    var doPeek = Math.random() < 0.5;
+    var delay = doPeek ? (200 + Math.random() * 400) : (300 + Math.random() * 500);
 
     this.interferenceTimeout = setTimeout(function() {
       if (this.sessionId !== sid || this.answered) return;
-      if (Math.random() < 0.5) {
+      if (doPeek) {
         this.showPeek();
       } else {
         this.showHandCover();
