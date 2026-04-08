@@ -2180,26 +2180,22 @@ const Game = {
     const gid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== gid) return;
-      // 1秒の静寂
+      text.textContent = I18n.t("dungeon.toNext");
+      text.classList.add("dg-trans-text-show");
       setTimeout(() => {
         if (this.sessionId !== gid) return;
-        text.textContent = I18n.t("dungeon.toNext");
-        text.classList.add("dg-trans-text-show");
+        text.classList.remove("dg-trans-text-show");
         setTimeout(() => {
           if (this.sessionId !== gid) return;
-          text.classList.remove("dg-trans-text-show");
-          setTimeout(() => {
-            if (this.sessionId !== gid) return;
-            Slash.pressure = this.pressureLevel;
-            Slash.currentLayer = 0;
-            Slash.totalMisses = 0;
-            Slash.start();
-            overlay.classList.remove("dg-trans-active");
-            text.textContent = "";
-          }, 700);
-        }, 1500);
-      }, 1000);
-    }, 600);
+          Slash.pressure = this.pressureLevel;
+          Slash.currentLayer = 0;
+          Slash.totalMisses = 0;
+          Slash.start();
+          overlay.classList.remove("dg-trans-active");
+          text.textContent = "";
+        }, 400);
+      }, 800);
+    }, 400);
   },
 
   showResult() {
@@ -4344,23 +4340,19 @@ const Slash = {
     const sid = this.sessionId;
     setTimeout(() => {
       if (this.sessionId !== sid) return;
-      // 1秒の静寂
+      text.textContent = I18n.t("slash.toDeep");
+      text.classList.add("dg-trans-text-show");
       setTimeout(() => {
         if (this.sessionId !== sid) return;
-        text.textContent = I18n.t("slash.toDeep");
-        text.classList.add("dg-trans-text-show");
+        text.classList.remove("dg-trans-text-show");
         setTimeout(() => {
           if (this.sessionId !== sid) return;
-          text.classList.remove("dg-trans-text-show");
-          setTimeout(() => {
-            if (this.sessionId !== sid) return;
-            Crowd.start();
-            overlay.classList.remove("dg-trans-active");
-            text.textContent = "";
-          }, 700);
-        }, 1500);
-      }, 1000);
-    }, 600);
+          Crowd.start();
+          overlay.classList.remove("dg-trans-active");
+          text.textContent = "";
+        }, 400);
+      }, 800);
+    }, 400);
   },
 
   showOX(isCorrect) {
@@ -5872,10 +5864,10 @@ const CROWD_LAYERS = [
 ];
 
 const CROWD_LAYER_TAUNTS = [
-  "違うやつ、見えるよな？",
-  "全部同じなら、触るな。",
-  "このやろう、やるじゃねーか。",
-  "まだ見えるのか。もっと邪魔してやる。",
+  "見えるか？",
+  "同じだろ。触るな。",
+  "…やるな。",
+  "まだ見えるのか。",
 ];
 
 const Crowd = {
@@ -6136,6 +6128,26 @@ const Crowd = {
     const layer = CROWD_LAYERS[this.currentLayer];
     this.roundType = this.roundPlan[this.currentRound] || "find";
 
+    // 波パターン: 最初のfindラウンドをやや易、直後を強化
+    this._roundDiffScale = 1.0;
+    this._roundInterferenceBoost = false;
+    if (this.roundType === "find") {
+      var findIndex = 0;
+      for (var fi = 0; fi < this.currentRound; fi++) {
+        if (this.roundPlan[fi] === "find") findIndex++;
+      }
+      if (findIndex === 0) {
+        // 最初のfind: やや分かりやすい
+        this._roundDiffScale = 1.4;
+      } else if (findIndex === 1) {
+        // 2問目find: 複合微差＋強妨害
+        this._roundDiffScale = 0.7;
+        this._roundInterferenceBoost = true;
+      }
+    }
+
+    this._roundStartTime = Date.now();
+    this._roundTimerDur = layer.timer;
     this.generateShapes(layer);
     this.renderGrid(layer);
     this.startTimer(layer.timer);
@@ -6163,14 +6175,16 @@ const Crowd = {
       this.oddIndex = Math.floor(Math.random() * totalCells);
 
       // offset必須＋補助軸を追加（Layer3-4は2つ、それ以外は1つ）
-      var axes = layer.axes.slice();
+      // ガード: color/shape軸は常に除外
+      var axes = layer.axes.filter(function(a) { return a !== "color" && a !== "shape"; });
       var chosenAxes = ["offset"];
       var rest = axes.filter(function(a) { return a !== "offset"; });
       for (var i = rest.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
         var tmp = rest[i]; rest[i] = rest[j]; rest[j] = tmp;
       }
-      var extraCount = (layer.diffStrength <= 0.55) ? 2 : 1;
+      // Layer3-4（diffStrength≤0.55）は必ず2軸以上の複合差異
+      var extraCount = (layer.diffStrength <= 0.55) ? Math.max(2, rest.length) : 1;
       for (var e = 0; e < extraCount && e < rest.length; e++) {
         chosenAxes.push(rest[e]);
       }
@@ -6179,7 +6193,7 @@ const Crowd = {
 
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
-        var s = layer.diffStrength;
+        var s = Math.min(1.0, layer.diffStrength * (this._roundDiffScale || 1.0));
         var sign = Math.random() < 0.5 ? 1 : -1;
 
         if (axis === "offset") {
@@ -6316,7 +6330,7 @@ const Crowd = {
     { count: 1, types: ["peek"],                  dirs: ["left", "right"] },
     { count: 2, types: ["peek", "cross"],          dirs: ["left", "right", "top"] },
     { count: 3, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"] },
-    { count: 4, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"] },
+    { count: 4, types: ["peek", "hand", "cross"],  dirs: ["left", "right", "top"], sequence: ["peek","cross","peek","hand"] },
   ],
 
   // アニメーション尺（ms）
@@ -6329,6 +6343,8 @@ const Crowd = {
 
   playInterferenceSequence(layer) {
     var count = this.getInterferenceCount(this.currentLayer);
+    // 強化ラウンド: 妨害数+1
+    if (this._roundInterferenceBoost && count < 4) count++;
     var sid = this.sessionId;
     var self = this;
     var delay1 = 300 + Math.random() * 300;
@@ -6341,10 +6357,15 @@ const Crowd = {
 
   _playChainedInterference(idx, total, prev, sid) {
     if (idx >= total || this.sessionId !== sid || this.answered) return;
+    // 判定直前0.2秒以内は妨害を出さない
+    var elapsed = Date.now() - (this._roundStartTime || 0);
+    var remaining = (this._roundTimerDur || 5000) - elapsed;
+    if (remaining < 200) return;
+
     var result = this.showSingleInterference(this.currentLayer, idx, prev);
     if (idx + 1 < total) {
-      // 1-2回目は0.3-0.6s、3-4回目は0.15-0.35s（「終わったと思ったらまた来る」）
-      var wait = (idx < 2) ? (300 + Math.random() * 300) : (150 + Math.random() * 200);
+      // 1回目→2回目: 0.15-0.25s、それ以降: 0.15-0.35s
+      var wait = (idx === 0) ? (150 + Math.random() * 100) : (150 + Math.random() * 200);
       var self = this;
       setTimeout(function() {
         self._playChainedInterference(idx + 1, total, result, sid);
@@ -6357,9 +6378,11 @@ const Crowd = {
     var types = cfg.types;
     var dirs = cfg.dirs;
 
-    // タイプ選択（連続で違うタイプに変える）
+    // タイプ選択（sequenceがあれば固定パターン、なければランダム）
     var type;
-    if (prev && types.length > 1) {
+    if (cfg.sequence && seqIndex < cfg.sequence.length) {
+      type = cfg.sequence[seqIndex];
+    } else if (prev && types.length > 1) {
       var others = types.filter(function(t) { return t !== prev.type; });
       type = others[Math.floor(Math.random() * others.length)];
     } else {

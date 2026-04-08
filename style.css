@@ -3898,16 +3898,18 @@ body::before {
 }
 @keyframes cwCrossLTR {
   0%   { left: -140px; opacity: 0; }
-  10%  { opacity: 0.8; }
-  50%  { opacity: 0.8; }
-  90%  { opacity: 0.6; }
+  8%   { left: 15%; opacity: 0.8; }
+  35%  { left: 35%; opacity: 0.8; }
+  65%  { left: 55%; opacity: 0.8; }
+  92%  { left: 90%; opacity: 0.6; }
   100% { left: 100%; opacity: 0; }
 }
 @keyframes cwCrossRTL {
   0%   { right: -140px; left: auto; opacity: 0; }
-  10%  { opacity: 0.8; }
-  50%  { opacity: 0.8; }
-  90%  { opacity: 0.6; }
+  8%   { right: 15%; left: auto; opacity: 0.8; }
+  35%  { right: 35%; left: auto; opacity: 0.8; }
+  65%  { right: 55%; left: auto; opacity: 0.8; }
+  92%  { right: 90%; left: auto; opacity: 0.6; }
   100% { right: 100%; left: auto; opacity: 0; }
 }
 

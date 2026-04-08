@@ -38,7 +38,7 @@ ui: {
 
 // === Pantalla de titulo ===
 title: {
-  hook: "Aunque lo veas claro, obedece.",
+  hook: "Lo ves. Obedece.",
   main: "Corredor de presi\u00F3n",
   prologueLine1: "En este mundo, obedecer es lo correcto.",
   prologueLine2: "Quien no sigue al grupo, se convierte en el error.",
@@ -79,8 +79,8 @@ slash: {
   cmdWait: "No cortes",
   timeout: "\u2026Muy lento",
   gameover: "\u2026Te dominaron",
-  clearMsg: "\u2026Esto no ha terminado.",
-  toDeep: "\u2026Al fondo",
+  clearMsg: "\u2026a\u00FAn no.",
+  toDeep: "\u2026m\u00E1s hondo",
   targets: { rat: "Rata", fly: "Mosca", pig: "Cerdo", spider: "Araña", bomb: "Bomba", burger: "Hamburguesa", mushroom: "Hongo", potion: "Poción", fire: "Fuego", treasure: "Cofre" },
   cmdSlash: "Corta a {name}",
   targetJoin: " y ",
@@ -96,10 +96,10 @@ slash: {
 crowd: {
   layerNames: ["Capa 1: Miradas","Capa 2: Multitud","Capa 3: Uniformidad","Capa final: Asimilacion"],
   taunts: [
-    "\u00BFVes al diferente, verdad?",
-    "Si todos son iguales, no toques nada.",
-    "Maldita sea, no lo haces mal.",
-    "\u00BFTodavia lo ves? Vamos a complicartelo."
+    "\u00BFLo ves?",
+    "Iguales. No toques.",
+    "\u2026nada mal.",
+    "\u00BFA\u00FAn lo ves?"
   ],
   found: "\u2026Lo encontraste",
   allSame: "\u2026Todos son iguales",
@@ -132,7 +132,7 @@ dungeon: {
   clearMsg: "Fallos esta vez: {miss}\nFallos totales: {total}",
   finalMsg: "\u2026Ya no necesitas que nadie te diga que hacer.",
   allClearTitle: "Todas las capas superadas",
-  toNext: "\u2026A la siguiente capa",
+  toNext: "\u2026siguiente",
   resultPerfect: "Cruzaste por el camino mas corto.\nNadie te arrastro.",
   resultGood: "Te dejaste llevar una vez.\nPero te recuperaste rapido.",
   resultOk: "Diste rodeos,\npero llegaste al final.",

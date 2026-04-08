@@ -40,7 +40,7 @@ ui: {
 
 // === Écran titre ===
 title: {
-  hook: "Tu vois la vérité. Obéis quand même.",
+  hook: "Tu vois. Obéis.",
   main: "Couloir de Pression",
   prologueLine1: "Dans ce monde, obéir est la seule vérité.",
   prologueLine2: "Ceux qui brisent le moule deviennent l'erreur.",
@@ -81,8 +81,8 @@ slash: {
   cmdWait: "Ne tranche pas",
   timeout: "…trop lent",
   gameover: "…soumis",
-  clearMsg: "…ce n'est pas fini.",
-  toDeep: "…vers les profondeurs",
+  clearMsg: "\u2026pas encore.",
+  toDeep: "\u2026plus profond",
   targets: { rat: "Rat", fly: "Mouche", pig: "Cochon", spider: "Araignée", bomb: "Bombe", burger: "Burger", mushroom: "Champignon", potion: "Potion", fire: "Feu", treasure: "Coffre" },
   cmdSlash: "Tranche {name}",
   targetJoin: " et ",
@@ -98,10 +98,10 @@ slash: {
 crowd: {
   layerNames: ["Strate 1 : Les regards","Strate 2 : La foule","Strate 3 : L'uniforme","Strate finale : L'assimilation"],
   taunts: [
-    "Tu le vois, celui qui dépasse ?",
-    "Ils sont tous pareils. Ne touche à rien.",
-    "Tss… T'es pas mauvais, en fait.",
-    "Tu vois encore ? Je vais arranger ça."
+    "Tu le vois ?",
+    "Tous pareils. Touche pas.",
+    "\u2026pas mal.",
+    "Tu vois encore ?"
   ],
   found: "…trouvé",
   allSame: "…tous identiques",
@@ -134,7 +134,7 @@ dungeon: {
   clearMsg: "Erreurs cette fois : {miss}\nErreurs totales : {total}",
   finalMsg: "…tu n'as plus besoin d'ordres.",
   allClearTitle: "Toutes les strates franchies",
-  toNext: "…vers la strate suivante",
+  toNext: "\u2026plus bas",
   resultPerfect: "Chemin le plus court. Inébranlable.\nPersonne n'a pu te faire plier.",
   resultGood: "Tu as flanché une fois.\nMais tu t'es repris vite.",
   resultOk: "Tu as pris le long chemin,\nmais tu t'en es sorti.",

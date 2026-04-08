@@ -38,7 +38,7 @@ ui: {
 
 // === タイトル画面 ===
 title: {
-  hook: "見えていても、従え。",
+  hook: "見えても、従え。",
   main: "圧力回廊",
   prologueLine1: "この世界では、従うことが正しさになる。",
   prologueLine2: "空気を読まない者は、間違いにされる。",
@@ -79,8 +79,8 @@ slash: {
   cmdWait: "斬るな",
   timeout: "…遅い",
   gameover: "…支配された",
-  clearMsg: "…まだ終わりじゃない。",
-  toDeep: "…最深部へ",
+  clearMsg: "…まだだ。",
+  toDeep: "…深部へ",
   targets: { rat: "ネズミ", fly: "ハエ", pig: "ブタ", spider: "クモ", bomb: "爆弾", burger: "バーガー", mushroom: "キノコ", potion: "ポーション", fire: "炎", treasure: "宝箱" },
   cmdSlash: "{name}を斬れ",
   targetJoin: "と",
@@ -96,10 +96,10 @@ slash: {
 crowd: {
   layerNames: ["第一層：視線","第二層：群衆","第三層：均一","最終層：同化"],
   taunts: [
-    "違うやつ、見えるよな？",
-    "全部同じなら、触るな。",
-    "このやろう、やるじゃねーか。",
-    "まだ見えるのか。もっと邪魔してやる。"
+    "見えるか？",
+    "同じだろ。触るな。",
+    "…やるな。",
+    "まだ見えるのか。"
   ],
   found: "…見つけた",
   allSame: "…全員同じだ",
@@ -132,7 +132,7 @@ dungeon: {
   clearMsg: "今回のミス：{miss}\n累計ミス：{total}",
   finalMsg: "…もう、誰の指示も要らない。",
   allClearTitle: "全ステージ脱出",
-  toNext: "…次の層へ",
+  toNext: "…次へ",
   resultPerfect: "最短ルートで突破した。\n誰にも流されなかった。",
   resultGood: "一度だけ流された。\nだが、すぐ立て直した。",
   resultOk: "遠回りしたが、\nゴールにはたどり着いた。",

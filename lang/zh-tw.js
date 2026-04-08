@@ -38,7 +38,7 @@ ui: {
 
 // === 標題畫面 ===
 title: {
-  hook: "看得見真相，也要閉嘴。",
+  hook: "看見了？閉嘴照做。",
   main: "壓力迴廊",
   prologueLine1: "在這個世界，服從就是正確。",
   prologueLine2: "不懂做人的，就會被消失。",
@@ -79,8 +79,8 @@ slash: {
   cmdWait: "別斬",
   timeout: "…太慢了",
   gameover: "…被支配了",
-  clearMsg: "…還沒結束。",
-  toDeep: "…往最深處",
+  clearMsg: "…還沒完。",
+  toDeep: "…更深處",
   targets: { rat: "老鼠", fly: "蒼蠅", pig: "豬", spider: "蜘蛛", bomb: "炸彈", burger: "漢堡", mushroom: "蘑菇", potion: "藥水", fire: "火焰", treasure: "寶箱" },
   cmdSlash: "斬{name}",
   targetJoin: "和",
@@ -96,10 +96,10 @@ slash: {
 crowd: {
   layerNames: ["第一層：目光","第二層：群眾","第三層：一致","最終層：同化"],
   taunts: [
-    "不一樣的那個，看到了吧？",
-    "全部一樣的話，別碰。",
-    "這傢伙，有兩下子。",
-    "還看得見嗎。再多干擾你一點。"
+    "看到了？",
+    "都一樣。別碰。",
+    "…還行。",
+    "還看得見？"
   ],
   found: "…找到了",
   allSame: "…全都一樣",
@@ -132,7 +132,7 @@ dungeon: {
   clearMsg: "本次失誤：{miss}\n累計失誤：{total}",
   finalMsg: "…再也不需要任何人的指示了。",
   allClearTitle: "全關脫出",
-  toNext: "…往下一層",
+  toNext: "…下一層",
   resultPerfect: "以最短路線突破了。\n沒有被任何人帶著走。",
   resultGood: "只被帶偏了一次。\n但馬上就站穩了。",
   resultOk: "繞了遠路，\n但還是到了終點。",

@@ -38,7 +38,7 @@ ui: {
 
 // === Title Screen ===
 title: {
-  hook: "You can see the truth. Obey anyway.",
+  hook: "See it. Obey anyway.",
   main: "Conformity Corridor",
   prologueLine1: "In this world, obedience is the only truth.",
   prologueLine2: "Those who won't read the room are made wrong.",
@@ -79,8 +79,8 @@ slash: {
   cmdWait: "Don't slash",
   timeout: "...too slow",
   gameover: "...consumed",
-  clearMsg: "...it's not over yet.",
-  toDeep: "...into the depths",
+  clearMsg: "...not yet.",
+  toDeep: "...deeper",
   targets: { rat: "Rat", fly: "Fly", pig: "Pig", spider: "Spider", bomb: "Bomb", burger: "Burger", mushroom: "Mushroom", potion: "Potion", fire: "Fire", treasure: "Treasure" },
   cmdSlash: "Slash the {name}",
   targetJoin: " & ",
@@ -96,10 +96,10 @@ slash: {
 crowd: {
   layerNames: ["Layer 1: Stares","Layer 2: The Crowd","Layer 3: Uniformity","Final Layer: Assimilation"],
   taunts: [
-    "You see the odd one out, right?",
-    "They're all the same. Don't touch anything.",
-    "Damn. You're actually good.",
-    "You can still see? Let me fix that."
+    "See it?",
+    "All the same. Don't touch.",
+    "...not bad.",
+    "Still see it?"
   ],
   found: "...found it",
   allSame: "...they're all the same",
@@ -132,7 +132,7 @@ dungeon: {
   clearMsg: "Mistakes this run: {miss}\nTotal mistakes: {total}",
   finalMsg: "...you don't need anyone's orders anymore.",
   allClearTitle: "All Stages Escaped",
-  toNext: "...to the next layer",
+  toNext: "...next",
   resultPerfect: "Shortest path. Unshaken.\nNo one could sway you.",
   resultGood: "You slipped once.\nBut you recovered fast.",
   resultOk: "You took the long way,\nbut you made it out.",
