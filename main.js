@@ -5799,6 +5799,7 @@ const Crowd = {
   heartbeatSpeed: 600,
   hintTimeout: null,
   interferenceTimeout: null,
+  tauntTimeout: null,
   _dismissFn: null,
   layerTutorialShown: new Set(),
 
@@ -5891,11 +5892,13 @@ const Crowd = {
     clearTimeout(this.heartbeatInterval);
     clearTimeout(this.hintTimeout);
     clearTimeout(this.interferenceTimeout);
+    clearTimeout(this.tauntTimeout);
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
     this.hintTimeout = null;
     this.interferenceTimeout = null;
+    this.tauntTimeout = null;
     // 妨害要素のリセット
     if (this.el.peek) {
       this.el.peek.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right");
@@ -5980,40 +5983,47 @@ const Crowd = {
     SoundSystem.updateSlashTension(this.calcTension());
     this.roundPlan = this.buildRoundPlan(layer);
     const sid = this.sessionId;
+    const doTaunt = !this.layerTutorialShown.has(this.currentLayer);
 
-    // 層タイトル → 1.2秒後にゲーム開始（常に同じテンポ）
+    // 層タイトル → 1.2秒後
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.layerOverlay.classList.remove("cw-lo-show");
-      this.currentRound = 0;
-      this.startRound();
 
-      // ゲーム開始0.5秒後にキモキャラ演出（非ブロッキング）
-      if (!this.layerTutorialShown.has(this.currentLayer)) {
+      if (doTaunt) {
+        // キモキャラ演出（初回のみ）→ 終了後にゲーム開始
         this.layerTutorialShown.add(this.currentLayer);
-        setTimeout(() => {
+        this.showTaunt(this.currentLayer, () => {
           if (this.sessionId !== sid) return;
-          this.showTaunt(this.currentLayer);
-        }, 500);
+          this.currentRound = 0;
+          this.startRound();
+        });
+      } else {
+        this.currentRound = 0;
+        this.startRound();
       }
     }, 1200);
   },
 
-  showTaunt(layerIdx) {
+  showTaunt(layerIdx, onDone) {
     var el = this.el.taunt;
-    if (!el) return;
+    if (!el) { if (onDone) onDone(); return; }
 
-    // キモキャラ画像
     this.el.tauntImg.src = this.CW_INTRUDER;
 
-    // セリフ（第4層はnull → 無言で覗くだけ）
     var text = CROWD_LAYER_TAUNTS[layerIdx];
     this.el.tauntText.textContent = text || "";
 
-    // リセット＆再生
     el.classList.remove("cw-taunt-show");
-    void el.offsetWidth; // reflow
+    void el.offsetWidth;
     el.classList.add("cw-taunt-show");
+
+    // アニメーション終了後にコールバック
+    clearTimeout(this.tauntTimeout);
+    this.tauntTimeout = setTimeout(function() {
+      el.classList.remove("cw-taunt-show");
+      if (onDone) onDone();
+    }, 1800);
   },
 
   startRound() {
