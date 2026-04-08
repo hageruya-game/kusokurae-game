@@ -33,6 +33,7 @@ ui: {
   jrScoreLabel: "Индекс сопротивления",
   jrScoreUnit: "/ 100",
   corridor: "Коридор давления",
+  btnGameStart: "Старт игры",
 },
 
 // === Титульный экран ===
@@ -80,6 +81,15 @@ slash: {
   gameover: "\u2026тебя подчинили",
   clearMsg: "\u2026это ещё не конец.",
   toDeep: "\u2026в глубину",
+  targets: { rat: "Крыса", fly: "Муха", pig: "Свинья", spider: "Паук", bomb: "Бомба", burger: "Бургер", mushroom: "Гриб", potion: "Зелье", fire: "Огонь", treasure: "Сундук" },
+  cmdSlash: "Руби {name}",
+  targetJoin: " и ",
+  waitSuccess: "\u2026выдержал",
+  regret1: "Оставался 1 вопрос.",
+  regret2: "Оставалось 2 вопроса.",
+  regretN: "Оставалось {n} вопросов.",
+  regretEarly: "Ещё начало.",
+  statsReached: "Пройдено: {reached} / {total}",
 },
 
 // === Crowd (Stage3) ===
@@ -110,6 +120,10 @@ dungeon: {
   statusObey: "Подчинись",
   statusWait: "Не двигайся",
   stateNormal: "Норма",
+  stateDominated: "Почти подчинён",
+  stateConfusion: "Смятение",
+  stateAnxiety: "Тревога",
+  totalMissLabel: "Всего ошибок: {n}",
   tutorialText: "Приказы из темноты \u2014<br>ты правда им веришь?",
   tutorialHint: "Нажми, чтобы начать",
   infectedTitle: "Ассимиляция: завершена",
@@ -129,10 +143,21 @@ dungeon: {
 corridorText: {
   tutorialText: "Дорога расходится.<br>Правильный путь \u2014 решай сам.",
   tutorialHint: "Нажми, чтобы начать",
+  resisted: "Не поддался давлению",
+  panicked: "Занервничал",
+  drifted: "Поплыл по течению",
+  rankPerfect: "Безупречный проход",
+  rankNear: "Почти идеально",
+  rankDetour: "Обходной путь",
+  rankDrift: "Дрейф",
+  stats: "Обход: +{detour} кл. / ОШИБКИ: {miss}/{total}",
 },
 
 // === Result ===
 result: {
+  contaminatedPct: "100% (Ассимиляция)",
+  pressureDisplay: "Подчинение: {pct}",
+  tooLate: "Уже поздно",
   footerContaminated: "Ты теперь часть стада",
   footerGood1: "Плевать на правила системы",
   footerGood2: "Воздух не читай \u2014 дыши.",
@@ -161,6 +186,7 @@ resultContaminated: {
 
 // === JudgeRoom ===
 judgeRoom: {
+  timeout: "Время вышло",
   ranks: [
     { title: "Абсолютный судья", message: "Все ловушки раскусил.\nДавление на тебя не действует." },
     { title: "Острая интуиция", message: "Почти безупречно.\nНо не расслабляйся." },

@@ -122,6 +122,26 @@ var I18n = {
       RESULT_CONTAMINATED.message = d.resultContaminated.message;
     }
 
+    // Slash layers
+    if (d.slash && d.slash.layerNames) {
+      for (var i = 0; i < d.slash.layerNames.length && i < SLASH_LAYERS.length; i++) {
+        SLASH_LAYERS[i].name = d.slash.layerNames[i];
+      }
+    }
+    if (d.slash && d.slash.hints) {
+      for (var i = 0; i < d.slash.hints.length && i < SLASH_LAYER_HINTS.length; i++) {
+        SLASH_LAYER_HINTS[i] = d.slash.hints[i];
+      }
+    }
+
+    // JudgeRoom ranks
+    if (d.judgeRoom && d.judgeRoom.ranks) {
+      for (var i = 0; i < d.judgeRoom.ranks.length && i < JUDGE_RANKS.length; i++) {
+        if (d.judgeRoom.ranks[i].title) JUDGE_RANKS[i].title = d.judgeRoom.ranks[i].title;
+        if (d.judgeRoom.ranks[i].message) JUDGE_RANKS[i].message = d.judgeRoom.ranks[i].message;
+      }
+    }
+
     // Crowd layers
     if (d.crowd && d.crowd.layerNames) {
       for (var i = 0; i < d.crowd.layerNames.length && i < CROWD_LAYERS.length; i++) {

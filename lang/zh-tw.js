@@ -33,6 +33,7 @@ ui: {
   jrScoreLabel: "抗壓指數",
   jrScoreUnit: "/ 100",
   corridor: "壓力迴廊",
+  btnGameStart: "開始遊戲",
 },
 
 // === 標題畫面 ===
@@ -80,6 +81,15 @@ slash: {
   gameover: "…被支配了",
   clearMsg: "…還沒結束。",
   toDeep: "…往最深處",
+  targets: { rat: "老鼠", fly: "蒼蠅", pig: "豬", spider: "蜘蛛", bomb: "炸彈", burger: "漢堡", mushroom: "蘑菇", potion: "藥水", fire: "火焰", treasure: "寶箱" },
+  cmdSlash: "斬{name}",
+  targetJoin: "和",
+  waitSuccess: "…撐住了",
+  regret1: "只差1題了。",
+  regret2: "只差2題了。",
+  regretN: "還差{n}題。",
+  regretEarly: "才剛開始。",
+  statsReached: "到達：{reached} / {total}題",
 },
 
 // === Crowd (Stage3) ===
@@ -110,6 +120,10 @@ dungeon: {
   statusObey: "服從",
   statusWait: "別動",
   stateNormal: "正常",
+  stateDominated: "即將被支配",
+  stateConfusion: "混亂",
+  stateAnxiety: "焦慮",
+  totalMissLabel: "總失誤：{n}",
   tutorialText: "黑暗中的命令，<br>你要相信嗎？",
   tutorialHint: "點擊開始",
   infectedTitle: "同調感染：完成",
@@ -129,10 +143,21 @@ dungeon: {
 corridorText: {
   tutorialText: "路會分岔。<br>正確答案，由你決定。",
   tutorialHint: "點擊開始",
+  resisted: "沒有屈服於壓力",
+  panicked: "慌張行動了",
+  drifted: "被帶走了",
+  rankPerfect: "完全突破",
+  rankNear: "幾乎最短",
+  rankDetour: "繞路突破",
+  rankDrift: "漂流",
+  stats: "繞路: +{detour}格 / 失誤: {miss}/{total}",
 },
 
 // === Result ===
 result: {
+  contaminatedPct: "100%（感染完成）",
+  pressureDisplay: "支配度: {pct}",
+  tooLate: "太遲了",
   footerContaminated: "你已經是群體的一部分了",
   footerGood1: "社會規矩關我什麼事",
   footerGood2: "空氣不是拿來讀的，是拿來呼吸的。",
@@ -161,6 +186,7 @@ resultContaminated: {
 
 // === JudgeRoom ===
 judgeRoom: {
+  timeout: "時間到",
   ranks: [
     { title: "完全的判斷者", message: "所有陷阱都被看穿了。\n從眾壓力對你無效。" },
     { title: "敏銳的直覺", message: "幾乎完美。\n但別大意。" },

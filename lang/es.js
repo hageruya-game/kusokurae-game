@@ -33,6 +33,7 @@ ui: {
   jrScoreLabel: "Resistencia",
   jrScoreUnit: "/ 100",
   corridor: "Corredor de presi\u00F3n",
+  btnGameStart: "Empezar juego",
 },
 
 // === Pantalla de titulo ===
@@ -80,6 +81,15 @@ slash: {
   gameover: "\u2026Te dominaron",
   clearMsg: "\u2026Esto no ha terminado.",
   toDeep: "\u2026Al fondo",
+  targets: { rat: "Rata", fly: "Mosca", pig: "Cerdo", spider: "Araña", bomb: "Bomba", burger: "Hamburguesa", mushroom: "Hongo", potion: "Poción", fire: "Fuego", treasure: "Cofre" },
+  cmdSlash: "Corta a {name}",
+  targetJoin: " y ",
+  waitSuccess: "\u2026Aguantaste",
+  regret1: "Faltaba 1 pregunta.",
+  regret2: "Faltaban 2 preguntas.",
+  regretN: "Faltaban {n} preguntas.",
+  regretEarly: "Aún era el comienzo.",
+  statsReached: "Alcanzado: {reached} / {total}",
 },
 
 // === Crowd (Stage3) ===
@@ -110,6 +120,10 @@ dungeon: {
   statusObey: "Obedece",
   statusWait: "No te muevas",
   stateNormal: "Estable",
+  stateDominated: "Casi dominado",
+  stateConfusion: "Confusi\u00F3n",
+  stateAnxiety: "Ansiedad",
+  totalMissLabel: "Fallos totales: {n}",
   tutorialText: "\u00BFVas a creer las ordenes<br>que vienen de la oscuridad?",
   tutorialHint: "Toca para empezar",
   infectedTitle: "Contaminacion social: completada",
@@ -129,10 +143,21 @@ dungeon: {
 corridorText: {
   tutorialText: "El camino se divide.<br>La respuesta la decides tu.",
   tutorialHint: "Toca para empezar",
+  resisted: "No cediste a la presi\u00F3n",
+  panicked: "Actuaste con prisa",
+  drifted: "Te dejaste llevar",
+  rankPerfect: "Paso perfecto",
+  rankNear: "Casi perfecto",
+  rankDetour: "Rodeo exitoso",
+  rankDrift: "A la deriva",
+  stats: "Rodeo: +{detour} celdas / FALLOS: {miss}/{total}",
 },
 
 // === Result ===
 result: {
+  contaminatedPct: "100% (Contaminado)",
+  pressureDisplay: "Dominio: {pct}",
+  tooLate: "Ya es tarde",
   footerContaminated: "Ya eres parte del rebano",
   footerGood1: "Las reglas sociales me importan un comino",
   footerGood2: "El 'que diran' no me gobierna.",
@@ -161,6 +186,7 @@ resultContaminated: {
 
 // === JudgeRoom ===
 judgeRoom: {
+  timeout: "Se acab\u00F3 el tiempo",
   ranks: [
     { title: "Juez absoluto", message: "Viste todas las trampas.\nLa presion no funciona contigo." },
     { title: "Instinto afilado", message: "Casi perfecto.\nPero no te confies." },

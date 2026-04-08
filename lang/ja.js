@@ -33,6 +33,7 @@ ui: {
   jrScoreLabel: "抗圧指数",
   jrScoreUnit: "/ 100",
   corridor: "圧力回廊",
+  btnGameStart: "ゲームスタート",
 },
 
 // === タイトル画面 ===
@@ -80,6 +81,15 @@ slash: {
   gameover: "…支配された",
   clearMsg: "…まだ終わりじゃない。",
   toDeep: "…最深部へ",
+  targets: { rat: "ネズミ", fly: "ハエ", pig: "ブタ", spider: "クモ", bomb: "爆弾", burger: "バーガー", mushroom: "キノコ", potion: "ポーション", fire: "炎", treasure: "宝箱" },
+  cmdSlash: "{name}を斬れ",
+  targetJoin: "と",
+  waitSuccess: "…耐えたな",
+  regret1: "あと1問だった。",
+  regret2: "あと2問だった。",
+  regretN: "あと{n}問だった。",
+  regretEarly: "まだ序盤だった。",
+  statsReached: "到達：{reached} / {total}問",
 },
 
 // === Crowd (Stage3) ===
@@ -110,6 +120,10 @@ dungeon: {
   statusObey: "従え",
   statusWait: "動くな",
   stateNormal: "平常",
+  stateDominated: "支配寸前",
+  stateConfusion: "混乱",
+  stateAnxiety: "焦り",
+  totalMissLabel: "総ミス：{n}",
   tutorialText: "暗闇の命令を、<br>お前は信じるのか？",
   tutorialHint: "タップして開始",
   infectedTitle: "同調汚染:完了",
@@ -129,10 +143,21 @@ dungeon: {
 corridorText: {
   tutorialText: "道は分かれる。<br>正解は、お前が決めろ。",
   tutorialHint: "タップして開始",
+  resisted: "圧力に負けなかった",
+  panicked: "焦って動いた",
+  drifted: "流された",
+  rankPerfect: "完全突破",
+  rankNear: "ほぼ最短",
+  rankDetour: "迂回突破",
+  rankDrift: "漂流",
+  stats: "迂回: +{detour}セル / MISS: {miss}/{total}",
 },
 
 // === Result ===
 result: {
+  contaminatedPct: "100%（汚染完了）",
+  pressureDisplay: "支配度: {pct}",
+  tooLate: "もう遅い",
   footerContaminated: "お前はもう群れの一部だ",
   footerGood1: "社会のルールなんか知ったことか",
   footerGood2: "空気は読むな、吸え。",
@@ -161,6 +186,7 @@ resultContaminated: {
 
 // === JudgeRoom ===
 judgeRoom: {
+  timeout: "時間切れ",
   ranks: [
     { title: "完全なる判断者", message: "全ての罠を見抜いた。\n同調圧力は通用しない。" },
     { title: "鋭い直感", message: "ほぼ完璧。\nだが油断するな。" },

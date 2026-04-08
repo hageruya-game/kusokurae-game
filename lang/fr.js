@@ -35,6 +35,7 @@ ui: {
   jrScoreLabel: "Résistance",
   jrScoreUnit: "/ 100",
   corridor: "Couloir de Pression",
+  btnGameStart: "Lancer le jeu",
 },
 
 // === Écran titre ===
@@ -82,6 +83,15 @@ slash: {
   gameover: "…soumis",
   clearMsg: "…ce n'est pas fini.",
   toDeep: "…vers les profondeurs",
+  targets: { rat: "Rat", fly: "Mouche", pig: "Cochon", spider: "Araignée", bomb: "Bombe", burger: "Burger", mushroom: "Champignon", potion: "Potion", fire: "Feu", treasure: "Coffre" },
+  cmdSlash: "Tranche {name}",
+  targetJoin: " et ",
+  waitSuccess: "\u2026tu as tenu",
+  regret1: "Plus qu'une question.",
+  regret2: "Plus que 2 questions.",
+  regretN: "Plus que {n} questions.",
+  regretEarly: "C'était encore le début.",
+  statsReached: "Atteint : {reached} / {total}",
 },
 
 // === Crowd (Stage3) ===
@@ -112,6 +122,10 @@ dungeon: {
   statusObey: "Obéis",
   statusWait: "Ne bouge pas",
   stateNormal: "Stable",
+  stateDominated: "Presque soumis",
+  stateConfusion: "Confusion",
+  stateAnxiety: "Angoisse",
+  totalMissLabel: "Erreurs totales : {n}",
   tutorialText: "Des ordres venus du noir.<br>Tu leur fais confiance ?",
   tutorialHint: "Touche pour commencer",
   infectedTitle: "Conformisation : terminée",
@@ -131,10 +145,21 @@ dungeon: {
 corridorText: {
   tutorialText: "Le chemin se divise.<br>C'est toi qui décides.",
   tutorialHint: "Touche pour commencer",
+  resisted: "Tu n'as pas cédé",
+  panicked: "Tu as paniqué",
+  drifted: "Tu t'es laissé porter",
+  rankPerfect: "Passage parfait",
+  rankNear: "Presque parfait",
+  rankDetour: "Détour réussi",
+  rankDrift: "À la dérive",
+  stats: "Détour : +{detour} cases / ERREURS : {miss}/{total}",
 },
 
 // === Result ===
 result: {
+  contaminatedPct: "100% (Conformisé)",
+  pressureDisplay: "Emprise : {pct}",
+  tooLate: "Trop tard",
   footerContaminated: "Tu fais partie du troupeau",
   footerGood1: "La bienséance ? Connais pas",
   footerGood2: "L'ambiance, on ne la lit pas. On la brise.",
@@ -163,6 +188,7 @@ resultContaminated: {
 
 // === JudgeRoom ===
 judgeRoom: {
+  timeout: "Temps écoulé",
   ranks: [
     { title: "Juge infaillible", message: "Tu as percé chaque piège.\nLa pression est impuissante." },
     { title: "Instinct aiguisé", message: "Presque parfait.\nMais ne baisse pas la garde." },

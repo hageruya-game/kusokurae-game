@@ -33,6 +33,7 @@ ui: {
   jrScoreLabel: "Resistance",
   jrScoreUnit: "/ 100",
   corridor: "Conformity Corridor",
+  btnGameStart: "Game Start",
 },
 
 // === Title Screen ===
@@ -80,6 +81,15 @@ slash: {
   gameover: "...consumed",
   clearMsg: "...it's not over yet.",
   toDeep: "...into the depths",
+  targets: { rat: "Rat", fly: "Fly", pig: "Pig", spider: "Spider", bomb: "Bomb", burger: "Burger", mushroom: "Mushroom", potion: "Potion", fire: "Fire", treasure: "Treasure" },
+  cmdSlash: "Slash the {name}",
+  targetJoin: " & ",
+  waitSuccess: "...you held",
+  regret1: "One more to go.",
+  regret2: "Two more to go.",
+  regretN: "{n} more to go.",
+  regretEarly: "Still early.",
+  statsReached: "Reached: {reached} / {total}",
 },
 
 // === Crowd (Stage3) ===
@@ -110,6 +120,10 @@ dungeon: {
   statusObey: "Obey",
   statusWait: "Don't move",
   stateNormal: "Stable",
+  stateDominated: "Near control",
+  stateConfusion: "Confusion",
+  stateAnxiety: "Anxiety",
+  totalMissLabel: "Total misses: {n}",
   tutorialText: "Orders from the dark.<br>Do you trust them?",
   tutorialHint: "Tap to start",
   infectedTitle: "Assimilation: Complete",
@@ -129,10 +143,21 @@ dungeon: {
 corridorText: {
   tutorialText: "The path splits.<br>You decide what's right.",
   tutorialHint: "Tap to start",
+  resisted: "You stood firm",
+  panicked: "You panicked",
+  drifted: "You drifted",
+  rankPerfect: "Perfect Run",
+  rankNear: "Near Perfect",
+  rankDetour: "Detour Clear",
+  rankDrift: "Adrift",
+  stats: "Detour: +{detour} cells / MISS: {miss}/{total}",
 },
 
 // === Result ===
 result: {
+  contaminatedPct: "100% (Assimilated)",
+  pressureDisplay: "Control: {pct}",
+  tooLate: "Too late",
   footerContaminated: "You are part of the herd now",
   footerGood1: "Society's rules? Not your problem",
   footerGood2: "Don't read the room. Breathe.",
@@ -161,6 +186,7 @@ resultContaminated: {
 
 // === JudgeRoom ===
 judgeRoom: {
+  timeout: "Time's up",
   ranks: [
     { title: "The Unbreakable", message: "You saw through every trap.\nConformity has no power here." },
     { title: "Sharp Instinct", message: "Nearly flawless.\nBut don't let your guard down." },
