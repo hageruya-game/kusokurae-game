@@ -118,6 +118,7 @@ crowd: {
   tutorialLine1: "1つだけ違う。",
   tutorialLine2: "見つけろ。",
   postLayer0: "…それはウォーミングアップだ。",
+  perfectClear: ["見抜いた。", "迷いなし。", "完全看破。", "完全突破。"],
   tutorialLine3: "タップしろ。",
   interlude1: "まだ入口だ。",
   interlude2: "ここまで来たのか。",

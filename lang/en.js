@@ -118,6 +118,7 @@ crowd: {
   tutorialLine1: "One is different.",
   tutorialLine2: "Find it.",
   postLayer0: "...that was just a warm-up.",
+  perfectClear: ["Seen through.", "No hesitation.", "Perfect read.", "Flawless."],
   tutorialLine3: "Tap it.",
   interlude1: "This was just the entrance.",
   interlude2: "You made it this far?",

@@ -1657,8 +1657,11 @@ const Game = {
       s.style.top = "";
     });
     screenEl.classList.add("active", "fade-in");
-    // スクロール位置リセット（タイトル画面復帰時の残留スクロール防止）
+    // スクロール位置リセット（横ズレ防止: 全要素のscrollLeftも強制0）
     window.scrollTo(0, 0);
+    document.documentElement.scrollLeft = 0;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollLeft = 0;
     document.body.scrollTop = 0;
 
     // ★ 全セッション無効化: sessionIdを進めて古い全callbackを死滅させる
@@ -6234,6 +6237,7 @@ const Crowd = {
     this.comboCount = 0;
     this.maxCombo = 0;
     this.totalMisses = 0;
+    this._layerMisses = 0;
     this.lives = this.maxLives;
     this._lastRoundIntroPlayed = false;
     SoundSystem.init();
@@ -6301,8 +6305,24 @@ const Crowd = {
     TitlePrologue.startIdle();
   },
 
+  // 画面位置の強制正常化（横ズレ安全弁）
+  _resetScreenPosition() {
+    this.el.screen.style.transform = "";
+    this.el.screen.style.filter = "";
+    this.el.screen.style.animation = "";
+    this.el.screen.style.left = "";
+    this.el.screen.style.top = "";
+    this.el.screen.style.marginLeft = "";
+    this.el.screen.scrollLeft = 0;
+    this.el.screen.scrollTop = 0;
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+    window.scrollTo(0, 0);
+  },
+
   cleanup() {
     this.answered = true;
+    this._resetScreenPosition();
     clearTimeout(this.timerTimeout);
     clearTimeout(this.flinchTimeout);
     clearTimeout(this.heartbeatInterval);
@@ -6331,23 +6351,26 @@ const Crowd = {
     // 揺れ停止 + グリッド回転リセット
     this._stopCellJitter();
     this.el.grid.style.transform = "";
-    // 妨害要素のリセット
+    // 妨害要素のリセット（inline style 完全クリア）
     if (this.el.peek) {
       this.el.peek.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right", "cw-peek-top");
-      this.el.peek.style.opacity = "0";
+      this.el.peek.style.cssText = "opacity:0";
     }
     if (this.el.hand) {
       this.el.hand.classList.remove("cw-hand-show");
-      this.el.hand.style.opacity = "0";
+      this.el.hand.style.cssText = "opacity:0";
     }
     if (this.el.cross) {
       this.el.cross.classList.remove("cw-cross-ltr", "cw-cross-rtl");
-      this.el.cross.style.opacity = "0";
+      this.el.cross.style.cssText = "opacity:0";
     }
+    // スクリーン横ズレ安全弁
+    this.el.screen.scrollLeft = 0;
+    this.el.screen.scrollTop = 0;
   },
 
   clearEffects() {
-    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash", "cw-last-intro");
+    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash", "cw-perfect-flash", "cw-last-intro");
     this.el.screen.style.transform = "";
     this.el.screen.style.filter = "";
     this.el.layerOverlay.classList.remove("cw-lo-show");
@@ -6413,6 +6436,7 @@ const Crowd = {
   },
 
   showLayerTitle() {
+    this._layerMisses = 0;
     // レイヤー別背景クラス
     for (var li = 0; li < CROWD_LAYERS.length; li++) {
       this.el.screen.classList.remove("cw-layer-" + li);
@@ -6689,9 +6713,9 @@ const Crowd = {
       c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d", "cw-jitter-sync");
       c.style.animationDelay = "";
       c.style.animationDuration = "";
-      // 動的回転で設定されたtransitionもクリア
+      // 動的回転で設定されたtransform/transitionもクリア
       var box = c.querySelector(".cw-box");
-      if (box) box.style.transition = "";
+      if (box) { box.style.transition = ""; box.style.transform = ""; }
     });
   },
 
@@ -6909,8 +6933,8 @@ const Crowd = {
     this.el.grid.style.gridTemplateColumns = "repeat(" + layer.cols + ", " + cellSize + "px)";
     this.el.grid.style.gridTemplateRows = "repeat(" + layer.rows + ", " + cellSize + "px)";
 
-    // 全体回転: Layer2以降でランダム角度（層が深いほど大きく）
-    var gridRotRange = [0, 8, 16, 25][this.currentLayer] || 0;
+    // 全体回転: Layer2以降でランダム角度（コンテナ幅を超えない範囲）
+    var gridRotRange = [0, 5, 8, 12][this.currentLayer] || 0;
     var gridRot = gridRotRange > 0 ? ((Math.random() * 2 - 1) * gridRotRange) : 0;
     this.el.grid.style.transform = gridRot ? ("rotate(" + gridRot.toFixed(1) + "deg)") : "";
     this._gridRotation = gridRot;
@@ -7474,6 +7498,7 @@ const Crowd = {
     var hadCombo = this.comboCount >= 3;
     this.comboCount = 0;
     this.totalMisses++;
+    this._layerMisses++;
     this.lives--;
     this.updateLivesUI(this.lives);
     SoundSystem.crowdMiss();
@@ -7535,6 +7560,7 @@ const Crowd = {
     var hadCombo = this.comboCount >= 3;
     this.comboCount = 0;
     this.totalMisses++;
+    this._layerMisses++;
     this.lives--;
     this.updateLivesUI(this.lives);
     SoundSystem.crowdMiss();
@@ -7597,22 +7623,68 @@ const Crowd = {
     this.currentRound++;
     const layer = CROWD_LAYERS[this.currentLayer];
     if (this.currentRound >= layer.rounds) {
+      // 層クリア → パーフェクト判定（全層対象）
+      var clearedLayer = this.currentLayer;
+      var wasPerfect = this._layerMisses === 0;
       this.currentLayer++;
       if (this.currentLayer >= CROWD_LAYERS.length) {
-        this.showClear();
+        if (wasPerfect) {
+          this._showPerfectClear(clearedLayer, () => { this.showClear(); });
+        } else {
+          this.showClear();
+        }
       } else {
         SaveSystem.save("crowd", this.currentLayer, this.totalMisses);
-        if (this.currentLayer === 1) {
-          this._showPostLayer0(() => {
-            this.showLayerTitle();
-          });
+        var self = this;
+        var proceedToNext = function() {
+          if (self.currentLayer === 1) {
+            self._showPostLayer0(function() { self.showLayerTitle(); });
+          } else {
+            self.showLayerTitle();
+          }
+        };
+        if (wasPerfect) {
+          this._showPerfectClear(clearedLayer, proceedToNext);
         } else {
-          this.showLayerTitle();
+          proceedToNext();
         }
       }
     } else {
       this.startRound();
     }
+  },
+
+  // 層パーフェクトクリア演出（ノーミスで層突破時）
+  _showPerfectClear(clearedLayer, callback) {
+    var sid = this.sessionId;
+    var self = this;
+    this.cleanup();
+    // 層別メッセージ
+    var msgs = I18n.t("crowd.perfectClear");
+    var msg = Array.isArray(msgs) ? (msgs[clearedLayer] || msgs[msgs.length - 1]) : msgs;
+    // 0.15s静寂 → フラッシュ + テキスト
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.screen.classList.remove("cw-correct-flash", "cw-perfect-flash");
+      void self.el.screen.offsetWidth;
+      self.el.screen.classList.add("cw-perfect-flash");
+      self.el.command.textContent = msg;
+      self.el.command.style.color = "#ffd700";
+      self.el.command.style.textShadow = "0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,180,0,0.4)";
+      self.el.command.style.letterSpacing = "6px";
+      SoundSystem.crowdHit();
+      setTimeout(function() { SoundSystem.crowdHit(); }, 150);
+      // 1.0s後に消えて次へ
+      setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        self.el.command.textContent = "";
+        self.el.command.style.color = "";
+        self.el.command.style.textShadow = "";
+        self.el.command.style.letterSpacing = "";
+        self.el.screen.classList.remove("cw-perfect-flash");
+        if (callback) callback();
+      }, 1000);
+    }, 150);
   },
 
   _showPostLayer0(callback) {

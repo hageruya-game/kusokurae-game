@@ -1,12 +1,18 @@
 /* ===== リセット・基本 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
 body {
   font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   background: #1a0a2e;
   color: #fff;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
@@ -22,6 +28,7 @@ body {
   padding-top: max(12px, env(safe-area-inset-top));
   padding-bottom: max(16px, env(safe-area-inset-bottom));
   transition: background 0.5s;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -3746,6 +3753,7 @@ body::before {
   padding: 12px;
   position: relative;
   z-index: 2;
+  overflow: hidden;
 }
 .cw-grid {
   display: grid;
@@ -4068,6 +4076,16 @@ body::before {
 @keyframes cwCorrectFlash {
   0%   { filter: brightness(1); }
   12%  { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+}
+/* 層パーフェクトクリア演出 */
+.cw-perfect-flash {
+  animation: cwPerfectFlash 1.0s ease-out;
+}
+@keyframes cwPerfectFlash {
+  0%   { filter: brightness(1); }
+  10%  { filter: brightness(2.5) saturate(0.3); }
+  30%  { filter: brightness(1.5) saturate(0.8); }
   100% { filter: brightness(1); }
 }
 /* 最終ラウンド前フリ暗転 */
