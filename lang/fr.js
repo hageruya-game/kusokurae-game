@@ -36,6 +36,7 @@ ui: {
   jrScoreUnit: "/ 100",
   corridor: "Couloir de Pression",
   btnGameStart: "Lancer le jeu",
+  btnContinue: "Continuer",
 },
 
 // === Écran titre ===

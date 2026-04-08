@@ -34,6 +34,7 @@ ui: {
   jrScoreUnit: "/ 100",
   corridor: "Conformity Corridor",
   btnGameStart: "Game Start",
+  btnContinue: "Continue",
 },
 
 // === Title Screen ===

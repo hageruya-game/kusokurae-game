@@ -34,6 +34,7 @@ ui: {
   jrScoreUnit: "/ 100",
   corridor: "圧力回廊",
   btnGameStart: "ゲームスタート",
+  btnContinue: "続きから",
 },
 
 // === タイトル画面 ===

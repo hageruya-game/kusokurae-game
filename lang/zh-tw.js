@@ -34,6 +34,7 @@ ui: {
   jrScoreUnit: "/ 100",
   corridor: "壓力迴廊",
   btnGameStart: "開始遊戲",
+  btnContinue: "繼續",
 },
 
 // === 標題畫面 ===

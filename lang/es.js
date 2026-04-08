@@ -34,6 +34,7 @@ ui: {
   jrScoreUnit: "/ 100",
   corridor: "Corredor de presión",
   btnGameStart: "Empezar juego",
+  btnContinue: "Continuar",
 },
 
 // === Pantalla de título ===

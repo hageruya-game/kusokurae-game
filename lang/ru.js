@@ -34,6 +34,7 @@ ui: {
   jrScoreUnit: "/ 100",
   corridor: "Коридор давления",
   btnGameStart: "Старт игры",
+  btnContinue: "Продолжить",
 },
 
 // === Титульный экран ===

@@ -134,6 +134,97 @@ const TIMING = {
 
 var TUTORIAL_DONE_KEY = "kusokurae_tutorial_done";
 
+// ============================================================
+// 簡易セーブシステム（ステージ区切り自動保存）
+// ============================================================
+const SaveSystem = {
+  KEY: "kusokurae_save",
+  save(mode, layer, totalMisses) {
+    try {
+      var data = {
+        mode: mode,
+        layer: layer,
+        totalMisses: totalMisses,
+        lang: localStorage.getItem("kusokurae_lang") || "ja",
+        ts: Date.now()
+      };
+      localStorage.setItem(this.KEY, JSON.stringify(data));
+    } catch (e) { /* localStorage full or disabled */ }
+  },
+  load() {
+    try {
+      var raw = localStorage.getItem(this.KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || !data.mode) return null;
+      return data;
+    } catch (e) { this.clear(); return null; }
+  },
+  clear() {
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
+  },
+  hasSave() {
+    return !!this.load();
+  },
+  resume() {
+    var data = this.load();
+    if (!data) return false;
+    if (data.lang) I18n.setLang(data.lang);
+
+    if (data.mode === "slash") {
+      Slash.sessionId++;
+      Slash.cleanup();
+      Slash.currentLayer = data.layer || 0;
+      Slash.currentRound = 0;
+      Slash.totalMisses = data.totalMisses || 0;
+      Slash.comboCount = 0;
+      Slash.maxCombo = 0;
+      Slash.lives = Slash.maxLives;
+      Slash.guideShown = false;
+      Slash.lastTargetIds = [];
+      Slash.lastDecision = "";
+      SoundSystem.init();
+      SoundSystem.stopAmbient();
+      SoundSystem.startSlashAmbient(0);
+      Slash.clearEffects();
+      Slash.el.screen.scrollTop = 0;
+      Slash.el.screen.style.transform = "";
+      Slash.el.comboEl.classList.remove("sl-combo-show", "sl-combo-hot");
+      Slash.el.comboEl.textContent = "";
+      Slash.updateLivesUI();
+      Game.showScreen(Slash.el.screen);
+      Slash.showLayerTitle();
+      return true;
+    } else if (data.mode === "crowd") {
+      Crowd.sessionId++;
+      Crowd.cleanup();
+      Crowd.currentLayer = data.layer || 0;
+      Crowd.currentRound = 0;
+      Crowd.totalMisses = data.totalMisses || 0;
+      Crowd.comboCount = 0;
+      Crowd.maxCombo = 0;
+      Crowd.lives = Crowd.maxLives;
+      Crowd._lastRoundIntroPlayed = false;
+      SoundSystem.init();
+      SoundSystem.stopAmbient();
+      SoundSystem.startSlashAmbient(0.3);
+      Crowd.clearEffects();
+      Crowd.el.screen.scrollTop = 0;
+      Crowd.el.comboEl.classList.remove("cw-combo-show", "cw-combo-hot");
+      Crowd.el.comboEl.textContent = "";
+      Crowd.updateLivesUI();
+      Game.showScreen(Crowd.el.screen);
+      if (data.layer === 0) {
+        Crowd._showCrowdTutorial(function() { Crowd.showLayerTitle(); });
+      } else {
+        Crowd.showLayerTitle();
+      }
+      return true;
+    }
+    return false;
+  }
+};
+
 function getTimeLimit(roundIndex) {
   if (roundIndex < 3) return 5;
   if (roundIndex < 7) return 4;
@@ -1519,6 +1610,34 @@ const Game = {
     this.el.btnChoice0.addEventListener("click", () => this.choose(0));
     this.el.btnChoice1.addEventListener("click", () => this.choose(1));
 
+    // 続きからボタン
+    var btnContinue = document.getElementById("btn-continue");
+    btnContinue.style.display = SaveSystem.hasSave() ? "" : "none";
+    btnContinue.addEventListener("click", () => {
+      if (startLocked) return;
+      startLocked = true;
+      TitlePrologue.stopAll();
+      SoundSystem.init();
+      SoundSystem.stopTitleAmbient();
+      SoundSystem.startBoom();
+      var titleScreen = document.getElementById("screen-title");
+      var transition = document.getElementById("start-transition");
+      titleScreen.classList.add("title-leaving");
+      setTimeout(function() { transition.classList.add("st-active"); }, 100);
+      setTimeout(function() {
+        titleScreen.classList.remove("title-leaving");
+        if (!SaveSystem.resume()) {
+          // データ破損時はフォールバックで最初から
+          Game.startGame();
+        }
+        transition.classList.add("st-fade-out");
+        setTimeout(function() {
+          transition.classList.remove("st-active", "st-fade-out");
+          startLocked = false;
+        }, 300);
+      }, 450);
+    });
+
     CommentSystem.show("title", this.el.titleComment);
   },
 
@@ -2250,49 +2369,64 @@ const Game = {
   transitionToSlash() {
     this.stopTimer();
     SoundSystem.stopAmbient();
+    SaveSystem.save("slash", 0, 0);
     const overlay = document.getElementById("dungeon-transition");
     const text = document.getElementById("dg-transition-text");
     const interImg = document.getElementById("dg-interlude-img");
     overlay.classList.add("dg-trans-active");
     const gid = this.sessionId;
+    var self = this;
+
+    // インタールード後の通常遷移処理
+    var proceeded = false;
+    function proceed() {
+      if (proceeded) return;
+      proceeded = true;
+      overlay.removeEventListener("click", skipInterlude);
+      // インタールード要素を確実にクリア
+      interImg.classList.remove("dg-interlude-show");
+      interImg.style.display = "none";
+      interImg.src = "";
+      text.classList.remove("dg-interlude-text-show");
+      text.textContent = "";
+      // 通常遷移テキスト
+      setTimeout(function() {
+        if (self.sessionId !== gid) return;
+        text.textContent = I18n.t("dungeon.toNext");
+        text.classList.add("dg-trans-text-show");
+        setTimeout(function() {
+          if (self.sessionId !== gid) return;
+          text.classList.remove("dg-trans-text-show");
+          setTimeout(function() {
+            if (self.sessionId !== gid) return;
+            Slash.pressure = self.pressureLevel;
+            Slash.currentLayer = 0;
+            Slash.totalMisses = 0;
+            Slash.start();
+            overlay.classList.remove("dg-trans-active");
+            text.textContent = "";
+          }, 400);
+        }, 800);
+      }, 300);
+    }
+
+    // タップスキップ
+    function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
+    var interludeTimer;
 
     // キモキャラ割り込み演出
-    setTimeout(() => {
-      if (this.sessionId !== gid) return;
+    setTimeout(function() {
+      if (self.sessionId !== gid) return;
       interImg.src = "assets/image_0.png";
       interImg.style.display = "";
       interImg.classList.add("dg-interlude-show");
       text.textContent = I18n.t("crowd.interlude1");
       text.classList.add("dg-interlude-text-show");
-
-      setTimeout(() => {
-        if (this.sessionId !== gid) return;
-        interImg.classList.remove("dg-interlude-show");
-        interImg.style.display = "none";
-        interImg.src = "";
-        text.classList.remove("dg-interlude-text-show");
-        text.textContent = "";
-
-        // 通常遷移テキスト
-        setTimeout(() => {
-          if (this.sessionId !== gid) return;
-          text.textContent = I18n.t("dungeon.toNext");
-          text.classList.add("dg-trans-text-show");
-          setTimeout(() => {
-            if (this.sessionId !== gid) return;
-            text.classList.remove("dg-trans-text-show");
-            setTimeout(() => {
-              if (this.sessionId !== gid) return;
-              Slash.pressure = this.pressureLevel;
-              Slash.currentLayer = 0;
-              Slash.totalMisses = 0;
-              Slash.start();
-              overlay.classList.remove("dg-trans-active");
-              text.textContent = "";
-            }, 400);
-          }, 800);
-        }, 300);
-      }, 1500);
+      overlay.addEventListener("click", skipInterlude);
+      interludeTimer = setTimeout(function() {
+        if (self.sessionId !== gid) return;
+        proceed();
+      }, 2400);
     }, 400);
   },
 
@@ -2901,6 +3035,7 @@ const Dungeon = {
     SoundSystem.stopAmbient();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
+    document.getElementById("btn-continue").style.display = SaveSystem.hasSave() ? "" : "none";
     TitlePrologue.startIdle();
   },
 
@@ -3538,6 +3673,7 @@ const Slash = {
     SoundSystem.stopSlashAmbient();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
+    document.getElementById("btn-continue").style.display = SaveSystem.hasSave() ? "" : "none";
     TitlePrologue.startIdle();
   },
 
@@ -4337,6 +4473,7 @@ const Slash = {
       if (this.currentLayer >= SLASH_LAYERS.length) {
         this.showClear();
       } else {
+        SaveSystem.save("slash", this.currentLayer, this.totalMisses);
         this.showLayerTitle();
       }
     } else {
@@ -4432,46 +4569,59 @@ const Slash = {
   },
 
   transitionToCrowd() {
+    SaveSystem.save("crowd", 0, this.totalMisses);
     const overlay = document.getElementById("dungeon-transition");
     const text = document.getElementById("dg-transition-text");
     const interImg = document.getElementById("dg-interlude-img");
     overlay.classList.add("dg-trans-active");
     const sid = this.sessionId;
+    var self = this;
+
+    // インタールード後の通常遷移処理
+    var proceeded = false;
+    function proceed() {
+      if (proceeded) return;
+      proceeded = true;
+      overlay.removeEventListener("click", skipInterlude);
+      interImg.classList.remove("dg-interlude-show");
+      interImg.style.display = "none";
+      interImg.src = "";
+      text.classList.remove("dg-interlude-text-show");
+      text.textContent = "";
+      setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        text.textContent = I18n.t("slash.toDeep");
+        text.classList.add("dg-trans-text-show");
+        setTimeout(function() {
+          if (self.sessionId !== sid) return;
+          text.classList.remove("dg-trans-text-show");
+          setTimeout(function() {
+            if (self.sessionId !== sid) return;
+            Crowd.start();
+            overlay.classList.remove("dg-trans-active");
+            text.textContent = "";
+          }, 400);
+        }, 800);
+      }, 300);
+    }
+
+    // タップスキップ
+    function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
+    var interludeTimer;
 
     // キモキャラ割り込み演出
-    setTimeout(() => {
-      if (this.sessionId !== sid) return;
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
       interImg.src = "assets/image_0.png";
       interImg.style.display = "";
       interImg.classList.add("dg-interlude-show");
       text.textContent = I18n.t("crowd.interlude2");
       text.classList.add("dg-interlude-text-show");
-
-      setTimeout(() => {
-        if (this.sessionId !== sid) return;
-        interImg.classList.remove("dg-interlude-show");
-        interImg.style.display = "none";
-        interImg.src = "";
-        text.classList.remove("dg-interlude-text-show");
-        text.textContent = "";
-
-        // 通常遷移テキスト
-        setTimeout(() => {
-          if (this.sessionId !== sid) return;
-          text.textContent = I18n.t("slash.toDeep");
-          text.classList.add("dg-trans-text-show");
-          setTimeout(() => {
-            if (this.sessionId !== sid) return;
-            text.classList.remove("dg-trans-text-show");
-            setTimeout(() => {
-              if (this.sessionId !== sid) return;
-              Crowd.start();
-              overlay.classList.remove("dg-trans-active");
-              text.textContent = "";
-            }, 400);
-          }, 800);
-        }, 300);
-      }, 1500);
+      overlay.addEventListener("click", skipInterlude);
+      interludeTimer = setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        proceed();
+      }, 2400);
     }, 400);
   },
 
@@ -4790,6 +4940,7 @@ const JudgeRoom = {
     this.cleanup();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
+    document.getElementById("btn-continue").style.display = SaveSystem.hasSave() ? "" : "none";
     TitlePrologue.startIdle();
   },
 
@@ -5143,6 +5294,7 @@ const Corridor = {
     this.cleanup();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
+    document.getElementById("btn-continue").style.display = SaveSystem.hasSave() ? "" : "none";
     TitlePrologue.startIdle();
   },
 
@@ -6133,6 +6285,7 @@ const Crowd = {
     SoundSystem.stopSlashAmbient();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
+    document.getElementById("btn-continue").style.display = SaveSystem.hasSave() ? "" : "none";
     TitlePrologue.startIdle();
   },
 
@@ -7239,12 +7392,15 @@ const Crowd = {
       this.currentLayer++;
       if (this.currentLayer >= CROWD_LAYERS.length) {
         this.showClear();
-      } else if (this.currentLayer === 1) {
-        this._showPostLayer0(() => {
-          this.showLayerTitle();
-        });
       } else {
-        this.showLayerTitle();
+        SaveSystem.save("crowd", this.currentLayer, this.totalMisses);
+        if (this.currentLayer === 1) {
+          this._showPostLayer0(() => {
+            this.showLayerTitle();
+          });
+        } else {
+          this.showLayerTitle();
+        }
       }
     } else {
       this.startRound();
@@ -7290,6 +7446,7 @@ const Crowd = {
 
   showClear() {
     SoundSystem.stopSlashAmbient();
+    SaveSystem.clear();
     const sid = this.sessionId;
     const m = this.totalMisses;
 

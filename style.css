@@ -112,6 +112,7 @@ body {
 #screen-title.title-leaving .title-hook,
 #screen-title.title-leaving .title-main,
 #screen-title.title-leaving .btn-start,
+#screen-title.title-leaving .btn-continue,
 #screen-title.title-leaving .lang-selector,
 #screen-title.title-leaving .title-prologue {
   opacity: 0;
@@ -955,22 +956,23 @@ body {
 }
 .dg-interlude-img.dg-interlude-show {
   display: block;
-  animation: dgInterludeImg 1.5s ease-in-out forwards;
+  animation: dgInterludeImg 2.4s ease-in-out forwards;
 }
 @keyframes dgInterludeImg {
   0%   { opacity: 0; transform: translateX(-50%) scale(0.7); }
-  15%  { opacity: 1; transform: translateX(-50%) scale(1.05); }
-  70%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  12%  { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  18%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  75%  { opacity: 1; transform: translateX(-50%) scale(1); }
   100% { opacity: 0; transform: translateX(-50%) scale(0.95); }
 }
 .dg-transition-text.dg-interlude-text-show {
   opacity: 1;
-  animation: dgInterludeText 1.5s ease-in-out forwards;
+  animation: dgInterludeText 2.4s ease-in-out forwards;
 }
 @keyframes dgInterludeText {
   0%   { opacity: 0; transform: translateY(8px); }
-  20%  { opacity: 1; transform: translateY(0); }
-  70%  { opacity: 1; }
+  15%  { opacity: 1; transform: translateY(0); }
+  75%  { opacity: 1; }
   100% { opacity: 0; }
 }
 
@@ -2679,6 +2681,16 @@ body::before {
 /* ボタン配置 */
 #screen-title .btn-start {
   margin-top: max(3vh, 16px);
+}
+.btn-continue {
+  background: rgba(80, 50, 120, 0.4);
+  color: #c8b0e8;
+  font-size: 0.85em;
+  padding: 10px 32px;
+  border: 1px solid rgba(140, 100, 200, 0.4);
+  box-shadow: none;
+  margin-top: 8px;
+  opacity: 0.85;
 }
 
 /* ルール説明サブボタン */
