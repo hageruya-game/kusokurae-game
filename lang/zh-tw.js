@@ -80,7 +80,7 @@ slash: {
   timeout: "…太慢了",
   gameover: "…被支配了",
   clearMsg: "…還沒完。",
-  toDeep: "…更深處",
+  toDeep: "…進入核心",
   targets: { rat: "老鼠", fly: "蒼蠅", pig: "豬", spider: "蜘蛛", bomb: "炸彈", burger: "漢堡", mushroom: "蘑菇", potion: "藥水", fire: "火焰", treasure: "寶箱" },
   cmdSlash: "斬{name}",
   targetJoin: "和",
@@ -114,6 +114,9 @@ crowd: {
   rankA: "銳利的眼光。",
   rankB: "至少還看得見。",
   epilogue: "違抗了命令，\n揮下了刀，\n在群眾中睜開了眼。\n\n…你已經不受任何人支配了。",
+  tutorialLine1: "只有一個不同。",
+  tutorialLine2: "找出來。",
+  postLayer0: "…那只是熱身。",
 },
 
 // === Dungeon ===

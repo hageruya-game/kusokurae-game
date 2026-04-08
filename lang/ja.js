@@ -80,7 +80,7 @@ slash: {
   timeout: "…遅い",
   gameover: "…支配された",
   clearMsg: "…まだだ。",
-  toDeep: "…深部へ",
+  toDeep: "…中枢へ",
   targets: { rat: "ネズミ", fly: "ハエ", pig: "ブタ", spider: "クモ", bomb: "爆弾", burger: "バーガー", mushroom: "キノコ", potion: "ポーション", fire: "炎", treasure: "宝箱" },
   cmdSlash: "{name}を斬れ",
   targetJoin: "と",
@@ -114,6 +114,9 @@ crowd: {
   rankA: "鋭い目だ。",
   rankB: "見えてはいた。",
   epilogue: "命令に逆らい、\n刃を振り、\n群衆の中で目を開けた。\n\n…お前はもう、誰の支配も受けない。",
+  tutorialLine1: "1つだけ違う。",
+  tutorialLine2: "見つけろ。",
+  postLayer0: "…それはウォーミングアップだ。",
 },
 
 // === Dungeon ===

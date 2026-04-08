@@ -82,7 +82,7 @@ slash: {
   timeout: "…trop lent",
   gameover: "…soumis",
   clearMsg: "\u2026pas encore.",
-  toDeep: "\u2026plus profond",
+  toDeep: "…au noyau",
   targets: { rat: "Rat", fly: "Mouche", pig: "Cochon", spider: "Araignée", bomb: "Bombe", burger: "Burger", mushroom: "Champignon", potion: "Potion", fire: "Feu", treasure: "Coffre" },
   cmdSlash: "Tranche {name}",
   targetJoin: " et ",
@@ -116,6 +116,9 @@ crowd: {
   rankA: "Regard aiguisé.",
   rankB: "Tu voyais. À peine.",
   epilogue: "Tu as désobéi aux ordres.\nTu as manié la lame.\nTu as gardé les yeux ouverts dans la foule.\n\n…plus personne ne te contrôle.",
+  tutorialLine1: "Un seul est différent.",
+  tutorialLine2: "Trouve-le.",
+  postLayer0: "…c'était juste l'échauffement.",
 },
 
 // === Dungeon ===

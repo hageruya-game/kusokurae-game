@@ -80,7 +80,7 @@ slash: {
   timeout: "...too slow",
   gameover: "...consumed",
   clearMsg: "...not yet.",
-  toDeep: "...deeper",
+  toDeep: "...to the core",
   targets: { rat: "Rat", fly: "Fly", pig: "Pig", spider: "Spider", bomb: "Bomb", burger: "Burger", mushroom: "Mushroom", potion: "Potion", fire: "Fire", treasure: "Treasure" },
   cmdSlash: "Slash the {name}",
   targetJoin: " & ",
@@ -114,6 +114,9 @@ crowd: {
   rankA: "Sharp eyes.",
   rankB: "You could see. Barely.",
   epilogue: "You defied the orders.\nYou swung the blade.\nYou kept your eyes open in the crowd.\n\n...no one controls you anymore.",
+  tutorialLine1: "One is different.",
+  tutorialLine2: "Find it.",
+  postLayer0: "...that was just a warm-up.",
 },
 
 // === Dungeon ===

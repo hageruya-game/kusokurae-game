@@ -80,7 +80,7 @@ slash: {
   timeout: "\u2026Muy lento",
   gameover: "\u2026Te dominaron",
   clearMsg: "\u2026a\u00FAn no.",
-  toDeep: "\u2026m\u00E1s hondo",
+  toDeep: "…al núcleo",
   targets: { rat: "Rata", fly: "Mosca", pig: "Cerdo", spider: "Araña", bomb: "Bomba", burger: "Hamburguesa", mushroom: "Hongo", potion: "Poción", fire: "Fuego", treasure: "Cofre" },
   cmdSlash: "Corta a {name}",
   targetJoin: " y ",
@@ -113,7 +113,10 @@ crowd: {
   rankS: "Vista perfecta.",
   rankA: "Mirada aguda.",
   rankB: "Algo veias.",
-  epilogue: "Desobedeciste ordenes,\nblandiste la hoja,\ny abriste los ojos entre la masa.\n\n\u2026Ya nadie te domina.",
+  epilogue: "Desobedeciste ordenes,\nblandiste la hoja,\ny abriste los ojos entre la masa.\n\n…Ya nadie te domina.",
+  tutorialLine1: "Uno es distinto.",
+  tutorialLine2: "Encuéntralo.",
+  postLayer0: "…eso fue solo calentamiento.",
 },
 
 // === Dungeon ===

@@ -5981,7 +5981,39 @@ const Crowd = {
     this.el.comboEl.textContent = "";
     this.updateLivesUI();
     Game.showScreen(this.el.screen);
-    this.showLayerTitle();
+    this._showCrowdTutorial(() => {
+      this.showLayerTitle();
+    });
+  },
+
+  _showCrowdTutorial(callback) {
+    var sid = this.sessionId;
+    var self = this;
+    this.el.screen.classList.add("cw-tutorial-intro");
+    this.el.command.textContent = I18n.t("crowd.tutorialLine1");
+    this.el.command.classList.add("cw-tutorial-text-in");
+
+    var line2Timeout = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.classList.remove("cw-tutorial-text-in");
+      void self.el.command.offsetWidth;
+      self.el.command.textContent = I18n.t("crowd.tutorialLine2");
+      self.el.command.classList.add("cw-tutorial-text-in");
+    }, 1200);
+
+    var dismiss = function() {
+      clearTimeout(line2Timeout);
+      clearTimeout(self._tutorialDismissTimeout);
+      self._tutorialDismissTimeout = null;
+      self.el.screen.classList.remove("cw-tutorial-intro");
+      self.el.command.classList.remove("cw-tutorial-text-in");
+      self.el.command.textContent = "";
+      self.el.screen.removeEventListener("click", dismiss);
+      if (self.sessionId === sid && callback) callback();
+    };
+
+    this.el.screen.addEventListener("click", dismiss);
+    this._tutorialDismissTimeout = setTimeout(dismiss, 2400);
   },
 
   goTitle() {
@@ -6003,6 +6035,8 @@ const Crowd = {
     clearTimeout(this.interferenceTimeout);
     clearTimeout(this.tauntTimeout);
     clearTimeout(this._jitterTimeout);
+    clearTimeout(this._tutorialDismissTimeout);
+    clearTimeout(this._comebackTimeout);
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
@@ -6010,6 +6044,8 @@ const Crowd = {
     this.interferenceTimeout = null;
     this.tauntTimeout = null;
     this._jitterTimeout = null;
+    this._tutorialDismissTimeout = null;
+    this._comebackTimeout = null;
     // 揺れ停止 + グリッド回転リセット
     this._stopCellJitter();
     this.el.grid.style.transform = "";
@@ -6169,12 +6205,16 @@ const Crowd = {
         if (this.roundPlan[fi] === "find") findIndex++;
       }
       if (findIndex === 0) {
-        // 最初のfind: やや分かりやすい
-        this._roundDiffScale = 1.4;
+        // コインフリップ: 50%で最初が易、50%で最初が難
+        this._waveEasyFirst = Math.random() < 0.5;
+        var isEasy = this._waveEasyFirst;
+        this._roundDiffScale = isEasy ? 1.4 : 0.7;
+        if (!isEasy) this._roundInterferenceBoost = true;
       } else if (findIndex === 1) {
-        // 2問目find: 複合微差＋強妨害
-        this._roundDiffScale = 0.7;
-        this._roundInterferenceBoost = true;
+        // 2問目: 1問目と逆パターン
+        var isEasy = !this._waveEasyFirst;
+        this._roundDiffScale = isEasy ? 1.4 : 0.7;
+        if (!isEasy) this._roundInterferenceBoost = true;
       }
     }
 
@@ -6240,19 +6280,25 @@ const Crowd = {
   },
 
   _startCellJitter() {
+    var jitterClasses = ["cw-jitter", "cw-jitter-h", "cw-jitter-d"];
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     cells.forEach(function(c) {
-      c.classList.add("cw-jitter");
+      // ランダムに揺れパターンを割り当て
+      var cls = jitterClasses[Math.floor(Math.random() * jitterClasses.length)];
+      c.classList.add(cls);
       // ランダムな遅延でずらす（自然に見せる）
       c.style.animationDelay = (Math.random() * 0.6).toFixed(2) + "s";
+      // ランダムな周期で完全非同期化
+      c.style.animationDuration = (1.6 + Math.random() * 0.4).toFixed(2) + "s";
     });
   },
 
   _stopCellJitter() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     cells.forEach(function(c) {
-      c.classList.remove("cw-jitter");
+      c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d");
       c.style.animationDelay = "";
+      c.style.animationDuration = "";
     });
   },
 
@@ -6289,6 +6335,14 @@ const Crowd = {
       var extraCount = (layer.diffStrength <= 0.55) ? Math.max(2, rest.length) : 1;
       for (var e = 0; e < extraCount && e < rest.length; e++) {
         chosenAxes.push(rest[e]);
+      }
+      // Layer0-1: 回転が唯一の補助軸なら50%でscaleに置換 or 追加
+      if (extraCount === 1 && chosenAxes.length === 2 && chosenAxes[1] === "rotation") {
+        if (Math.random() < 0.5) {
+          chosenAxes[1] = "scale"; // 置換
+        } else {
+          chosenAxes.push("scale"); // 追加
+        }
       }
 
       var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, flipX: false };
@@ -6496,6 +6550,16 @@ const Crowd = {
     this.interferenceTimeout = setTimeout(function() {
       if (self.sessionId !== sid || self.answered) return;
       self._playChainedInterference(0, count, null, sid);
+
+      // Layer2-3: カムバック妨害（メインチェーン終了後に追加1回）
+      if (self.currentLayer >= 2) {
+        var chainDur = count * 300; // チェーン推定所要時間
+        var comebackDelay = chainDur + 500 + Math.random() * 300;
+        self._comebackTimeout = setTimeout(function() {
+          if (self.sessionId !== sid || self.answered) return;
+          self.showSingleInterference(self.currentLayer, count, null);
+        }, comebackDelay);
+      }
     }, delay1);
   },
 
@@ -6508,8 +6572,8 @@ const Crowd = {
 
     var result = this.showSingleInterference(this.currentLayer, idx, prev);
 
-    // 視線トラップ: 最終ラウンド、妨害2回目以降に1回だけ
-    if (this._isLastRound && !this._gazeTrapFired && idx >= 1 && this.oddIndex >= 0) {
+    // 視線トラップ: 最終ラウンド or Layer2以降、妨害2回目以降に1回だけ
+    if ((this._isLastRound || this.currentLayer >= 2) && !this._gazeTrapFired && idx >= 1 && this.oddIndex >= 0) {
       this._gazeTrapFired = true;
       var trapSelf = this;
       var trapSid = sid;
@@ -6520,8 +6584,14 @@ const Crowd = {
     }
 
     if (idx + 1 < total) {
-      // 1回目→2回目: 0.15-0.25s、それ以降: 0.15-0.35s
-      var wait = (idx === 0) ? (150 + Math.random() * 100) : (150 + Math.random() * 200);
+      var wait;
+      if (this.currentLayer >= 2) {
+        // Layer2-3: 圧縮タイミング
+        wait = (idx === 0) ? (100 + Math.random() * 80) : (100 + Math.random() * 150);
+      } else {
+        // Layer0-1: 通常タイミング
+        wait = (idx === 0) ? (150 + Math.random() * 100) : (150 + Math.random() * 200);
+      }
       var self = this;
       setTimeout(function() {
         self._playChainedInterference(idx + 1, total, result, sid);
@@ -6954,12 +7024,29 @@ const Crowd = {
       this.currentLayer++;
       if (this.currentLayer >= CROWD_LAYERS.length) {
         this.showClear();
+      } else if (this.currentLayer === 1) {
+        this._showPostLayer0(() => {
+          this.showLayerTitle();
+        });
       } else {
         this.showLayerTitle();
       }
     } else {
       this.startRound();
     }
+  },
+
+  _showPostLayer0(callback) {
+    var sid = this.sessionId;
+    var self = this;
+    this.el.command.textContent = I18n.t("crowd.postLayer0");
+    this.el.command.style.color = "#908090";
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.textContent = "";
+      self.el.command.style.color = "";
+      if (callback) callback();
+    }, 1300);
   },
 
   updateLivesUI(breakIndex) {
