@@ -3611,6 +3611,27 @@ body::before {
   z-index: 0;
   pointer-events: none;
   animation: cwBgBreathe 12s ease-in-out infinite;
+  transition: opacity 0.8s ease, filter 0.8s ease;
+}
+/* Layer0（視線）: ほぼ無地、ごく薄い気配 */
+#screen-crowd.cw-layer-0::before {
+  opacity: 0.12;
+  filter: brightness(0.2) saturate(0.3) blur(4px);
+}
+/* Layer1（群衆）: 少しだけ空間ノイズ */
+#screen-crowd.cw-layer-1::before {
+  opacity: 0.2;
+  filter: brightness(0.25) saturate(0.35) blur(3px);
+}
+/* Layer2（均一）: 背景が"感じられる" — ベースライン */
+#screen-crowd.cw-layer-2::before {
+  opacity: 0.55;
+  filter: brightness(0.35) saturate(0.5) blur(1.5px);
+}
+/* Layer3（同化）: 圧を強める */
+#screen-crowd.cw-layer-3::before {
+  opacity: 0.7;
+  filter: brightness(0.4) saturate(0.6) blur(0.8px);
 }
 @keyframes cwBgBreathe {
   0%   { transform: scale(1.0) translate(0, 0); }

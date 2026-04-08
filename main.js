@@ -214,6 +214,11 @@ const SaveSystem = {
       Crowd.el.comboEl.textContent = "";
       Crowd.updateLivesUI();
       Game.showScreen(Crowd.el.screen);
+      // レイヤー別背景クラス復元
+      for (var li = 0; li < CROWD_LAYERS.length; li++) {
+        Crowd.el.screen.classList.remove("cw-layer-" + li);
+      }
+      Crowd.el.screen.classList.add("cw-layer-" + (data.layer || 0));
       if (data.layer === 0) {
         Crowd._showCrowdTutorial(function() { Crowd.showLayerTitle(); });
       } else {
@@ -6234,6 +6239,7 @@ const Crowd = {
     this.el.comboEl.textContent = "";
     this.updateLivesUI();
     Game.showScreen(this.el.screen);
+    this.el.screen.classList.add("cw-layer-0");
     this._showCrowdTutorial(() => {
       this.showLayerTitle();
     });
@@ -6311,6 +6317,11 @@ const Crowd = {
     this._tutorialDismissTimeout = null;
     this._comebackTimeout = null;
     this._syncToIndivTimeout = null;
+    // フェイクヒントタイマークリア
+    if (this._fakeHintTimers) {
+      this._fakeHintTimers.forEach(function(t) { clearTimeout(t); });
+      this._fakeHintTimers = [];
+    }
     // 揺れ停止 + グリッド回転リセット
     this._stopCellJitter();
     this.el.grid.style.transform = "";
@@ -6394,6 +6405,11 @@ const Crowd = {
   },
 
   showLayerTitle() {
+    // レイヤー別背景クラス
+    for (var li = 0; li < CROWD_LAYERS.length; li++) {
+      this.el.screen.classList.remove("cw-layer-" + li);
+    }
+    this.el.screen.classList.add("cw-layer-" + this.currentLayer);
     const layer = CROWD_LAYERS[this.currentLayer];
     this.el.layerName.textContent = layer.name;
     this.el.layerLabel.textContent = layer.name;
@@ -6528,6 +6544,7 @@ const Crowd = {
   _startRoundCore(layer) {
     this._roundStartTime = Date.now();
     this._roundTimerDur = layer.timer;
+    this._fakeHintTimers = [];
     this.generateShapes(layer);
     this.renderGrid(layer);
     this.startTimer(layer.timer);
@@ -6546,19 +6563,21 @@ const Crowd = {
       var cells2 = self.el.grid.querySelectorAll(".cw-cell");
       cells2.forEach(function(c) { c.classList.remove("cw-cell-mask"); });
 
-      // ② 同期揺れフェーズ: 全セルが同じ動き（差異は見えるが確信できない）
+      // ② 同期揺れフェーズ: 全セルに遅延を分散（正解だけが浮かない）
       if (self.currentLayer >= 1) {
         self._startSyncJitter();
       }
 
-      // 時間差差異（Temporal Diff）: 正解セルだけ遅れて/先に動く
-      // Layer1以降、Layer3-4は強制適用
-      if (self.oddIndex >= 0 && (self.currentLayer >= 1 || self._forceTemporalDiff)) {
+      // 時間差差異: 全セルに分散（Layer1以降、Layer3-4は強制適用）
+      if (self.currentLayer >= 1 || self._forceTemporalDiff) {
         self._applyTemporalDiff();
       }
 
       // 妨害開始
       self.playInterferenceSequence(layer);
+
+      // フェイク差異: 正解でないセルにも怪しい挙動を混ぜる
+      self._applyFakeHints();
 
       // ③ 0.3-0.5秒後に個別揺れフェーズへ移行
       var syncDur = 300 + Math.random() * 200;
@@ -6583,12 +6602,20 @@ const Crowd = {
   // 時間差差異: 正解セルだけ動きのタイミングをずらす
   _applyTemporalDiff() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
-    if (this.oddIndex < 0 || !cells[this.oddIndex]) return;
-    var oddCell = cells[this.oddIndex];
-    // 正解セルだけ0.15-0.25秒の遅延（または先行）
-    var delay = (0.15 + Math.random() * 0.1);
-    if (Math.random() < 0.3) delay = -delay; // 30%で先行
-    oddCell.style.animationDelay = Math.max(0, delay).toFixed(3) + "s";
+    if (!cells.length) return;
+    var self = this;
+    // 全セルにランダム遅延を分散（正解だけが浮かない）
+    cells.forEach(function(c, idx) {
+      var delay;
+      if (idx === self.oddIndex && self.oddIndex >= 0) {
+        delay = 0.15 + Math.random() * 0.1; // 正解: 0.15-0.25s
+        if (Math.random() < 0.3) delay = -delay;
+      } else {
+        delay = Math.random() * 0.12; // 他: 0-0.12s
+        if (Math.random() < 0.4) delay = -delay;
+      }
+      c.style.animationDelay = Math.max(0, delay).toFixed(3) + "s";
+    });
   },
 
   _startCellJitter() {
@@ -6604,14 +6631,20 @@ const Crowd = {
       // ランダムな周期で完全非同期化
       c.style.animationDuration = (1.6 + Math.random() * 0.4).toFixed(2) + "s";
     });
-    // 動的回転差: 個別揺れ開始時に正解セルへ回転を適用
-    if (this._motionRotation && this.oddIndex >= 0 && cells[this.oddIndex]) {
-      var oddBox = cells[this.oddIndex].querySelector(".cw-box");
-      if (oddBox) {
-        oddBox.style.transition = "transform 0.3s ease";
-        oddBox.style.transform = "rotate(" + this._motionRotation + "deg)";
+    // 動的回転: 全セルにランダム回転を配布（正解だけが浮かない）
+    cells.forEach(function(c, idx) {
+      var box = c.querySelector(".cw-box");
+      if (!box) return;
+      var rot;
+      if (idx === self.oddIndex && self._motionRotation) {
+        rot = self._motionRotation; // 正解: 差異込みの回転（±8〜25°）
+      } else {
+        // 他セル: レイヤーに応じたランダム小回転
+        rot = (Math.random() * 2 - 1) * (3 + self.currentLayer * 2); // ±3〜±11°
       }
-    }
+      box.style.transition = "transform 0.3s ease";
+      box.style.transform = "rotate(" + rot.toFixed(1) + "deg)";
+    });
   },
 
   _stopCellJitter() {
@@ -6623,6 +6656,57 @@ const Crowd = {
       // 動的回転で設定されたtransitionもクリア
       var box = c.querySelector(".cw-box");
       if (box) box.style.transition = "";
+    });
+  },
+
+  // === フェイク差異（Pattern C）: 正解でないセルにも怪しい挙動を混ぜる ===
+  _applyFakeHints() {
+    if (this.currentLayer < 1) return; // Layer0はフェイクなし（ルール理解フェーズ）
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    if (!cells.length) return;
+    var candidates = [];
+    for (var i = 0; i < cells.length; i++) {
+      if (i !== this.oddIndex) candidates.push(i);
+    }
+    // シャッフル
+    for (var i = candidates.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = candidates[i]; candidates[i] = candidates[j]; candidates[j] = tmp;
+    }
+    var fakeCount = this.currentLayer >= 2 ? 2 : 1;
+    var fakes = candidates.slice(0, Math.min(fakeCount, candidates.length));
+    var sid = this.sessionId;
+    var self = this;
+    var startDelay = 1000 + Math.random() * 1000;
+
+    fakes.forEach(function(fi, fIdx) {
+      var tid = setTimeout(function() {
+        if (self.sessionId !== sid || self.answered) return;
+        var fakeOrb = cells[fi] ? cells[fi].querySelector(".cw-shape") : null;
+        if (!fakeOrb) return;
+        var origTransform = fakeOrb.style.transform;
+        var origInset = fakeOrb.style.inset;
+        fakeOrb.style.transition = "transform 0.15s ease, inset 0.15s ease";
+        if (Math.random() < 0.5) {
+          // offsetフェイク
+          var fakeOx = (Math.random() * 2 - 1) * 8;
+          var fakeOy = (Math.random() * 2 - 1) * 6;
+          fakeOrb.style.transform = "translate(" + fakeOx.toFixed(1) + "%, " + fakeOy.toFixed(1) + "%)";
+        } else {
+          // scaleフェイク
+          var fakeInset = 10 + (Math.random() * 2 - 1) * 4;
+          fakeOrb.style.inset = fakeInset.toFixed(1) + "%";
+        }
+        // 0.4〜0.8秒後に復帰
+        var restoreTid = setTimeout(function() {
+          if (self.sessionId !== sid) return;
+          fakeOrb.style.transform = origTransform;
+          fakeOrb.style.inset = origInset;
+          setTimeout(function() { fakeOrb.style.transition = ""; }, 200);
+        }, 400 + Math.random() * 400);
+        self._fakeHintTimers.push(restoreTid);
+      }, startDelay + fIdx * (300 + Math.random() * 300));
+      self._fakeHintTimers.push(tid);
     });
   },
 
