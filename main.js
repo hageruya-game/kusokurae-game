@@ -5901,7 +5901,7 @@ const Crowd = {
     this.tauntTimeout = null;
     // 妨害要素のリセット
     if (this.el.peek) {
-      this.el.peek.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right");
+      this.el.peek.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right", "cw-peek-top");
       this.el.peek.style.opacity = "0";
     }
     if (this.el.hand) {
@@ -6247,11 +6247,11 @@ const Crowd = {
     var types = cfg.types;
     var dirs = cfg.dirs;
 
-    // タイプ選択（2回目は1回目と違うタイプを優先）
+    // タイプ選択（2回目は必ず違うタイプ）
     var type;
     if (prev && types.length > 1) {
       var others = types.filter(function(t) { return t !== prev.type; });
-      type = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : types[0];
+      type = others[Math.floor(Math.random() * others.length)];
     } else {
       type = types[Math.floor(Math.random() * types.length)];
     }

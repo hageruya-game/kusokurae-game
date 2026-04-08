@@ -57,22 +57,23 @@ body {
 }
 .title-main {
   font-family: "Hiragino Kaku Gothic StdN", "Noto Sans JP", sans-serif;
-  font-size: clamp(32px, 10vw, 52px);
+  font-size: clamp(34px, 11vw, 56px);
   font-weight: 900;
   text-align: center;
   line-height: 1.2;
-  color: rgba(255, 240, 240, 0.95);
-  letter-spacing: 0.18em;
-  transform: scale(1.04) skewX(-1deg);
+  color: #fff;
+  letter-spacing: 0.22em;
+  transform: scale(1.06) skewX(-2deg) rotate(-0.5deg);
   text-shadow:
-    0 0 8px rgba(255, 60, 60, 0.5),
-    0 0 24px rgba(200, 30, 50, 0.35),
-    0 3px 12px rgba(0, 0, 0, 0.8);
-  animation: titlePulse 3s ease-in-out infinite alternate;
+    0 0 12px rgba(255, 30, 30, 0.8),
+    0 0 32px rgba(200, 0, 30, 0.6),
+    0 0 60px rgba(180, 0, 20, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.9);
+  animation: titlePulse 2.5s ease-in-out infinite alternate;
 }
 @keyframes titlePulse {
-  0%   { text-shadow: 0 0 8px rgba(255,60,60,0.5), 0 0 24px rgba(200,30,50,0.35), 0 3px 12px rgba(0,0,0,0.8); }
-  100% { text-shadow: 0 0 12px rgba(255,60,60,0.6), 0 0 30px rgba(200,30,50,0.45), 0 3px 12px rgba(0,0,0,0.8); }
+  0%   { text-shadow: 0 0 12px rgba(255,30,30,0.8), 0 0 32px rgba(200,0,30,0.6), 0 0 60px rgba(180,0,20,0.3), 0 4px 16px rgba(0,0,0,0.9); }
+  100% { text-shadow: 0 0 18px rgba(255,40,40,0.9), 0 0 44px rgba(220,0,30,0.7), 0 0 70px rgba(180,0,20,0.4), 0 4px 16px rgba(0,0,0,0.9); }
 }
 .title-accent {
   color: #ff2060;
@@ -108,7 +109,6 @@ body {
 }
 
 /* タイトル要素のフェードアウト */
-#screen-title.title-leaving .title-intro,
 #screen-title.title-leaving .title-main,
 #screen-title.title-leaving .btn-start,
 #screen-title.title-leaving .title-prologue {
@@ -168,12 +168,19 @@ body {
   color: #fff;
   font-size: clamp(20px, 5vw, 28px);
   padding: 16px 48px;
-  box-shadow: 0 4px 0 #900030, 0 6px 20px rgba(255, 0, 80, 0.4);
+  box-shadow: 0 5px 0 #900030, 0 8px 24px rgba(255, 0, 80, 0.5), 0 0 40px rgba(255, 0, 60, 0.15);
   letter-spacing: 2px;
+  animation: btnPulse 2s ease-in-out infinite;
+}
+@keyframes btnPulse {
+  0%   { transform: scale(1.00); }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1.00); }
 }
 .btn-start:active {
-  box-shadow: 0 2px 0 #900030, 0 3px 10px rgba(255, 0, 80, 0.3);
-  transform: translateY(2px) scale(0.98);
+  animation: none;
+  box-shadow: 0 1px 0 #900030, 0 2px 8px rgba(255, 0, 80, 0.3);
+  transform: translateY(4px) scale(0.97);
 }
 
 /* ===== ゲーム画面 ===== */
@@ -2556,7 +2563,7 @@ body::before {
 
   justify-content: center;
   align-items: center;
-  background: url('assets/title-bg-clean.png') center / cover no-repeat;
+  background: url('assets/title_bg_final.png') center / cover no-repeat;
   z-index: 10;
 }
 #screen-title::before {
@@ -2565,38 +2572,28 @@ body::before {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(10, 2, 25, 0.62) 0%,
-    rgba(8, 0, 20, 0.50) 30%,
-    rgba(5, 0, 15, 0.45) 55%,
-    rgba(0, 0, 10, 0.50) 75%,
-    rgba(0, 0, 0, 0.60) 100%
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0.15) 30%,
+    rgba(0, 0, 0, 0.10) 55%,
+    rgba(0, 0, 0, 0.20) 75%,
+    rgba(0, 0, 0, 0.45) 100%
   );
   pointer-events: none;
   z-index: 1;
 }
-/* タイトル背景の微粒子 */
+/* タイトル背景の微粒子（控えめ） */
 #screen-title::after {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1px 1px at 15% 20%, rgba(200,180,255,0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 40% 65%, rgba(200,180,255,0.2) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 70% 30%, rgba(200,180,255,0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 85% 75%, rgba(200,180,255,0.2) 0%, transparent 100%),
-    radial-gradient(1px 1px at 25% 85%, rgba(200,180,255,0.15) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 55% 10%, rgba(200,180,255,0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 50%, rgba(200,180,255,0.2) 0%, transparent 100%);
+    radial-gradient(1px 1px at 15% 20%, rgba(255,200,200,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 30%, rgba(255,200,200,0.12) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 75%, rgba(255,200,200,0.1) 0%, transparent 100%);
   background-size: 100% 100%;
   pointer-events: none;
   z-index: 1;
-  animation: titleParticleDrift 18s ease-in-out infinite alternate;
-  opacity: 0.7;
-}
-@keyframes titleParticleDrift {
-  0%   { transform: translateY(0) scale(1); opacity: 0.7; }
-  50%  { transform: translateY(-8px) scale(1.03); opacity: 0.9; }
-  100% { transform: translateY(4px) scale(0.98); opacity: 0.6; }
+  opacity: 0.5;
 }
 #screen-title > * {
   position: relative;
@@ -2605,27 +2602,14 @@ body::before {
   flex-shrink: 0;
 }
 
-/* 導入文 */
+/* 導入文（非表示） */
 .title-intro {
-  font-size: 15px;
-  color: rgba(200, 180, 200, 0.8);
-  text-align: center;
-  line-height: 1.9;
-  font-weight: 700;
-  padding: max(20px, 4vh) 16px 2vh;
-  text-shadow:
-    0 1px 8px rgba(0, 0, 0, 0.7),
-    0 0 12px rgba(150, 30, 50, 0.2);
-  letter-spacing: 0.5px;
+  display: none;
 }
 
 /* ボタン配置 */
 #screen-title .btn-start {
   margin-top: max(3vh, 16px);
-  box-shadow:
-    0 4px 0 #900030,
-    0 6px 18px rgba(255, 0, 80, 0.4),
-    0 0 50px rgba(255, 0, 80, 0.2);
 }
 
 /* ルール説明サブボタン */
@@ -2652,11 +2636,11 @@ body::before {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.title-intro {
+#screen-title .title-main {
   animation: titleFadeIn 1.0s ease-out both;
 }
 #screen-title .btn-start {
-  animation: titleFadeIn 0.8s ease-out 0.6s both;
+  animation: titleFadeIn 0.8s ease-out 0.4s both, btnPulse 2s ease-in-out 1.2s infinite;
 }
 
 /* ===== ルール説明オーバーレイ ===== */
