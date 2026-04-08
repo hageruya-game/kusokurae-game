@@ -5765,7 +5765,7 @@ const CW_SHAPES = ["circle", "triangle", "star", "diamond"];
 
 const CROWD_LAYERS = [
   { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation","hue"] },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["offset","scale","rotation","hue"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.7, axes: ["offset","scale","rotation"] },
   { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.45, axes: ["offset","rotation","scale"] },
   { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.25, axes: ["offset","rotation","scale"] },
 ];
@@ -6200,13 +6200,12 @@ const Crowd = {
   CW_INTRUDER: "assets/image_0.png",
 
   scheduleInterference(layer) {
-    // 第一層は出さない、それ以降50%の確率（テスト用・確認後に下げる）
+    // 第一層は出さない（テスト用: 第2層以降100%出現）
     if (this.currentLayer < 1) return;
-    if (Math.random() > 0.50) return;
 
     var sid = this.sessionId;
     var doPeek = Math.random() < 0.5;
-    var delay = doPeek ? (200 + Math.random() * 400) : (300 + Math.random() * 500);
+    var delay = 200; // テスト用: 0.2秒固定
 
     this.interferenceTimeout = setTimeout(function() {
       if (this.sessionId !== sid || this.answered) return;
@@ -6253,11 +6252,12 @@ const Crowd = {
     var cell = cells[targetIdx];
     var rect = cell.getBoundingClientRect();
     var screenRect = this.el.screen.getBoundingClientRect();
+    var size = Math.max(rect.width, rect.height) * 1.2;
 
-    el.style.left = (rect.left - screenRect.left + rect.width / 2 - 30) + "px";
-    el.style.top = (rect.top - screenRect.top + rect.height / 2 - 30) + "px";
-    el.style.width = rect.width + "px";
-    el.style.height = rect.height + "px";
+    el.style.left = (rect.left - screenRect.left + rect.width / 2 - size / 2) + "px";
+    el.style.top = (rect.top - screenRect.top + rect.height / 2 - size / 2) + "px";
+    el.style.width = size + "px";
+    el.style.height = size + "px";
 
     el.classList.remove("cw-hand-show");
     el.style.opacity = "";
