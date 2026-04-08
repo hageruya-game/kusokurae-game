@@ -1649,6 +1649,12 @@ const Game = {
   showScreen(screenEl) {
     document.querySelectorAll(".screen").forEach((s) => {
       s.classList.remove("active", "fade-in");
+      // 全スクリーンのinline transform/filter/animation残留を強制クリア
+      s.style.transform = "";
+      s.style.filter = "";
+      s.style.animation = "";
+      s.style.left = "";
+      s.style.top = "";
     });
     screenEl.classList.add("active", "fade-in");
     // スクロール位置リセット（タイトル画面復帰時の残留スクロール防止）
@@ -6342,6 +6348,8 @@ const Crowd = {
 
   clearEffects() {
     this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash", "cw-last-intro");
+    this.el.screen.style.transform = "";
+    this.el.screen.style.filter = "";
     this.el.layerOverlay.classList.remove("cw-lo-show");
     this.el.layerOverlay.style.pointerEvents = "";
     if (this._dismissFn) {
@@ -6853,10 +6861,10 @@ const Crowd = {
         var sign = Math.random() < 0.5 ? 1 : -1;
 
         if (axis === "offset") {
-          // 箱の中の図形の位置ズレ（主役）
-          var range = 6 + (16 - 6) * s;
+          // 箱の中の図形の位置ズレ（主役）— ノイズと重なる控えめ範囲
+          var range = 3 + (8 - 3) * s;
           diff.offsetX = sign * range;
-          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (4 + (12 - 4) * s);
+          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (2 + (6 - 2) * s);
         } else if (axis === "rotation") {
           // 外箱の回転（動的のみ: 静止時は0、揺れで差が出る）
           // _motionRotation にストアして jitter フェーズで適用
@@ -6865,15 +6873,15 @@ const Crowd = {
           this._motionRotation = sign * range;
           diff.rotation = 0; // 静止時は角度差なし
         } else if (axis === "scale") {
-          // 図形のサイズ差（補助）
-          var range = 2 + (6 - 2) * s;
+          // 図形のサイズ差（補助）— ノイズと重なる控えめ範囲
+          var range = 1.5 + (4 - 1.5) * s;
           diff.inset = Math.max(4, Math.min(18, 10 + sign * range));
         } else if (axis === "flip") {
           // 向き違い：左右反転（円はrotationにフォールバック）
           if (this.roundShape !== "circle") {
             diff.flipX = true;
           } else {
-            var fallbackRange = 8 + (25 - 8) * s;
+            var fallbackRange = 4 + (12 - 4) * s;
             diff.rotation = sign * fallbackRange;
           }
         }
@@ -6907,6 +6915,11 @@ const Crowd = {
     this.el.grid.style.transform = gridRot ? ("rotate(" + gridRot.toFixed(1) + "deg)") : "";
     this._gridRotation = gridRot;
 
+    // 全セルにランダムノイズを配布（単体で"正常"に見えるがバラバラ）
+    var noiseOff = 2 + this.currentLayer * 1.5;  // offset noise: ±2~±6.5%
+    var noiseInset = 1 + this.currentLayer * 0.5; // inset noise: ±1~±2.5%
+    var noiseRot = 1 + this.currentLayer * 0.8;   // rotation noise: ±1~±3.4°
+
     for (var i = 0; i < totalCells; i++) {
       var cell = document.createElement("div");
       cell.className = "cw-cell";
@@ -6918,8 +6931,35 @@ const Crowd = {
       cell.style.width = cellSize + "px";
       cell.style.height = cellSize + "px";
 
+      // このセル固有のノイズ
+      var nox = (Math.random() * 2 - 1) * noiseOff;
+      var noy = (Math.random() * 2 - 1) * noiseOff;
+      var nin = (Math.random() * 2 - 1) * noiseInset;
+      var nrt = (Math.random() * 2 - 1) * noiseRot;
+
       var isOdd = (i === this.oddIndex);
-      var shape = isOdd ? this.diffShape : this.baseShape;
+      var shape;
+      if (isOdd && this.diffShape) {
+        // 正解: diff + noise（diffがノイズに紛れる）
+        shape = {
+          hue: this.diffShape.hue,
+          offsetX: this.diffShape.offsetX + nox,
+          offsetY: this.diffShape.offsetY + noy,
+          inset: this.diffShape.inset + nin,
+          rotation: this.diffShape.rotation + nrt,
+          flipX: this.diffShape.flipX,
+        };
+      } else {
+        // 通常: baseShape + noise（全セルが微妙にズレている）
+        shape = {
+          hue: this.baseShape.hue,
+          offsetX: nox,
+          offsetY: noy,
+          inset: 10 + nin,
+          rotation: nrt,
+          flipX: false,
+        };
+      }
       this.applyShapeStyle(cell, shape, cellSize, isOdd);
 
       // タップイベント
