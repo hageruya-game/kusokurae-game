@@ -4128,6 +4128,31 @@ body::before {
   60% { translate: 1.1px 0.9px; rotate: 0.8deg; }
   80% { translate: -1.3px -0.7px; rotate: -1.1deg; }
 }
+/* 強揺れ: translate強調・回転なし（Layer2-3用 — 画面はみ出し防止） */
+.cw-cell.cw-jitter-s { animation-name: cwJitterS; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes cwJitterS {
+  0%, 100% { translate: 0 0; }
+  20%  { translate: 2.5px -2.0px; }
+  40%  { translate: -3.0px 1.5px; }
+  60%  { translate: 1.8px 2.8px; }
+  80%  { translate: -2.0px -2.5px; }
+}
+.cw-cell.cw-jitter-hs { animation-name: cwJitterHS; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes cwJitterHS {
+  0%,100% { translate: 0 0; }
+  20% { translate: 3.5px 0.5px; }
+  40% { translate: -2.8px -0.4px; }
+  60% { translate: 3.2px 0.3px; }
+  80% { translate: -2.5px 0.5px; }
+}
+.cw-cell.cw-jitter-ds { animation-name: cwJitterDS; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes cwJitterDS {
+  0%,100% { translate: 0 0; }
+  20% { translate: 2.8px -2.8px; }
+  40% { translate: -2.0px 3.2px; }
+  60% { translate: 2.5px 2.2px; }
+  80% { translate: -3.0px -1.8px; }
+}
 
 /* --- チュートリアル導入演出 --- */
 .cw-tutorial-intro { filter: brightness(0.85); transition: filter 0.2s ease; }

@@ -6679,38 +6679,50 @@ const Crowd = {
   },
 
   _startCellJitter() {
-    var jitterClasses = ["cw-jitter", "cw-jitter-h", "cw-jitter-d"];
+    var jitterStd = ["cw-jitter", "cw-jitter-h", "cw-jitter-d"];
+    var jitterStrong = ["cw-jitter-s", "cw-jitter-hs", "cw-jitter-ds"];
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     var self = this;
+    // Layer2以降: translate強調揺れ（回転なしキーフレーム）で画面はみ出し防止
+    var useStrong = self.currentLayer >= 2;
+    var jitterClasses = useStrong ? jitterStrong : jitterStd;
     cells.forEach(function(c, idx) {
-      // ランダムに揺れパターンを割り当て
       var cls = jitterClasses[Math.floor(Math.random() * jitterClasses.length)];
       c.classList.add(cls);
-      // ランダムな遅延でずらす（自然に見せる）
       c.style.animationDelay = (Math.random() * 0.6).toFixed(2) + "s";
-      // ランダムな周期で完全非同期化
       c.style.animationDuration = (1.6 + Math.random() * 0.4).toFixed(2) + "s";
     });
-    // 動的回転: 全セルにランダム回転を配布（正解と他セルの範囲が重なる）
+    // レイヤー別回転上限: Layer3は回転控えめ、translate主体で錯乱
+    var maxRotByLayer = [6, 7, 5, 3.5];
+    var maxRot = maxRotByLayer[self.currentLayer] || 4;
+    // Layer2-3: デバイス幅ベースのtranslate shift（はみ出し防止clamp）
+    var screenW = window.innerWidth;
+    var maxShift = useStrong ? Math.min(5, screenW * 0.013) : 0;
     cells.forEach(function(c, idx) {
       var box = c.querySelector(".cw-box");
       if (!box) return;
       var rot;
       if (idx === self.oddIndex && self._motionRotation) {
-        rot = self._motionRotation; // 正解: ±6〜15°（generateShapesで決定）
+        rot = self._motionRotation;
+        rot = rot > 0 ? Math.min(rot, maxRot) : Math.max(rot, -maxRot);
       } else {
-        // 他セル: レイヤーに応じた回転（Layer2-3では正解と同等以上もあり得る）
-        rot = (Math.random() * 2 - 1) * (4 + self.currentLayer * 2.5); // ±4〜±11.5°
+        rot = (Math.random() * 2 - 1) * maxRot;
+      }
+      // Layer2-3: translate offsetで位置ベースの錯乱を追加
+      var tx = 0, ty = 0;
+      if (maxShift > 0) {
+        tx = (Math.random() * 2 - 1) * maxShift;
+        ty = (Math.random() * 2 - 1) * maxShift;
       }
       box.style.transition = "transform 0.3s ease";
-      box.style.transform = "rotate(" + rot.toFixed(1) + "deg)";
+      box.style.transform = "translate(" + tx.toFixed(1) + "px, " + ty.toFixed(1) + "px) rotate(" + rot.toFixed(1) + "deg)";
     });
   },
 
   _stopCellJitter() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     cells.forEach(function(c) {
-      c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d", "cw-jitter-sync");
+      c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d", "cw-jitter-sync", "cw-jitter-s", "cw-jitter-hs", "cw-jitter-ds");
       c.style.animationDelay = "";
       c.style.animationDuration = "";
       // 動的回転で設定されたtransform/transitionもクリア
@@ -6795,9 +6807,9 @@ const Crowd = {
       fakeOrb.style.transition = "transform 0.2s ease, inset 0.2s ease";
       fakeOrb.style.inset = fakeInset.toFixed(1) + "%";
     }
-    // box回転: 60%の確率で適用（正解セルの回転と同等の角度）
+    // box回転: 60%の確率で適用（Layer3は控えめ）
     if (fakeBox && Math.random() < 0.6) {
-      var fakeRot = (Math.random() * 2 - 1) * (5 + self.currentLayer * 3);
+      var fakeRot = (Math.random() * 2 - 1) * (3 + self.currentLayer * 1.5);
       effects.push("boxrot");
       fakeBox.style.transition = "transform 0.25s ease";
       fakeBox.style.transform = "rotate(" + fakeRot.toFixed(1) + "deg)";
@@ -6892,8 +6904,8 @@ const Crowd = {
         } else if (axis === "rotation") {
           // 外箱の回転（動的のみ: 静止時は0、揺れで差が出る）
           // _motionRotation にストアして jitter フェーズで適用
-          // 他セルとの差を縮小: ±6〜15°（他セル ±4〜11.5° と重なる）
-          var range = 6 + (15 - 6) * s;
+          // translate主体へ移行: 回転は控えめ ±4〜10°
+          var range = 4 + (10 - 4) * s;
           this._motionRotation = sign * range;
           diff.rotation = 0; // 静止時は角度差なし
         } else if (axis === "scale") {
@@ -6905,7 +6917,7 @@ const Crowd = {
           if (this.roundShape !== "circle") {
             diff.flipX = true;
           } else {
-            var fallbackRange = 4 + (12 - 4) * s;
+            var fallbackRange = 3 + (8 - 3) * s;
             diff.rotation = sign * fallbackRange;
           }
         }
@@ -6934,7 +6946,7 @@ const Crowd = {
     this.el.grid.style.gridTemplateRows = "repeat(" + layer.rows + ", " + cellSize + "px)";
 
     // 全体回転: Layer2以降でランダム角度（コンテナ幅を超えない範囲）
-    var gridRotRange = [0, 5, 8, 12][this.currentLayer] || 0;
+    var gridRotRange = [0, 5, 7, 4][this.currentLayer] || 0;
     var gridRot = gridRotRange > 0 ? ((Math.random() * 2 - 1) * gridRotRange) : 0;
     this.el.grid.style.transform = gridRot ? ("rotate(" + gridRot.toFixed(1) + "deg)") : "";
     this._gridRotation = gridRot;
