@@ -3598,6 +3598,26 @@ body::before {
   -webkit-overflow-scrolling: auto;
   transition: background 0.8s ease;
 }
+/* 空間ノイズ背景（圧を与える環境レイヤー） */
+#screen-crowd::before {
+  content: '';
+  position: absolute;
+  inset: -5%;
+  width: 110%;
+  height: 110%;
+  background: url('assets/bg_crowd_stage3.png') center/cover no-repeat;
+  filter: brightness(0.35) saturate(0.5) blur(1.5px);
+  opacity: 0.55;
+  z-index: 0;
+  pointer-events: none;
+  animation: cwBgBreathe 12s ease-in-out infinite;
+}
+@keyframes cwBgBreathe {
+  0%   { transform: scale(1.0) translate(0, 0); }
+  33%  { transform: scale(1.02) translate(-0.5%, 0.3%); }
+  66%  { transform: scale(1.01) translate(0.3%, -0.4%); }
+  100% { transform: scale(1.0) translate(0, 0); }
+}
 /* 浮遊微粒子（SlashのslParticleDrift再利用） */
 #screen-crowd::after {
   content: '';
