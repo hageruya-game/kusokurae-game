@@ -3660,7 +3660,16 @@ body::before {
 .cw-cell:active {
   transform: scale(0.93);
 }
-/* === シルエット形状 === */
+/* === 外箱（四角形） === */
+.cw-box {
+  position: absolute;
+  inset: 4%;
+  border-radius: 6px;
+  background: rgba(20, 15, 40, 0.55);
+  border: 1px solid rgba(130, 100, 190, 0.3);
+  overflow: hidden;
+}
+/* === 内側の丸（オーブ） === */
 .cw-shape {
   position: absolute;
   inset: 8%;

@@ -6065,18 +6065,18 @@ const Crowd = {
           var range = 5 + (15 - 5) * s;
           diff.hue = baseHue + sign * range;
         } else if (axis === "offset") {
-          // 内部の位置ズレ（メイン差異）
-          var range = 3 + (12 - 3) * s;
+          // 箱の中の丸の位置ズレ
+          var range = 4 + (14 - 4) * s;
           diff.offsetX = sign * range;
-          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (2 + (8 - 2) * s);
+          diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (3 + (10 - 3) * s);
         } else if (axis === "rotation") {
-          // 軽微な回転
-          var range = 4 + (15 - 4) * s;
+          // 外箱の回転（四角なので小さくても見える）
+          var range = 5 + (22 - 5) * s;
           diff.rotation = sign * range;
         } else if (axis === "scale") {
-          // 内部のサイズ差
-          var range = 2 + (6 - 2) * s;
-          diff.inset = Math.max(3, Math.min(16, 8 + sign * range));
+          // 丸のサイズ差（箱との隙間で分かる）
+          var range = 3 + (8 - 3) * s;
+          diff.inset = Math.max(3, Math.min(18, 8 + sign * range));
         }
       }
 
@@ -6147,27 +6147,27 @@ const Crowd = {
     var ox = shape.offsetX || 0;
     var oy = shape.offsetY || 0;
 
-    // .cw-shape生成
-    var el = document.createElement("div");
-    el.className = "cw-shape";
-    el.style.inset = shape.inset + "%";
+    // outerBox（四角形の箱）
+    var box = document.createElement("div");
+    box.className = "cw-box";
+    box.style.transform = "rotate(" + shape.rotation + "deg)";
 
-    // 外形は常に丸
-    el.style.borderRadius = "50%";
-
-    // 背景色
-    el.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",35%,52%), hsl(" + h + ",45%,22%))";
-
-    // 位置ズレ + 回転
-    el.style.transform = "translate(" + ox + "%, " + oy + "%) rotate(" + shape.rotation + "deg)";
+    // innerOrb（紫の丸）
+    var orb = document.createElement("div");
+    orb.className = "cw-shape";
+    orb.style.inset = shape.inset + "%";
+    orb.style.borderRadius = "50%";
+    orb.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",35%,52%), hsl(" + h + ",45%,22%))";
+    orb.style.transform = "translate(" + ox + "%, " + oy + "%)";
 
     // 敵意
     if (shape.hostile) {
-      el.classList.add("cw-shape-hostile");
-      el.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",30%,50%), hsl(350,40%,20%))";
+      orb.classList.add("cw-shape-hostile");
+      orb.style.background = "radial-gradient(ellipse at 50% 38%, hsl(" + h + ",30%,50%), hsl(350,40%,20%))";
     }
 
-    cell.appendChild(el);
+    box.appendChild(orb);
+    cell.appendChild(box);
   },
 
   startTimer(dur) {
