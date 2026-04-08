@@ -101,6 +101,7 @@ crowd: {
     "...not bad.",
     "Still see it?"
   ],
+  lastTaunt: "...it's over.",
   found: "...found it",
   allSame: "...they're all the same",
   wrong: "...wrong one",

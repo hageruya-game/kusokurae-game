@@ -2977,10 +2977,12 @@ body::before {
 /* 命令文 */
 .sl-command {
   text-align: center;
-  font-size: clamp(22px, 6vw, 32px);
+  font-size: clamp(18px, 5.5vw, 30px);
   font-weight: 900;
   color: #f0e8ff;
   padding: 8px 12px 4px;
+  max-width: 90vw;
+  overflow-wrap: break-word;
   min-height: 40px;
   line-height: 1.3;
   letter-spacing: 2px;
@@ -3393,12 +3395,16 @@ body::before {
 }
 .sl-layer-overlay.sl-lo-show { opacity: 1; }
 .sl-layer-name {
-  font-size: clamp(24px, 7vw, 36px);
+  font-size: clamp(20px, 6vw, 34px);
   font-weight: 900;
   color: #d0b0ff;
-  letter-spacing: 6px;
+  letter-spacing: 4px;
   text-shadow: 0 0 20px rgba(160, 100, 255, 0.4), 0 0 40px rgba(140, 80, 240, 0.2);
   animation: slLayerNameIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  max-width: 90vw;
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 @keyframes slLayerNameIn {
   0%   { opacity: 0; transform: scale(0.8) translateY(8px); letter-spacing: 12px; }
@@ -3634,10 +3640,12 @@ body::before {
 /* 命令/フィードバック */
 .cw-command {
   text-align: center;
-  font-size: clamp(16px, 4.5vw, 22px);
+  font-size: clamp(14px, 4vw, 20px);
   font-weight: 700;
   color: #c0b0e0;
   padding: 6px 12px 4px;
+  max-width: 90vw;
+  overflow-wrap: break-word;
   min-height: 32px;
   line-height: 1.4;
   letter-spacing: 1px;
@@ -3783,10 +3791,13 @@ body::before {
 }
 .cw-taunt-text {
   margin-top: 16px;
-  font-size: clamp(16px, 5vw, 22px);
+  font-size: clamp(14px, 4.5vw, 20px);
   font-weight: 700;
   color: rgba(255, 240, 240, 0.95);
   text-shadow: 0 0 8px rgba(255, 60, 60, 0.6), 0 0 20px rgba(200, 30, 50, 0.4), 0 2px 4px rgba(0, 0, 0, 0.9);
+  max-width: 85vw;
+  text-align: center;
+  word-break: break-word;
   letter-spacing: 2px;
 }
 @keyframes cwTauntIn {
@@ -3953,6 +3964,23 @@ body::before {
 .cw-miss-flash {
   animation: slMissScreenFlash 0.2s ease-out;
 }
+/* 失敗暗転（0.2s） */
+.cw-miss-darken {
+  animation: cwMissDarken 0.25s ease-out;
+}
+@keyframes cwMissDarken {
+  0%   { filter: brightness(0.4); }
+  100% { filter: brightness(1); }
+}
+/* 正解明転 */
+.cw-correct-flash {
+  animation: cwCorrectFlash 0.3s ease-out;
+}
+@keyframes cwCorrectFlash {
+  0%   { filter: brightness(1); }
+  12%  { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+}
 
 /* --- 層タイトルオーバーレイ --- */
 .cw-layer-overlay {
@@ -3970,12 +3998,16 @@ body::before {
 }
 .cw-layer-overlay.cw-lo-show { opacity: 1; }
 .cw-layer-name {
-  font-size: clamp(24px, 7vw, 36px);
+  font-size: clamp(20px, 6vw, 34px);
   font-weight: 900;
   color: #d0b0ff;
-  letter-spacing: 6px;
+  letter-spacing: 4px;
   text-shadow: 0 0 20px rgba(160, 100, 255, 0.4), 0 0 40px rgba(140, 80, 240, 0.2);
   animation: slLayerNameIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  max-width: 90vw;
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 .cw-layer-hint {
   font-size: clamp(14px, 4vw, 18px);

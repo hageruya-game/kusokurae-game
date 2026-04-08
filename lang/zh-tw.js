@@ -101,6 +101,7 @@ crowd: {
     "…還行。",
     "還看得見？"
   ],
+  lastTaunt: "…結束了。",
   found: "…找到了",
   allSame: "…全都一樣",
   wrong: "…不對",

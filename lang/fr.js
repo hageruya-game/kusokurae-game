@@ -103,6 +103,7 @@ crowd: {
     "\u2026pas mal.",
     "Tu vois encore ?"
   ],
+  lastTaunt: "\u2026c'est fini.",
   found: "…trouvé",
   allSame: "…tous identiques",
   wrong: "…mauvais choix",

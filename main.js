@@ -6004,7 +6004,7 @@ const Crowd = {
   },
 
   clearEffects() {
-    this.el.screen.classList.remove("cw-miss-flash");
+    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash");
     this.el.layerOverlay.classList.remove("cw-lo-show");
     this.el.layerOverlay.style.pointerEvents = "";
     if (this._dismissFn) {
@@ -6105,7 +6105,12 @@ const Crowd = {
     this.el.tauntImg.src = this.CW_INTRUDER;
     this.applyKimoVisualPreset(this.el.tauntImg, "taunt");
 
-    var text = CROWD_LAYER_TAUNTS[layerIdx];
+    var text;
+    if (this._isLastRound) {
+      text = I18n.t("crowd.lastTaunt");
+    } else {
+      text = CROWD_LAYER_TAUNTS[layerIdx];
+    }
     this.el.tauntText.textContent = text || "";
 
     el.classList.remove("cw-taunt-show");
@@ -6122,7 +6127,7 @@ const Crowd = {
   startRound() {
     this.cleanup();
     this.answered = false;
-    this.el.screen.classList.remove("cw-miss-flash");
+    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash");
     this.el.command.textContent = "";
 
     const layer = CROWD_LAYERS[this.currentLayer];
@@ -6131,6 +6136,7 @@ const Crowd = {
     // 波パターン: 最初のfindラウンドをやや易、直後を強化
     this._roundDiffScale = 1.0;
     this._roundInterferenceBoost = false;
+    this._isLastRound = false;
     if (this.roundType === "find") {
       var findIndex = 0;
       for (var fi = 0; fi < this.currentRound; fi++) {
@@ -6144,6 +6150,12 @@ const Crowd = {
         this._roundDiffScale = 0.7;
         this._roundInterferenceBoost = true;
       }
+    }
+
+    // Layer4最終ラウンド: 強化演出（妨害+1, 固定タウント）
+    if (this.currentLayer === 3 && this.currentRound === layer.rounds - 1) {
+      this._roundInterferenceBoost = true;
+      this._isLastRound = true;
     }
 
     this._roundStartTime = Date.now();
@@ -6380,7 +6392,10 @@ const Crowd = {
 
     // タイプ選択（sequenceがあれば固定パターン、なければランダム）
     var type;
-    if (cfg.sequence && seqIndex < cfg.sequence.length) {
+    if (this._isLastRound && cfg.sequence && seqIndex >= cfg.sequence.length) {
+      // Layer4最終ラウンド追加分: cross固定
+      type = "cross";
+    } else if (cfg.sequence && seqIndex < cfg.sequence.length) {
       type = cfg.sequence[seqIndex];
     } else if (prev && types.length > 1) {
       var others = types.filter(function(t) { return t !== prev.type; });
@@ -6610,8 +6625,15 @@ const Crowd = {
   onCorrectFind(tappedCell) {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
-    SoundSystem.crowdHit();
+    // 0.06s静寂 → 正解音（カタルシス）
+    setTimeout(function() { SoundSystem.crowdHit(); }, 60);
     this.updateComboUI();
+
+    // 画面一瞬明転
+    var screen = this.el.screen;
+    screen.classList.remove("cw-correct-flash");
+    void screen.offsetWidth;
+    screen.classList.add("cw-correct-flash");
 
     // 潰しアニメーション
     tappedCell.classList.add("cw-cell-crush");
@@ -6638,8 +6660,14 @@ const Crowd = {
   onNoneSuccess() {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
-    SoundSystem.correct();
+    setTimeout(function() { SoundSystem.correct(); }, 60);
     this.updateComboUI();
+
+    // 画面一瞬明転
+    var screen = this.el.screen;
+    screen.classList.remove("cw-correct-flash");
+    void screen.offsetWidth;
+    screen.classList.add("cw-correct-flash");
 
     this.el.command.textContent = I18n.t("crowd.allSame");
     this.el.command.style.color = "#60ff90";
@@ -6664,10 +6692,10 @@ const Crowd = {
 
     tappedCell.classList.add("cw-cell-wrong");
 
-    // 赤フラッシュ
-    this.el.screen.classList.remove("cw-miss-flash");
+    // 暗転 + 赤フラッシュ
+    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken");
     void this.el.screen.offsetWidth;
-    this.el.screen.classList.add("cw-miss-flash");
+    this.el.screen.classList.add("cw-miss-flash", "cw-miss-darken");
 
     // 正解セルを暴露（赤グロー + シルエット強調）
     if (this.roundType === "find" && this.oddIndex >= 0) {
@@ -6721,6 +6749,12 @@ const Crowd = {
     this.updateLivesUI(this.lives);
     SoundSystem.crowdMiss();
     SoundSystem.updateSlashTension(this.calcTension());
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+
+    // 暗転 + 赤フラッシュ
+    this.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken");
+    void this.el.screen.offsetWidth;
+    this.el.screen.classList.add("cw-miss-flash", "cw-miss-darken");
 
     // 正解セルを暴露（赤グロー + シルエット強調）
     if (this.oddIndex >= 0) {
