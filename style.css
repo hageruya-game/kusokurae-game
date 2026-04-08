@@ -3942,17 +3942,21 @@ body::before {
 @keyframes cwCrossLTR {
   0%   { left: -140px; opacity: 0; }
   8%   { left: 15%; opacity: 0.8; }
-  35%  { left: 35%; opacity: 0.8; }
-  65%  { left: 55%; opacity: 0.8; }
-  92%  { left: 90%; opacity: 0.6; }
+  30%  { left: 38%; opacity: 0.85; }
+  38%  { left: 42%; opacity: 0.85; }
+  42%  { left: 42%; opacity: 0.85; }
+  70%  { left: 65%; opacity: 0.7; }
+  92%  { left: 90%; opacity: 0.5; }
   100% { left: 100%; opacity: 0; }
 }
 @keyframes cwCrossRTL {
   0%   { right: -140px; left: auto; opacity: 0; }
   8%   { right: 15%; left: auto; opacity: 0.8; }
-  35%  { right: 35%; left: auto; opacity: 0.8; }
-  65%  { right: 55%; left: auto; opacity: 0.8; }
-  92%  { right: 90%; left: auto; opacity: 0.6; }
+  30%  { right: 38%; left: auto; opacity: 0.85; }
+  38%  { right: 42%; left: auto; opacity: 0.85; }
+  42%  { right: 42%; left: auto; opacity: 0.85; }
+  70%  { right: 65%; left: auto; opacity: 0.7; }
+  92%  { right: 90%; left: auto; opacity: 0.5; }
   100% { right: 100%; left: auto; opacity: 0; }
 }
 
@@ -4028,6 +4032,12 @@ body::before {
   40%  { translate: -1.5px 0.6px; rotate: -0.9deg; }
   60%  { translate: 0.8px 1.3px; rotate: 0.5deg; }
   80%  { translate: -0.7px -1.1px; rotate: -0.6deg; }
+}
+/* 同期揺れ: 全セルが同じ動き */
+.cw-cell.cw-jitter-sync {
+  animation-name: cwJitter;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
 /* 揺れバリエーション: 左右強調 */
 .cw-cell.cw-jitter-h { animation-name: cwJitterH; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }

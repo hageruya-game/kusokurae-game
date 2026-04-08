@@ -6145,6 +6145,7 @@ const Crowd = {
     clearTimeout(this._jitterTimeout);
     clearTimeout(this._tutorialDismissTimeout);
     clearTimeout(this._comebackTimeout);
+    clearTimeout(this._syncToIndivTimeout);
     this.timerTimeout = null;
     this.flinchTimeout = null;
     this.heartbeatInterval = null;
@@ -6154,6 +6155,7 @@ const Crowd = {
     this._jitterTimeout = null;
     this._tutorialDismissTimeout = null;
     this._comebackTimeout = null;
+    this._syncToIndivTimeout = null;
     // 揺れ停止 + グリッド回転リセット
     this._stopCellJitter();
     this.el.grid.style.transform = "";
@@ -6379,26 +6381,66 @@ const Crowd = {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     cells.forEach(function(c) { c.classList.add("cw-cell-mask"); });
 
-    // 0.4秒の完全静止 → マスク除去 → 揺れ・妨害開始
     var sid = this.sessionId;
     var self = this;
+
+    // ① 静止 0.4秒 → マスク除去 + 同期揺れ開始
     this._jitterTimeout = setTimeout(function() {
       if (self.sessionId !== sid || self.answered) return;
-      // マスク除去（差異がここから見え始める）
+      // マスク除去
       var cells2 = self.el.grid.querySelectorAll(".cw-cell");
       cells2.forEach(function(c) { c.classList.remove("cw-cell-mask"); });
-      // Layer1以降: 各セルに微揺れ
+
+      // ② 同期揺れフェーズ: 全セルが同じ動き（差異は見えるが確信できない）
       if (self.currentLayer >= 1) {
-        self._startCellJitter();
+        self._startSyncJitter();
       }
+
+      // 時間差差異（Temporal Diff）: 正解セルだけ遅れて/先に動く
+      // Layer1以降、Layer3-4は強制適用
+      if (self.oddIndex >= 0 && (self.currentLayer >= 1 || self._forceTemporalDiff)) {
+        self._applyTemporalDiff();
+      }
+
+      // 妨害開始
       self.playInterferenceSequence(layer);
+
+      // ③ 0.3-0.5秒後に個別揺れフェーズへ移行
+      var syncDur = 300 + Math.random() * 200;
+      self._syncToIndivTimeout = setTimeout(function() {
+        if (self.sessionId !== sid || self.answered) return;
+        self._stopCellJitter();
+        self._startCellJitter();
+      }, syncDur);
     }, 400);
+  },
+
+  // 同期揺れ: 全セルが同じアニメーション（同期）
+  _startSyncJitter() {
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    cells.forEach(function(c) {
+      c.classList.add("cw-jitter-sync");
+      c.style.animationDelay = "0s";
+      c.style.animationDuration = "1.8s";
+    });
+  },
+
+  // 時間差差異: 正解セルだけ動きのタイミングをずらす
+  _applyTemporalDiff() {
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    if (this.oddIndex < 0 || !cells[this.oddIndex]) return;
+    var oddCell = cells[this.oddIndex];
+    // 正解セルだけ0.15-0.25秒の遅延（または先行）
+    var delay = (0.15 + Math.random() * 0.1);
+    if (Math.random() < 0.3) delay = -delay; // 30%で先行
+    oddCell.style.animationDelay = Math.max(0, delay).toFixed(3) + "s";
   },
 
   _startCellJitter() {
     var jitterClasses = ["cw-jitter", "cw-jitter-h", "cw-jitter-d"];
     var cells = this.el.grid.querySelectorAll(".cw-cell");
-    cells.forEach(function(c) {
+    var self = this;
+    cells.forEach(function(c, idx) {
       // ランダムに揺れパターンを割り当て
       var cls = jitterClasses[Math.floor(Math.random() * jitterClasses.length)];
       c.classList.add(cls);
@@ -6407,18 +6449,27 @@ const Crowd = {
       // ランダムな周期で完全非同期化
       c.style.animationDuration = (1.6 + Math.random() * 0.4).toFixed(2) + "s";
     });
+    // 動的回転差: 個別揺れ開始時に正解セルへ回転を適用
+    if (this._motionRotation && this.oddIndex >= 0 && cells[this.oddIndex]) {
+      var oddBox = cells[this.oddIndex].querySelector(".cw-box");
+      if (oddBox) {
+        oddBox.style.transition = "transform 0.3s ease";
+        oddBox.style.transform = "rotate(" + this._motionRotation + "deg)";
+      }
+    }
   },
 
   _stopCellJitter() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     cells.forEach(function(c) {
-      c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d");
+      c.classList.remove("cw-jitter", "cw-jitter-h", "cw-jitter-d", "cw-jitter-sync");
       c.style.animationDelay = "";
       c.style.animationDuration = "";
     });
   },
 
   generateShapes(layer) {
+    this._motionRotation = 0; // 動的回転差（揺れフェーズで適用）
     var baseHue = 260 + Math.random() * 20; // 260-280 紫系
 
     // ラウンドごとに図形をランダム選択（全セル統一）
@@ -6452,7 +6503,7 @@ const Crowd = {
       for (var e = 0; e < extraCount && e < rest.length; e++) {
         chosenAxes.push(rest[e]);
       }
-      // 全Layer: 回転が唯一の補助軸なら70%でscale置換/追加（初手で見抜かれにくくする）
+      // 全Layer: 回転が唯一の補助軸なら70%でscale置換/追加
       var extraAxes = chosenAxes.filter(function(a) { return a !== "offset"; });
       if (extraAxes.length === 1 && extraAxes[0] === "rotation" && Math.random() < 0.7) {
         var rotIdx = chosenAxes.indexOf("rotation");
@@ -6461,6 +6512,12 @@ const Crowd = {
         } else {
           chosenAxes.push("scale"); // 追加
         }
+      }
+      // Layer3-4: 必ずtemporal（時間差）を追加（まだなければ）
+      if (layer.diffStrength <= 0.55) {
+        this._forceTemporalDiff = true;
+      } else {
+        this._forceTemporalDiff = false;
       }
 
       var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, flipX: false };
@@ -6476,9 +6533,11 @@ const Crowd = {
           diff.offsetX = sign * range;
           diff.offsetY = (Math.random() < 0.5 ? 1 : -1) * (4 + (12 - 4) * s);
         } else if (axis === "rotation") {
-          // 外箱の回転（補助）
+          // 外箱の回転（動的のみ: 静止時は0、揺れで差が出る）
+          // _motionRotation にストアして jitter フェーズで適用
           var range = 8 + (25 - 8) * s;
-          diff.rotation = sign * range;
+          this._motionRotation = sign * range;
+          diff.rotation = 0; // 静止時は角度差なし
         } else if (axis === "scale") {
           // 図形のサイズ差（補助）
           var range = 2 + (6 - 2) * s;
@@ -6602,8 +6661,8 @@ const Crowd = {
     cell.appendChild(box);
   },
 
-  // === 視線トラップ（最終ラウンド限定） ===
-  // 差異が一瞬消えて戻る → 「見えたはずなのに…」を誘発
+  // === 視線トラップ ===
+  // 正解セルの差異を消す + 別のセルに偽の違和感を出す
   _fireGazeTrap() {
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     if (!cells.length || this.oddIndex < 0) return;
@@ -6620,7 +6679,7 @@ const Crowd = {
     var origOrbTransform = oddOrb.style.transform;
     var origOrbInset = oddOrb.style.inset;
 
-    // 差異を消す（baseShapeと同じにする）
+    // 正解セルの差異を消す（baseShapeと同じにする）
     oddBox.style.transform = "rotate(" + this.baseShape.rotation + "deg)";
     var baseOx = this.baseShape.offsetX || 0;
     var baseOy = this.baseShape.offsetY || 0;
@@ -6629,12 +6688,39 @@ const Crowd = {
     oddOrb.style.transform = baseTransforms;
     oddOrb.style.inset = this.baseShape.inset + "%";
 
-    // 0.12-0.18秒後に差異を復帰
-    var dur = 120 + Math.random() * 60;
+    // 偽の違和感: ランダムな非正解セルを一瞬だけ変化させる
+    var fakeIdx = -1;
+    var candidates = [];
+    for (var fi = 0; fi < cells.length; fi++) {
+      if (fi !== this.oddIndex) candidates.push(fi);
+    }
+    if (candidates.length > 0) {
+      fakeIdx = candidates[Math.floor(Math.random() * candidates.length)];
+    }
+    var fakeOrb = null;
+    var fakeOrigTransform = "";
+    if (fakeIdx >= 0 && cells[fakeIdx]) {
+      fakeOrb = cells[fakeIdx].querySelector(".cw-shape");
+      if (fakeOrb) {
+        fakeOrigTransform = fakeOrb.style.transform;
+        // 偽セルに差異のスタイルを一瞬適用
+        if (this.diffShape) {
+          var dx = this.diffShape.offsetX || 0;
+          var dy = this.diffShape.offsetY || 0;
+          fakeOrb.style.transform = "translate(" + dx + "%, " + dy + "%)";
+        }
+      }
+    }
+
+    // 0.10-0.15秒で全復帰（残像なし）
+    var dur = 100 + Math.random() * 50;
     setTimeout(function() {
       oddBox.style.transform = origBoxTransform;
       oddOrb.style.transform = origOrbTransform;
       oddOrb.style.inset = origOrbInset;
+      if (fakeOrb) {
+        fakeOrb.style.transform = fakeOrigTransform;
+      }
     }, dur);
   },
 
