@@ -5773,8 +5773,8 @@ const CROWD_LAYERS = [
 const CROWD_LAYER_TAUNTS = [
   "違うやつ、見えるよな？",
   "全部同じなら、触るな。",
-  "もう、見えなくなってきたか？",
-  null,
+  "このやろう、やるじゃねーか。",
+  "まだ見えるのか。もっと邪魔してやる。",
 ];
 
 const Crowd = {
@@ -6210,21 +6210,41 @@ const Crowd = {
   CW_INTRUDER: "assets/image_0.png",
 
   scheduleInterference(layer) {
-    // 第一層は出さない（テスト用: 第2層以降100%出現）
-    if (this.currentLayer < 1) return;
+    // 層ごとの妨害設定
+    var cfg = [
+      { chance: 0.25, max: 1 },  // 第1層: 25%, 最大1回
+      { chance: 0.30, max: 1 },  // 第2層: 30%, 最大1回
+      { chance: 0.35, max: 2 },  // 第3層: 35%, 最大2回（低確率で2回目）
+      { chance: 0.40, max: 2 },  // 第4層: 40%, 最大2回
+    ][this.currentLayer] || { chance: 0.30, max: 1 };
+
+    if (Math.random() > cfg.chance) return;
 
     var sid = this.sessionId;
-    var doPeek = Math.random() < 0.5;
-    var delay = 200; // テスト用: 0.2秒固定
+    var self = this;
 
+    // 1回目
+    var delay1 = 300 + Math.random() * 400;
     this.interferenceTimeout = setTimeout(function() {
-      if (this.sessionId !== sid || this.answered) return;
-      if (doPeek) {
-        this.showPeek();
+      if (self.sessionId !== sid || self.answered) return;
+      if (Math.random() < 0.5) {
+        self.showPeek();
       } else {
-        this.showHandCover();
+        self.showHandCover();
       }
-    }.bind(this), delay);
+
+      // 2回目（後半層のみ）
+      if (cfg.max >= 2 && Math.random() < 0.5) {
+        setTimeout(function() {
+          if (self.sessionId !== sid || self.answered) return;
+          if (Math.random() < 0.5) {
+            self.showPeek();
+          } else {
+            self.showHandCover();
+          }
+        }, 800 + Math.random() * 600);
+      }
+    }, delay1);
   },
 
   showPeek() {
