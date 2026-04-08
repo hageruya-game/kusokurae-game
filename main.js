@@ -6010,6 +6010,7 @@ const Crowd = {
     if (!el) { if (onDone) onDone(); return; }
 
     this.el.tauntImg.src = this.CW_INTRUDER;
+    this.applyKimoVisualPreset(this.el.tauntImg, "taunt");
 
     var text = CROWD_LAYER_TAUNTS[layerIdx];
     this.el.tauntText.textContent = text || "";
@@ -6018,7 +6019,6 @@ const Crowd = {
     void el.offsetWidth;
     el.classList.add("cw-taunt-show");
 
-    // アニメーション終了後にコールバック
     clearTimeout(this.tauntTimeout);
     this.tauntTimeout = setTimeout(function() {
       el.classList.remove("cw-taunt-show");
@@ -6038,7 +6038,7 @@ const Crowd = {
     this.generateShapes(layer);
     this.renderGrid(layer);
     this.startTimer(layer.timer);
-    this.scheduleInterference(layer);
+    this.playInterferenceSequence(layer);
   },
 
   generateShapes(layer) {
@@ -6209,58 +6209,103 @@ const Crowd = {
   // === 妨害演出 ===
   CW_INTRUDER: "assets/image_0.png",
 
-  scheduleInterference(layer) {
-    // 層ごとの妨害設定
-    var cfg = [
-      { chance: 0.25, max: 1 },  // 第1層: 25%, 最大1回
-      { chance: 0.30, max: 1 },  // 第2層: 30%, 最大1回
-      { chance: 0.35, max: 2 },  // 第3層: 35%, 最大2回（低確率で2回目）
-      { chance: 0.40, max: 2 },  // 第4層: 40%, 最大2回
-    ][this.currentLayer] || { chance: 0.30, max: 1 };
+  // 層ごとの妨害設定
+  CW_INTERFERENCE: [
+    { chance: 0.25, max: 1, types: ["peek"],          secondChance: 0 },
+    { chance: 0.30, max: 1, types: ["peek"],          secondChance: 0 },
+    { chance: 0.35, max: 2, types: ["peek", "hand"],  secondChance: 0.5 },
+    { chance: 0.40, max: 2, types: ["peek", "hand"],  secondChance: 0.5 },
+  ],
 
-    if (Math.random() > cfg.chance) return;
+  // アニメーション尺（ms）
+  CW_ANIM_DUR: { peek: 1200, hand: 1000 },
+
+  getInterferenceCount(layerIdx) {
+    var cfg = this.CW_INTERFERENCE[layerIdx];
+    if (!cfg || Math.random() > cfg.chance) return 0;
+    if (cfg.max >= 2 && Math.random() < cfg.secondChance) return 2;
+    return 1;
+  },
+
+  playInterferenceSequence(layer) {
+    var count = this.getInterferenceCount(this.currentLayer);
+    if (count === 0) return;
 
     var sid = this.sessionId;
     var self = this;
-
-    // 1回目
     var delay1 = 300 + Math.random() * 400;
+
     this.interferenceTimeout = setTimeout(function() {
       if (self.sessionId !== sid || self.answered) return;
-      if (Math.random() < 0.5) {
-        self.showPeek();
-      } else {
-        self.showHandCover();
-      }
+      var first = self.showSingleInterference(self.currentLayer, 0);
 
-      // 2回目（後半層のみ）
-      if (cfg.max >= 2 && Math.random() < 0.5) {
+      if (count >= 2) {
+        // 1回目の退場完了後 + 0.8〜1.4秒後に2回目
+        var wait = self.CW_ANIM_DUR[first.type] + 800 + Math.random() * 600;
         setTimeout(function() {
           if (self.sessionId !== sid || self.answered) return;
-          if (Math.random() < 0.5) {
-            self.showPeek();
-          } else {
-            self.showHandCover();
-          }
-        }, 800 + Math.random() * 600);
+          self.showSingleInterference(self.currentLayer, 1, first);
+        }, wait);
       }
     }, delay1);
   },
 
-  showPeek() {
+  showSingleInterference(layerIdx, seqIndex, prev) {
+    var cfg = this.CW_INTERFERENCE[layerIdx];
+    var types = cfg.types;
+
+    // タイプ選択（2回目は1回目と違うタイプを優先）
+    var type;
+    if (prev && types.length > 1) {
+      var others = types.filter(function(t) { return t !== prev.type; });
+      type = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : types[0];
+    } else {
+      type = types[Math.floor(Math.random() * types.length)];
+    }
+
+    // 方向選択（2回目は1回目と違う方向を優先）
+    var fromLeft;
+    if (prev && prev.fromLeft !== undefined) {
+      fromLeft = !prev.fromLeft;
+    } else {
+      fromLeft = Math.random() < 0.5;
+    }
+
+    var result = { type: type, fromLeft: fromLeft };
+
+    if (type === "peek") {
+      this.showPeek(fromLeft);
+    } else {
+      this.showHandCover();
+    }
+
+    return result;
+  },
+
+  applyKimoVisualPreset(imgEl, presetName) {
+    if (presetName === "peek") {
+      imgEl.style.opacity = "0.75";
+      imgEl.style.filter = "brightness(0.85) saturate(0.7) drop-shadow(0 0 12px rgba(60,0,100,0.6))";
+    } else if (presetName === "hand") {
+      imgEl.style.opacity = "0.6";
+      imgEl.style.filter = "brightness(0.8) saturate(0.6) drop-shadow(0 0 10px rgba(60,0,100,0.5))";
+    } else if (presetName === "taunt") {
+      imgEl.style.opacity = "0.85";
+      imgEl.style.filter = "brightness(0.9) saturate(0.8) drop-shadow(0 0 24px rgba(60,0,100,0.7))";
+    }
+  },
+
+  showPeek(fromLeft) {
     var el = this.el.peek;
     var img = this.el.peekImg;
     if (!el || !img) return;
 
     img.src = this.CW_INTRUDER;
+    this.applyKimoVisualPreset(img, "peek");
 
-    // 左右ランダム
-    var fromLeft = Math.random() < 0.5;
     el.classList.remove("cw-peek-show", "cw-peek-left", "cw-peek-right");
     el.style.opacity = "";
     el.classList.add(fromLeft ? "cw-peek-left" : "cw-peek-right");
-
-    // 位置を縦方向にランダム化
     el.style.top = (20 + Math.random() * 40) + "%";
 
     requestAnimationFrame(function() {
@@ -6274,12 +6319,17 @@ const Crowd = {
     if (!el || !img) return;
 
     img.src = this.CW_INTRUDER;
+    this.applyKimoVisualPreset(img, "hand");
 
-    // ランダムなセルの上に配置
+    // 正解セル以外からランダム選択（正解を完全に隠さない）
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     if (cells.length === 0) return;
-    var targetIdx = Math.floor(Math.random() * cells.length);
-    var cell = cells[targetIdx];
+    var candidates = [];
+    for (var i = 0; i < cells.length; i++) {
+      if (i !== this.oddIndex) candidates.push(cells[i]);
+    }
+    if (candidates.length === 0) candidates = Array.from(cells);
+    var cell = candidates[Math.floor(Math.random() * candidates.length)];
     var rect = cell.getBoundingClientRect();
     var screenRect = this.el.screen.getBoundingClientRect();
     var size = Math.max(rect.width, rect.height) * 1.6;
