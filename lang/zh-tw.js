@@ -51,6 +51,7 @@ intro: {
   line1: "你會被命令。",
   line2: "違抗。",
   line3: "別信。",
+  hint: "選相反的",
 },
 
 // === 規則說明 ===
@@ -127,8 +128,8 @@ crowd: {
   postLayer0: "…那只是熱身。",
   perfectClear: ["看穿了。", "毫不猶豫。", "完美看破。", "完美突破。"],
   tutorialLine3: "點它。",
-  interlude1: "這只是入口。",
-  interlude2: "你竟然走到這裡？",
+  interlude1: "…還不錯。",
+  interlude2: "…真頑固。",
 },
 
 // === Dungeon ===

@@ -51,6 +51,7 @@ intro: {
   line1: "You'll be ordered.",
   line2: "Defy.",
   line3: "Don't trust it.",
+  hint: "Pick the opposite",
 },
 
 // === Rules ===
@@ -127,8 +128,8 @@ crowd: {
   postLayer0: "...that was just a warm-up.",
   perfectClear: ["Seen through.", "No hesitation.", "Perfect read.", "Flawless."],
   tutorialLine3: "Tap it.",
-  interlude1: "This was just the entrance.",
-  interlude2: "You made it this far?",
+  interlude1: "…Not bad.",
+  interlude2: "…You're stubborn.",
 },
 
 // === Dungeon ===

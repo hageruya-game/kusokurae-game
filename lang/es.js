@@ -51,6 +51,7 @@ intro: {
   line1: "Te darán órdenes.",
   line2: "Desobedece.",
   line3: "No te fíes.",
+  hint: "Elige lo opuesto",
 },
 
 // === Reglas ===
@@ -127,8 +128,8 @@ crowd: {
   postLayer0: "…eso fue solo calentamiento.",
   perfectClear: ["Visto.", "Sin dudar.", "Lectura perfecta.", "Impecable."],
   tutorialLine3: "Tócalo.",
-  interlude1: "Esto fue solo la entrada.",
-  interlude2: "¿Llegaste hasta aquí?",
+  interlude1: "…Nada mal.",
+  interlude2: "…Eres terco.",
 },
 
 // === Dungeon ===

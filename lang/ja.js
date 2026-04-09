@@ -51,6 +51,7 @@ intro: {
   line1: "命令される。",
   line2: "逆らえ。",
   line3: "信じるな。",
+  hint: "逆を選べ",
 },
 
 // === ルール説明 ===
@@ -127,8 +128,8 @@ crowd: {
   postLayer0: "…それはウォーミングアップだ。",
   perfectClear: ["見抜いた。", "迷いなし。", "完全看破。", "完全突破。"],
   tutorialLine3: "タップしろ。",
-  interlude1: "まだ入口だ。",
-  interlude2: "ここまで来たのか。",
+  interlude1: "…やるじゃないか。",
+  interlude2: "…しぶといな。",
 },
 
 // === Dungeon ===

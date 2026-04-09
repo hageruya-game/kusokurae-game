@@ -53,6 +53,7 @@ intro: {
   line1: "On va t'ordonner.",
   line2: "Résiste.",
   line3: "Ne crois rien.",
+  hint: "Choisis l'inverse",
 },
 
 // === Règles ===
@@ -129,8 +130,8 @@ crowd: {
   postLayer0: "…c'était juste l'échauffement.",
   perfectClear: ["Percé à jour.", "Sans hésiter.", "Lecture parfaite.", "Impeccable."],
   tutorialLine3: "Touche.",
-  interlude1: "Ce n'était que l'entrée.",
-  interlude2: "Tu es arrivé jusqu'ici ?",
+  interlude1: "…Pas mal.",
+  interlude2: "…Tu es tenace.",
 },
 
 // === Dungeon ===

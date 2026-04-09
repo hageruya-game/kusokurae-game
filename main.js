@@ -2209,8 +2209,9 @@ const Game = {
     this.answered = false;  // ★ 入力受付開始
 
     if (this._isTutorialRound) {
-      // チュートリアル: タイマーなし、1.2秒後に両ボタンにパルス
-      // 正解側がごく僅かに先に光る（視線誘導であり答え表示ではない）
+      // チュートリアル: タイマーなし、ヒントテキスト表示 + 1.2秒後に両ボタンにパルス
+      this.el.hintMessage.textContent = I18n.t("intro.hint");
+      this.el.hintMessage.classList.add("hint-visible");
       var sid = this.sessionId;
       var self = this;
       this._tutorialHintTimer = setTimeout(function() {
@@ -6232,7 +6233,7 @@ const CROWD_LAYERS = [
   { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation"] },
   { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.75, axes: ["offset","scale","rotation","flip"] },
   { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.55, axes: ["offset","scale","rotation","flip"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 4200, types: ["find"], diffStrength: 0.40, axes: ["offset","scale","rotation","flip"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 4800, types: ["find"], diffStrength: 0.40, axes: ["offset","scale","rotation","flip"] },
 ];
 
 const CROWD_LAYER_TAUNTS = [
@@ -7643,30 +7644,30 @@ const Crowd = {
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
     this.updateComboUI();
 
-    // ① 0ms: jitter停止 → 一瞬の静寂
+    // ① 0ms: jitter停止 → 完全静止（時間停止感）
     this._stopCellJitter();
 
-    // 画面フラッシュ（暗転→明転）
-    var screen = this.el.screen;
-    screen.classList.remove("cw-correct-flash");
-    void screen.offsetWidth;
-    screen.classList.add("cw-correct-flash");
-
-    // ② 0ms: 他セルを即座にdim（正解セルを孤立させる）
+    // ② 0ms: 他セルを即座にdim + 正解セルhit（音も画面効果もない80msが「時間停止感」を作る）
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     cells.forEach(function(c) {
       if (c !== tappedCell) c.classList.add("cw-cell-dim");
     });
-
-    // ③ 0ms: 正解セルhit（0.3sの強い発光）
     tappedCell.classList.add("cw-cell-hit");
 
-    // ④ 60ms: SE 1回目
-    setTimeout(function() { SoundSystem.crowdHit(); }, 60);
-
-    // ⑤ 350ms: hit→crush、dim→fade
     var sid = this.sessionId;
     var self = this;
+
+    // ③ 80ms: 静止解除 → 画面フラッシュ + SE1
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      var screen = self.el.screen;
+      screen.classList.remove("cw-correct-flash");
+      void screen.offsetWidth;
+      screen.classList.add("cw-correct-flash");
+      SoundSystem.crowdHit();
+    }, 80);
+
+    // ④ 430ms: hit→crush、dim→fade
     setTimeout(function() {
       if (self.sessionId !== sid) return;
       tappedCell.classList.remove("cw-cell-hit");
@@ -7677,20 +7678,25 @@ const Crowd = {
           c.classList.add("cw-cell-fade");
         }
       });
-    }, 350);
+    }, 430);
 
-    // ⑥ 500ms: SE 2回目（間隔を広げて余韻）
-    setTimeout(function() { SoundSystem.crowdHit(); }, 500);
+    // ⑤ 500ms: テキスト控えめ表示（セルが主役）
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.textContent = I18n.t("crowd.found");
+      self.el.command.style.color = "rgba(96, 255, 144, 0.5)";
+    }, 500);
 
-    this.el.command.textContent = I18n.t("crowd.found");
-    this.el.command.style.color = "#60ff90";
+    // ⑥ 580ms: SE 2回目
+    setTimeout(function() { SoundSystem.crowdHit(); }, 580);
 
-    // ⑦ 1000ms: 次ラウンド
+    // ⑦ 1100ms: 次ラウンド
     setTimeout(function() {
       if (self.sessionId !== sid) return;
       self.el.command.style.color = "";
+      self.el.command.textContent = "";
       self.advanceRound();
-    }, 1000);
+    }, 1100);
   },
 
   onNoneSuccess() {
