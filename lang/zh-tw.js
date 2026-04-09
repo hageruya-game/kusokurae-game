@@ -46,6 +46,13 @@ title: {
   prologueLine3: "如果你還想反抗，就走下去。",
 },
 
+// === Stage1 導入 ===
+intro: {
+  line1: "你會被命令。",
+  line2: "違抗。",
+  line3: "別信。",
+},
+
 // === 規則說明 ===
 rule: {
   title: "規則說明",

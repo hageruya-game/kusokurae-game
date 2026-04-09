@@ -46,6 +46,13 @@ title: {
   prologueLine3: "Si aún así te atreves, avanza.",
 },
 
+// === Intro Stage1 ===
+intro: {
+  line1: "Te darán órdenes.",
+  line2: "Desobedece.",
+  line3: "No te fíes.",
+},
+
 // === Reglas ===
 rule: {
   title: "Reglas",

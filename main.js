@@ -1536,6 +1536,8 @@ const Game = {
   speechCommentText: "",
   speechCommentClass: "",
   tauntTimeout: null,
+  _hasSeenStage1Intro: false,
+  _introTimers: [],
 
   init() {
     this.el = {
@@ -1711,6 +1713,15 @@ const Game = {
     const normal = [...STAGES_NORMAL].sort(() => Math.random() - 0.5);
     const exception = [...STAGES_EXCEPTION].sort(() => Math.random() - 0.5);
 
+    // 初回プレイ: YES/NO問題を先頭に固定（最も直感的）
+    if (!this._hasSeenStage1Intro) {
+      var yesIdx = normal.findIndex(function(s) { return s.command === "今すぐYESを押せ"; });
+      if (yesIdx > 0) {
+        var first = normal.splice(yesIdx, 1)[0];
+        normal.unshift(first);
+      }
+    }
+
     const phase1 = normal.splice(0, 5);
 
     const exCount = 3 + Math.floor(Math.random() * 2);
@@ -1730,6 +1741,7 @@ const Game = {
     clearTimeout(this.hintTimeout);
     clearTimeout(this.mockeryTimeout);
     clearTimeout(this.tauntTimeout);
+    if (this._introTimers) this._introTimers.forEach(clearTimeout);
 
     SoundSystem.init();
     SoundSystem.stopTitleAmbient();
@@ -1755,7 +1767,54 @@ const Game = {
     this.updatePressureUI();
 
     this.showScreen(this.el.screenGame);
-    this.startRound();
+
+    // 初回プレイ: 短い導入を表示してからラウンド開始
+    if (!this._hasSeenStage1Intro) {
+      this._hasSeenStage1Intro = true;
+      var self = this;
+      var sid = this.sessionId;
+      this._showStage1Intro(function() {
+        if (self.sessionId !== sid) return;
+        self.startRound();
+      });
+    } else {
+      this.startRound();
+    }
+  },
+
+  // === Stage1 導入演出 ===
+  _showStage1Intro(callback) {
+    var self = this;
+    var sid = this.sessionId;
+    var el = this.el.commandText;
+
+    el.textContent = I18n.t("intro.line1");
+    el.className = "command-text s1-intro-text";
+
+    var t2 = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      el.className = "command-text";
+      void el.offsetWidth;
+      el.textContent = I18n.t("intro.line2");
+      el.className = "command-text s1-intro-text";
+    }, 700);
+
+    var t3 = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      el.className = "command-text";
+      void el.offsetWidth;
+      el.textContent = I18n.t("intro.line3");
+      el.className = "command-text s1-intro-text";
+    }, 1400);
+
+    var dismiss = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      el.className = "command-text";
+      el.textContent = "";
+      if (callback) callback();
+    }, 2100);
+
+    this._introTimers = [t2, t3, dismiss];
   },
 
   // === デバッグラベル ===

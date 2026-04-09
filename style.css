@@ -888,6 +888,20 @@ body {
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 .command-appear { animation: commandIn 0.4s ease-out forwards; }
+
+/* --- Stage1 導入テキスト --- */
+.s1-intro-text {
+  animation: s1IntroFade 0.7s ease-in-out forwards;
+  color: #ddd;
+  text-shadow: 0 0 10px rgba(200, 200, 200, 0.4);
+}
+@keyframes s1IntroFade {
+  0%   { opacity: 0; transform: translateY(5px); }
+  15%  { opacity: 1; transform: translateY(0); }
+  85%  { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
 @keyframes charEnter {
   0% { transform: scale(1.3); }
   100% { transform: scale(1); }

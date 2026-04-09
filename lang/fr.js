@@ -48,6 +48,13 @@ title: {
   prologueLine3: "Si tu oses encore résister, avance.",
 },
 
+// === Intro Stage1 ===
+intro: {
+  line1: "On va t'ordonner.",
+  line2: "Résiste.",
+  line3: "Ne crois rien.",
+},
+
 // === Règles ===
 rule: {
   title: "Règles du jeu",

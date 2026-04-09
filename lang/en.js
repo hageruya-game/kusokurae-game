@@ -46,6 +46,13 @@ title: {
   prologueLine3: "If you still dare to resist, step forward.",
 },
 
+// === Stage1 Intro ===
+intro: {
+  line1: "You'll be ordered.",
+  line2: "Defy.",
+  line3: "Don't trust it.",
+},
+
 // === Rules ===
 rule: {
   title: "How It Works",
