@@ -901,36 +901,30 @@ body {
   85%  { opacity: 1; }
   100% { opacity: 0.5; }
 }
-/* --- Stage1 チュートリアル: 正解ボタン視覚誘導（1問目のみ、0.5s、1回） --- */
-.s1-tutorial-guide {
-  position: relative;
-  z-index: 2;
-  animation: s1GuideGlow 0.5s ease-out forwards;
-}
-.s1-tutorial-guide::after {
-  content: "▼";
-  position: absolute;
-  top: -20px;
+/* --- Stage1 チュートリアル: 大型テキストオーバーレイ（1問目のみ、1s、1回） --- */
+.hint-message.s1-tutorial-overlay {
+  position: fixed;
+  top: 42%;
   left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.7);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
-  animation: s1GuideArrow 0.5s ease-out forwards;
+  transform: translate(-50%, -50%);
+  width: auto;
+  max-width: 90vw;
+  font-size: clamp(26px, 7vw, 42px);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 30px rgba(200, 220, 255, 0.2);
+  letter-spacing: 4px;
+  text-align: center;
+  opacity: 0;
+  z-index: 200;
   pointer-events: none;
+  animation: s1TutorialOverlay 1s ease-in-out forwards;
 }
-@keyframes s1GuideGlow {
-  0%   { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
-  20%  { box-shadow: 0 0 20px rgba(255, 255, 255, 0.35), 0 0 40px rgba(180, 200, 255, 0.15); }
-  60%  { box-shadow: 0 0 10px rgba(255, 255, 255, 0.15); }
-  100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
-}
-@keyframes s1GuideArrow {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(-4px); }
-  20%  { opacity: 0.8; transform: translateX(-50%) translateY(0); }
-  70%  { opacity: 0.5; transform: translateX(-50%) translateY(0); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(2px); }
+@keyframes s1TutorialOverlay {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  12%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  65%  { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.03); }
 }
 
 @keyframes charEnter {

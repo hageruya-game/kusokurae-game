@@ -51,7 +51,7 @@ intro: {
   line1: "Te darán órdenes.",
   line2: "Desobedece.",
   line3: "No te fíes.",
-  hint: "Elige lo opuesto",
+  hint: "Pulsa lo contrario",
 },
 
 // === Reglas ===
