@@ -1918,7 +1918,7 @@ const Game = {
 
   clearHint() {
     clearTimeout(this.hintTimeout);
-    this.el.hintMessage.classList.remove("hint-visible", "s1-tutorial-overlay");
+    this.el.hintMessage.classList.remove("hint-visible");
     this.el.hintMessage.textContent = "";
   },
 
@@ -2209,16 +2209,17 @@ const Game = {
     this.answered = false;  // ★ 入力受付開始
 
     if (this._isTutorialRound) {
-      // チュートリアル1問目: 画面中央に大きめ半透明テキストで一発理解させる
-      this.el.hintMessage.textContent = I18n.t("intro.hint");
-      this.el.hintMessage.classList.add("s1-tutorial-overlay");
+      // チュートリアル1問目: 正解ボタン直近に「ここを押す」+ リングハイライト
+      var correctBtn = this.el.btnChoice1;
+      correctBtn.dataset.tutorialText = I18n.t("intro.hint");
+      correctBtn.classList.add("s1-tap-here");
       var sid = this.sessionId;
       var self = this;
       this._tutorialHintTimer = setTimeout(function() {
         if (self.sessionId !== sid) return;
-        self.el.hintMessage.classList.remove("s1-tutorial-overlay");
-        self.el.hintMessage.textContent = "";
-      }, 1000);
+        correctBtn.classList.remove("s1-tap-here");
+        delete correctBtn.dataset.tutorialText;
+      }, 900);
     } else {
       this.startTimer();
     }
@@ -2374,7 +2375,8 @@ const Game = {
     this.stopTimer();
     this.clearHint();
     clearTimeout(this._tutorialHintTimer);
-    this.el.hintMessage.classList.remove("s1-tutorial-overlay");
+    this.el.btnChoice1.classList.remove("s1-tap-here");
+    delete this.el.btnChoice1.dataset.tutorialText;
 
     const cmd = this.roundCommands[this.currentRound];
     const isWaitLike = cmd.ruleType === "wait" || cmd.correctType === "wait";

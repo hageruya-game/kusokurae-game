@@ -53,7 +53,7 @@ intro: {
   line1: "On va t'ordonner.",
   line2: "Résiste.",
   line3: "Ne crois rien.",
-  hint: "Appuie sur l'opposé",
+  hint: "Appuie ici",
 },
 
 // === Règles ===

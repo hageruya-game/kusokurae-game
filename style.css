@@ -901,30 +901,37 @@ body {
   85%  { opacity: 1; }
   100% { opacity: 0.5; }
 }
-/* --- Stage1 チュートリアル: 大型テキストオーバーレイ（1問目のみ、1s、1回） --- */
-.hint-message.s1-tutorial-overlay {
-  position: fixed;
-  top: 42%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: auto;
-  max-width: 90vw;
-  font-size: clamp(26px, 7vw, 42px);
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 30px rgba(200, 220, 255, 0.2);
-  letter-spacing: 4px;
-  text-align: center;
-  opacity: 0;
-  z-index: 200;
-  pointer-events: none;
-  animation: s1TutorialOverlay 1s ease-in-out forwards;
+/* --- Stage1 チュートリアル: 正解ボタン直近テキスト+リング（1問目のみ、0.9s） --- */
+.s1-tap-here {
+  position: relative;
+  animation: s1TapRing 0.9s ease-out forwards;
+  overflow: visible !important;
 }
-@keyframes s1TutorialOverlay {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
-  12%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
-  65%  { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.03); }
+.s1-tap-here::after {
+  content: attr(data-tutorial-text);
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(100, 200, 255, 0.9);
+  text-shadow: 0 0 6px rgba(100, 200, 255, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: s1TapText 0.9s ease-out forwards;
+}
+@keyframes s1TapRing {
+  0%   { box-shadow: 0 0 0 0 rgba(100, 200, 255, 0); }
+  12%  { box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.5), 0 0 14px rgba(100, 200, 255, 0.25); }
+  55%  { box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.3), 0 0 8px rgba(100, 200, 255, 0.12); }
+  100% { box-shadow: 0 0 0 0 rgba(100, 200, 255, 0); }
+}
+@keyframes s1TapText {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(2px); }
+  12%  { opacity: 0.95; transform: translateX(-50%) translateY(0); }
+  60%  { opacity: 0.7; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-2px); }
 }
 
 @keyframes charEnter {

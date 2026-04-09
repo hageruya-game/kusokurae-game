@@ -51,7 +51,7 @@ intro: {
   line1: "You'll be ordered.",
   line2: "Defy.",
   line3: "Don't trust it.",
-  hint: "Press the opposite",
+  hint: "Tap here",
 },
 
 // === Rules ===
