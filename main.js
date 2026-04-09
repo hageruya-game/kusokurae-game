@@ -1538,6 +1538,8 @@ const Game = {
   tauntTimeout: null,
   _hasSeenStage1Intro: false,
   _introTimers: [],
+  _isTutorialRound: false,
+  _tutorialHintTimer: null,
 
   init() {
     this.el = {
@@ -1771,6 +1773,7 @@ const Game = {
     // 初回プレイ: 短い導入を表示してからラウンド開始
     if (!this._hasSeenStage1Intro) {
       this._hasSeenStage1Intro = true;
+      this._isTutorialRound = true;
       var self = this;
       var sid = this.sessionId;
       this._showStage1Intro(function() {
@@ -2146,20 +2149,23 @@ const Game = {
     // キャラ演出
     this.el.gameCharImg.className = "character-img char-enter";
 
-    // 圧力コメント（吹き出し）
-    if (cmd.ruleType === "wait") {
-      this.showGameComment(CommentSystem.pick("pressureWait"));
-    } else if (cmd.ruleType === "obey") {
-      this.showGameComment(CommentSystem.pick("pressureObey"));
-    } else if (cmd.ruleType === "tap") {
-      this.showGameComment(CommentSystem.pick("pressureTap"));
-    } else {
-      this.showGameComment(CommentSystem.pick("pressure"));
+    // 圧力コメント（吹き出し）— チュートリアルラウンドはスキップ
+    if (!this._isTutorialRound) {
+      if (cmd.ruleType === "wait") {
+        this.showGameComment(CommentSystem.pick("pressureWait"));
+      } else if (cmd.ruleType === "obey") {
+        this.showGameComment(CommentSystem.pick("pressureObey"));
+      } else if (cmd.ruleType === "tap") {
+        this.showGameComment(CommentSystem.pick("pressureTap"));
+      } else {
+        this.showGameComment(CommentSystem.pick("pressure"));
+      }
     }
 
     this.isWaiting = true;
     const gid = this.sessionId;
-    setTimeout(() => { if (this.sessionId !== gid) return; this.showChoices(); }, TIMING.pressurePhase);
+    var pressDelay = this._isTutorialRound ? 800 : TIMING.pressurePhase;
+    setTimeout(() => { if (this.sessionId !== gid) return; this.showChoices(); }, pressDelay);
   },
 
   // === Phase 2: 選択肢表示 ===
@@ -2201,7 +2207,20 @@ const Game = {
 
     this.isWaiting = false;
     this.answered = false;  // ★ 入力受付開始
-    this.startTimer();
+
+    if (this._isTutorialRound) {
+      // チュートリアル: タイマーなし、1.2秒後に両ボタンにパルス
+      // 正解側がごく僅かに先に光る（視線誘導であり答え表示ではない）
+      var sid = this.sessionId;
+      var self = this;
+      this._tutorialHintTimer = setTimeout(function() {
+        if (self.sessionId !== sid || self.answered) return;
+        self.el.btnChoice1.classList.add("s1-hint-pulse");
+        self.el.btnChoice0.classList.add("s1-hint-pulse-fake");
+      }, 1200);
+    } else {
+      this.startTimer();
+    }
   },
 
   // === タイマー ===
@@ -2353,6 +2372,9 @@ const Game = {
     this.isWaiting = true;
     this.stopTimer();
     this.clearHint();
+    clearTimeout(this._tutorialHintTimer);
+    this.el.btnChoice0.classList.remove("s1-hint-pulse", "s1-hint-pulse-fake");
+    this.el.btnChoice1.classList.remove("s1-hint-pulse", "s1-hint-pulse-fake");
 
     const cmd = this.roundCommands[this.currentRound];
     const isWaitLike = cmd.ruleType === "wait" || cmd.correctType === "wait";
@@ -2397,15 +2419,20 @@ const Game = {
       this.el.feedback.className = "feedback feedback-big wrong";
       this.showOX(false);
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
-      this.showGameComment(CommentSystem.pick(highPressure ? "wrongHigh" : "wrong"));
-      // 強煽り(中央)とmockery(吹き出し)は排他。taunt優先
-      if (this.inPhase2) {
-        this.showTaunt(200);
+      if (this._isTutorialRound) {
+        // チュートリアル: wrongReactionだけ表示、嘲笑なし
       } else {
-        this.showMockery(400);
+        this.showGameComment(CommentSystem.pick(highPressure ? "wrongHigh" : "wrong"));
+        // 強煽り(中央)とmockery(吹き出し)は排他。taunt優先
+        if (this.inPhase2) {
+          this.showTaunt(200);
+        } else {
+          this.showMockery(400);
+        }
       }
     }
 
+    if (this._isTutorialRound) this._isTutorialRound = false;
     this.advanceAfterResult();
   },
 
@@ -7616,7 +7643,7 @@ const Crowd = {
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
     this.updateComboUI();
 
-    // ① 0ms: jitter停止 → 一瞬の静寂（時間停止感）
+    // ① 0ms: jitter停止 → 一瞬の静寂
     this._stopCellJitter();
 
     // 画面フラッシュ（暗転→明転）
@@ -7625,14 +7652,19 @@ const Crowd = {
     void screen.offsetWidth;
     screen.classList.add("cw-correct-flash");
 
-    // ② 正解セルをパルス光で強調（crush前の0.18s）
+    // ② 0ms: 他セルを即座にdim（正解セルを孤立させる）
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    cells.forEach(function(c) {
+      if (c !== tappedCell) c.classList.add("cw-cell-dim");
+    });
+
+    // ③ 0ms: 正解セルhit（0.3sの強い発光）
     tappedCell.classList.add("cw-cell-hit");
 
-    // ③ 60ms: 正解音 1回目
+    // ④ 60ms: SE 1回目
     setTimeout(function() { SoundSystem.crowdHit(); }, 60);
 
-    // ④ 180ms: パルス光終了→潰し開始、他セルfade
-    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    // ⑤ 350ms: hit→crush、dim→fade
     var sid = this.sessionId;
     var self = this;
     setTimeout(function() {
@@ -7640,21 +7672,25 @@ const Crowd = {
       tappedCell.classList.remove("cw-cell-hit");
       tappedCell.classList.add("cw-cell-crush");
       cells.forEach(function(c) {
-        if (c !== tappedCell) c.classList.add("cw-cell-fade");
+        if (c !== tappedCell) {
+          c.classList.remove("cw-cell-dim");
+          c.classList.add("cw-cell-fade");
+        }
       });
-    }, 180);
+    }, 350);
 
-    // ⑤ 250ms: 正解音 2回目（追い打ち）
-    setTimeout(function() { SoundSystem.crowdHit(); }, 250);
+    // ⑥ 500ms: SE 2回目（間隔を広げて余韻）
+    setTimeout(function() { SoundSystem.crowdHit(); }, 500);
 
     this.el.command.textContent = I18n.t("crowd.found");
     this.el.command.style.color = "#60ff90";
 
+    // ⑦ 1000ms: 次ラウンド
     setTimeout(function() {
       if (self.sessionId !== sid) return;
       self.el.command.style.color = "";
       self.advanceRound();
-    }, 900);
+    }, 1000);
   },
 
   onNoneSuccess() {
