@@ -49,9 +49,20 @@ title: {
 // === Stage1 導入 ===
 intro: {
   line1: "你會被命令。",
-  line2: "違抗。",
-  line3: "別信。",
-  hint: "按這裡",
+  line2: "別服從。",
+  line3: "看穿規則。",
+  hint: "這次，按這邊。",
+},
+
+// === Stage Intros ===
+stageIntro: {
+  slash1: "看清再選。",
+  crowd1: "看起來都一樣。",
+  crowd2: "只有一個不同。",
+  crowd3: "找出來。",
+  final1: "現在不會那麼明顯了。",
+  final2: "比較它們。",
+  final3: "就算猶豫，也要看穿。",
 },
 
 // === 規則說明 ===
@@ -123,13 +134,15 @@ crowd: {
   rankA: "銳利的眼光。",
   rankB: "至少還看得見。",
   epilogue: "違抗了命令，\n揮下了刀，\n在群眾中睜開了眼。\n\n…你已經不受任何人支配了。",
-  tutorialLine1: "只有一個不同。",
-  tutorialLine2: "找出來。",
+  tutorialLine1: "看起來都一樣。",
+  tutorialLine2: "只有一個不同。",
   postLayer0: "…那只是熱身。",
   perfectClear: ["看穿了。", "毫不猶豫。", "完美看破。", "完美突破。"],
-  tutorialLine3: "點它。",
+  tutorialLine3: "找出來。",
   interlude1: "…還不錯。",
   interlude2: "…真頑固。",
+  interlude3: "…你竟然撐過來了。",
+  finalDefeat: "…你看穿了。",
 },
 
 // === Dungeon ===

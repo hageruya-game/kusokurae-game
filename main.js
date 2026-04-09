@@ -2491,6 +2491,7 @@ const Game = {
       interImg.src = "";
       text.classList.remove("dg-interlude-text-show");
       text.textContent = "";
+      overlay.classList.remove("dg-breakthrough-flash");
       // 通常遷移テキスト
       setTimeout(function() {
         if (self.sessionId !== gid) return;
@@ -2524,6 +2525,8 @@ const Game = {
       interImg.classList.add("dg-interlude-show");
       text.textContent = I18n.t("crowd.interlude1");
       text.classList.add("dg-interlude-text-show");
+      overlay.classList.add("dg-breakthrough-flash");
+      SoundSystem.crowdHit();
       overlay.addEventListener("click", skipInterlude);
       interludeTimer = setTimeout(function() {
         if (self.sessionId !== gid) return;
@@ -3845,7 +3848,21 @@ const Slash = {
     this.el.comboEl.textContent = "";
     this.updateLivesUI();
     Game.showScreen(this.el.screen);
-    this.showLayerTitle();
+    this._showSlashIntro(() => this.showLayerTitle());
+  },
+
+  // === Stage2 導入演出（1行・軽め） ===
+  _showSlashIntro(callback) {
+    var sid = this.sessionId;
+    var self = this;
+    this.el.command.textContent = I18n.t("stageIntro.slash1");
+    this.el.command.classList.add("sl-intro-text");
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.classList.remove("sl-intro-text");
+      self.el.command.textContent = "";
+      if (callback) callback();
+    }, 1200);
   },
 
   // 制御付きランダム: 層の全ラウンド分のタイプ配列を生成
@@ -4690,6 +4707,7 @@ const Slash = {
       interImg.src = "";
       text.classList.remove("dg-interlude-text-show");
       text.textContent = "";
+      overlay.classList.remove("dg-breakthrough-flash");
       setTimeout(function() {
         if (self.sessionId !== sid) return;
         text.textContent = I18n.t("slash.toDeep");
@@ -4719,6 +4737,8 @@ const Slash = {
       interImg.classList.add("dg-interlude-show");
       text.textContent = I18n.t("crowd.interlude2");
       text.classList.add("dg-interlude-text-show");
+      overlay.classList.add("dg-breakthrough-flash");
+      SoundSystem.crowdHit();
       overlay.addEventListener("click", skipInterlude);
       interludeTimer = setTimeout(function() {
         if (self.sessionId !== sid) return;
@@ -6228,6 +6248,21 @@ const Tutorial = {
 // ============================================================
 
 
+// === 拡張用ステージ設定 ===
+const STAGE_CONFIG = {
+  stages: [
+    { key: "game", introLines: 3, hasIntro: true },
+    { key: "slash", introLines: 1, hasIntro: true },
+    { key: "crowd", introLines: 3, hasIntro: true },
+    { key: "final", introLines: 3, hasIntro: true },
+  ],
+  features: {
+    extendedStages: false,
+    premiumSkins: false,
+    challengeMode: false,
+  },
+};
+
 const CW_SHAPES = ["circle", "triangle", "star", "diamond"];
 
 const CROWD_LAYERS = [
@@ -6380,6 +6415,106 @@ const Crowd = {
 
     this.el.screen.addEventListener("click", dismiss);
     this._tutorialDismissTimeout = setTimeout(dismiss, 3000);
+  },
+
+  // === Stage3→4 突破インタールード ===
+  _showStage3Breakthrough(callback) {
+    var overlay = document.getElementById("dungeon-transition");
+    var text = document.getElementById("dg-transition-text");
+    var interImg = document.getElementById("dg-interlude-img");
+    overlay.classList.add("dg-trans-active");
+    var sid = this.sessionId;
+    var self = this;
+
+    var proceeded = false;
+    function proceed() {
+      if (proceeded) return;
+      proceeded = true;
+      overlay.removeEventListener("click", skipInterlude);
+      interImg.classList.remove("dg-interlude-show");
+      interImg.style.display = "none";
+      interImg.src = "";
+      text.classList.remove("dg-interlude-text-show");
+      text.textContent = "";
+      overlay.classList.remove("dg-trans-active", "dg-breakthrough-flash");
+      if (self.sessionId === sid && callback) callback();
+    }
+    function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
+    var interludeTimer;
+
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      interImg.src = "assets/image_0.png";
+      interImg.style.display = "";
+      interImg.classList.add("dg-interlude-show");
+      text.textContent = I18n.t("crowd.interlude3");
+      text.classList.add("dg-interlude-text-show");
+      overlay.classList.add("dg-breakthrough-flash");
+      SoundSystem.crowdHit();
+      overlay.addEventListener("click", skipInterlude);
+      interludeTimer = setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        proceed();
+      }, 2000);
+    }, 300);
+  },
+
+  // === Stage4 導入演出（3行・強め） ===
+  _showFinalIntro(callback) {
+    var sid = this.sessionId;
+    var self = this;
+    this.el.command.textContent = I18n.t("stageIntro.final1");
+    this.el.command.classList.add("cw-final-intro-text");
+
+    var t2 = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.classList.remove("cw-final-intro-text");
+      void self.el.command.offsetWidth;
+      self.el.command.textContent = I18n.t("stageIntro.final2");
+      self.el.command.classList.add("cw-final-intro-text");
+    }, 700);
+
+    var t3 = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.classList.remove("cw-final-intro-text");
+      void self.el.command.offsetWidth;
+      self.el.command.textContent = I18n.t("stageIntro.final3");
+      self.el.command.classList.add("cw-final-intro-text");
+    }, 1400);
+
+    var dismiss = setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.classList.remove("cw-final-intro-text");
+      self.el.command.textContent = "";
+      if (callback) callback();
+    }, 2100);
+  },
+
+  // === 最終撃破演出 ===
+  _showFinalDefeat(callback) {
+    var sid = this.sessionId;
+    var self = this;
+    this.cleanup();
+    // 150ms 静寂
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      // 強フラッシュ + SE
+      self.el.screen.classList.remove("cw-final-defeat-flash");
+      void self.el.screen.offsetWidth;
+      self.el.screen.classList.add("cw-final-defeat-flash");
+      SoundSystem.clearChime();
+      // テキスト大きく表示
+      self.el.command.textContent = I18n.t("crowd.finalDefeat");
+      self.el.command.classList.add("cw-final-defeat-text");
+      // 1500ms → callback
+      setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        self.el.screen.classList.remove("cw-final-defeat-flash");
+        self.el.command.classList.remove("cw-final-defeat-text");
+        self.el.command.textContent = "";
+        if (callback) callback();
+      }, 1500);
+    }, 150);
   },
 
   goTitle() {
@@ -7857,10 +7992,14 @@ const Crowd = {
       var wasPerfect = this._layerMisses === 0;
       this.currentLayer++;
       if (this.currentLayer >= CROWD_LAYERS.length) {
+        var self = this;
+        var afterDefeat = function() { self.showClear(); };
         if (wasPerfect) {
-          this._showPerfectClear(clearedLayer, () => { this.showClear(); });
+          this._showPerfectClear(clearedLayer, function() {
+            self._showFinalDefeat(afterDefeat);
+          });
         } else {
-          this.showClear();
+          this._showFinalDefeat(afterDefeat);
         }
       } else {
         SaveSystem.save("crowd", this.currentLayer, this.totalMisses);
@@ -7868,6 +8007,10 @@ const Crowd = {
         var proceedToNext = function() {
           if (self.currentLayer === 1) {
             self._showPostLayer0(function() { self.showLayerTitle(); });
+          } else if (self.currentLayer === 3) {
+            self._showStage3Breakthrough(function() {
+              self._showFinalIntro(function() { self.showLayerTitle(); });
+            });
           } else {
             self.showLayerTitle();
           }

@@ -49,9 +49,20 @@ title: {
 // === Stage1 導入 ===
 intro: {
   line1: "命令される。",
-  line2: "逆らえ。",
-  line3: "信じるな。",
-  hint: "ここを押す",
+  line2: "従うな。",
+  line3: "法則を見切れ。",
+  hint: "今回は、こっち。",
+},
+
+// === ステージ導入 ===
+stageIntro: {
+  slash1: "見極めろ。",
+  crowd1: "同じに見える。",
+  crowd2: "1つだけ違う。",
+  crowd3: "見抜け。",
+  final1: "もう、簡単には見えない。",
+  final2: "比較しろ。",
+  final3: "迷っても、見切れ。",
 },
 
 // === ルール説明 ===
@@ -123,13 +134,15 @@ crowd: {
   rankA: "鋭い目だ。",
   rankB: "見えてはいた。",
   epilogue: "命令に逆らい、\n刃を振り、\n群衆の中で目を開けた。\n\n…お前はもう、誰の支配も受けない。",
-  tutorialLine1: "1つだけ違う。",
-  tutorialLine2: "見つけろ。",
+  tutorialLine1: "同じに見える。",
+  tutorialLine2: "1つだけ違う。",
   postLayer0: "…それはウォーミングアップだ。",
   perfectClear: ["見抜いた。", "迷いなし。", "完全看破。", "完全突破。"],
-  tutorialLine3: "タップしろ。",
+  tutorialLine3: "見抜け。",
   interlude1: "…やるじゃないか。",
   interlude2: "…しぶといな。",
+  interlude3: "…よく抜けたな。",
+  finalDefeat: "…見抜いたな。",
 },
 
 // === Dungeon ===

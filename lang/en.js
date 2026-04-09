@@ -49,9 +49,20 @@ title: {
 // === Stage1 Intro ===
 intro: {
   line1: "You'll be ordered.",
-  line2: "Defy.",
-  line3: "Don't trust it.",
-  hint: "Tap here",
+  line2: "Don't obey.",
+  line3: "Read the pattern.",
+  hint: "This one.",
+},
+
+// === Stage Intros ===
+stageIntro: {
+  slash1: "Judge carefully.",
+  crowd1: "They look the same.",
+  crowd2: "One is different.",
+  crowd3: "Find it.",
+  final1: "It won't be obvious anymore.",
+  final2: "Compare.",
+  final3: "Even if you doubt, decide.",
 },
 
 // === Rules ===
@@ -123,13 +134,15 @@ crowd: {
   rankA: "Sharp eyes.",
   rankB: "You could see. Barely.",
   epilogue: "You defied the orders.\nYou swung the blade.\nYou kept your eyes open in the crowd.\n\n...no one controls you anymore.",
-  tutorialLine1: "One is different.",
-  tutorialLine2: "Find it.",
+  tutorialLine1: "They look the same.",
+  tutorialLine2: "One is different.",
   postLayer0: "...that was just a warm-up.",
   perfectClear: ["Seen through.", "No hesitation.", "Perfect read.", "Flawless."],
-  tutorialLine3: "Tap it.",
+  tutorialLine3: "Find it.",
   interlude1: "…Not bad.",
   interlude2: "…You're stubborn.",
+  interlude3: "…You made it through.",
+  finalDefeat: "…You saw through it.",
 },
 
 // === Dungeon ===

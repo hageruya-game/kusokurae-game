@@ -51,9 +51,20 @@ title: {
 // === Intro Stage1 ===
 intro: {
   line1: "On va t'ordonner.",
-  line2: "Résiste.",
-  line3: "Ne crois rien.",
-  hint: "Appuie ici",
+  line2: "N'obéis pas.",
+  line3: "Trouve la règle.",
+  hint: "Cette fois, ici.",
+},
+
+// === Stage Intros ===
+stageIntro: {
+  slash1: "Fais le tri.",
+  crowd1: "Ils se ressemblent tous.",
+  crowd2: "Un seul diffère.",
+  crowd3: "Repère-le.",
+  final1: "Ce ne sera plus évident.",
+  final2: "Compare.",
+  final3: "Même en doutant, tranche.",
 },
 
 // === Règles ===
@@ -125,13 +136,15 @@ crowd: {
   rankA: "Regard aiguisé.",
   rankB: "Tu voyais. À peine.",
   epilogue: "Tu as désobéi aux ordres.\nTu as manié la lame.\nTu as gardé les yeux ouverts dans la foule.\n\n…plus personne ne te contrôle.",
-  tutorialLine1: "Un seul est différent.",
-  tutorialLine2: "Trouve-le.",
+  tutorialLine1: "Ils se ressemblent tous.",
+  tutorialLine2: "Un seul diffère.",
   postLayer0: "…c'était juste l'échauffement.",
   perfectClear: ["Percé à jour.", "Sans hésiter.", "Lecture parfaite.", "Impeccable."],
-  tutorialLine3: "Touche.",
+  tutorialLine3: "Repère-le.",
   interlude1: "…Pas mal.",
   interlude2: "…Tu es tenace.",
+  interlude3: "…Tu t'en es sorti.",
+  finalDefeat: "…Tu as tout percé.",
 },
 
 // === Dungeon ===

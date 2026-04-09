@@ -49,10 +49,22 @@ title: {
 // === Intro Stage1 ===
 intro: {
   line1: "Te darán órdenes.",
-  line2: "Desobedece.",
-  line3: "No te fíes.",
-  hint: "Toca aquí",
+  line2: "No obedezcas.",
+  line3: "Descifra la regla.",
+  hint: "Esta vez, aquí.",
 },
+
+// === Stage Intros ===
+stageIntro: {
+  slash1: "Juzga bien.",
+  crowd1: "Parecen iguales.",
+  crowd2: "Solo uno es distinto.",
+  crowd3: "Encuéntralo.",
+  final1: "Ya no será tan obvio.",
+  final2: "Compara.",
+  final3: "Aunque dudes, decide.",
+},
+
 
 // === Reglas ===
 rule: {
@@ -123,13 +135,15 @@ crowd: {
   rankA: "Mirada aguda.",
   rankB: "Algo veías.",
   epilogue: "Desobedeciste órdenes,\nblandiste la hoja,\ny abriste los ojos entre la masa.\n\n…Ya nadie te domina.",
-  tutorialLine1: "Uno es distinto.",
-  tutorialLine2: "Encuéntralo.",
+  tutorialLine1: "Parecen iguales.",
+  tutorialLine2: "Solo uno es distinto.",
   postLayer0: "…eso fue solo calentamiento.",
   perfectClear: ["Visto.", "Sin dudar.", "Lectura perfecta.", "Impecable."],
-  tutorialLine3: "Tócalo.",
+  tutorialLine3: "Encuéntralo.",
   interlude1: "…Nada mal.",
   interlude2: "…Eres terco.",
+  interlude3: "…Lograste pasar.",
+  finalDefeat: "…Lo descubriste.",
 },
 
 // === Dungeon ===
