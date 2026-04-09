@@ -901,22 +901,36 @@ body {
   85%  { opacity: 1; }
   100% { opacity: 0.5; }
 }
-/* --- Stage1 チュートリアル: ボタンヒントパルス --- */
-.s1-hint-pulse {
-  animation: s1HintPulse 0.8s ease-in-out;
+/* --- Stage1 チュートリアル: 正解ボタン視覚誘導（1問目のみ、0.5s、1回） --- */
+.s1-tutorial-guide {
+  position: relative;
+  z-index: 2;
+  animation: s1GuideGlow 0.5s ease-out forwards;
 }
-@keyframes s1HintPulse {
-  0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  40%  { box-shadow: 0 0 15px rgba(255,255,255,0.2), inset 0 0 10px rgba(255,255,255,0.08); }
-  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+.s1-tutorial-guide::after {
+  content: "▼";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+  animation: s1GuideArrow 0.5s ease-out forwards;
+  pointer-events: none;
 }
-.s1-hint-pulse-fake {
-  animation: s1HintPulseFake 0.6s ease-in-out;
+@keyframes s1GuideGlow {
+  0%   { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  20%  { box-shadow: 0 0 20px rgba(255, 255, 255, 0.35), 0 0 40px rgba(180, 200, 255, 0.15); }
+  60%  { box-shadow: 0 0 10px rgba(255, 255, 255, 0.15); }
+  100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
 }
-@keyframes s1HintPulseFake {
-  0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  35%  { box-shadow: 0 0 10px rgba(255,255,255,0.12); }
-  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+@keyframes s1GuideArrow {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  20%  { opacity: 0.8; transform: translateX(-50%) translateY(0); }
+  70%  { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(2px); }
 }
 
 @keyframes charEnter {
