@@ -3922,15 +3922,15 @@ body::before {
 }
 /* === 正解: パルス光（crush前の強調） === */
 .cw-cell-hit {
-  animation: cwCellHit 0.3s ease-out forwards;
+  animation: cwCellHit 0.35s ease-out forwards;
   z-index: 10;
   position: relative;
 }
 @keyframes cwCellHit {
   0%   { transform: scale(1); filter: brightness(1); }
-  25%  { transform: scale(1.25); filter: brightness(3) drop-shadow(0 0 25px rgba(255,245,150,1)); }
-  60%  { transform: scale(1.18); filter: brightness(2.2) drop-shadow(0 0 18px rgba(255,220,100,0.8)); }
-  100% { transform: scale(1.15); filter: brightness(1.6) drop-shadow(0 0 12px rgba(255,200,80,0.5)); }
+  20%  { transform: scale(1.35); filter: brightness(4) drop-shadow(0 0 35px rgba(255,255,200,1)); }
+  50%  { transform: scale(1.25); filter: brightness(2.8) drop-shadow(0 0 25px rgba(255,235,120,0.9)); }
+  100% { transform: scale(1.2); filter: brightness(2.0) drop-shadow(0 0 18px rgba(255,215,80,0.6)); }
 }
 /* === 正解: 潰しアニメーション === */
 .cw-cell-crush {
@@ -3939,8 +3939,8 @@ body::before {
 }
 @keyframes cwCrush {
   0%   { transform: scale(1); opacity: 1; filter: brightness(1) drop-shadow(0 0 0 transparent); }
-  20%  { transform: scale(1.25); opacity: 1; filter: brightness(2) drop-shadow(0 0 30px rgba(255, 100, 80, 0.8)); }
-  60%  { transform: scale(0.3); opacity: 0.5; filter: brightness(0.5) drop-shadow(0 0 10px rgba(255, 100, 80, 0.2)); }
+  15%  { transform: scale(1.35); opacity: 1; filter: brightness(2.5) drop-shadow(0 0 40px rgba(255, 120, 80, 0.9)); }
+  50%  { transform: scale(0.25); opacity: 0.4; filter: brightness(0.4) drop-shadow(0 0 12px rgba(255, 80, 60, 0.3)); }
   100% { transform: scale(0); opacity: 0; filter: brightness(0) drop-shadow(0 0 0 transparent); }
 }
 /* === 不正解シェイク === */
@@ -3963,15 +3963,15 @@ body::before {
 }
 /* === セルフェードアウト === */
 .cw-cell-fade {
-  opacity: 0.2 !important;
-  transform: scale(0.85) !important;
-  transition: opacity 0.3s, transform 0.3s !important;
+  opacity: 0.05 !important;
+  transform: scale(0.7) !important;
+  transition: opacity 0.25s, transform 0.25s !important;
 }
 /* === 正解時: 他セル即座dim（fadeより高速） === */
 .cw-cell-dim {
-  opacity: 0.3 !important;
-  filter: brightness(0.5) !important;
-  transition: opacity 0.15s, filter 0.15s !important;
+  opacity: 0.15 !important;
+  filter: brightness(0.3) saturate(0) !important;
+  transition: opacity 0.12s, filter 0.12s !important;
 }
 /* === 暴露アニメーション（ミス時に正解セルを示す） === */
 .cw-cell-expose {
@@ -4203,8 +4203,8 @@ body::before {
 }
 @keyframes cwCorrectFlash {
   0%   { filter: brightness(1); }
-  8%   { filter: brightness(0.6); }
-  20%  { filter: brightness(1.8); }
+  5%   { filter: brightness(0.4); }
+  15%  { filter: brightness(2.2); }
   100% { filter: brightness(1); }
 }
 /* 層パーフェクトクリア演出 */
