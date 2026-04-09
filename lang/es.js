@@ -56,7 +56,7 @@ rule: {
   labelObey: "En aumento",
   descObey: "Obedece la orden",
   labelWait: "Peligro",
-  descWait: "No hagas nada (espera)",
+  descWait: "No te muevas",
   labelTap: "Control total",
   descTap: "Toca lo correcto",
   note: "Si el dominio llega al 100%, se acabó.",
@@ -73,7 +73,7 @@ state: {
 // === Slash ===
 slash: {
   layerNames: ["Capa 1: Despertar","Capa 2: Duda","Capa 3: Silencio","Capa 4: Caos","Capa final: Decisión"],
-  hints: ["Corta lo contrario.","Si dice 'obedece', corta tal cual.","Si dice 'espera', no te muevas.","\u00BFPuedes distinguirlo?",null],
+  hints: ["Corta lo contrario.","Si dice 'obedece', corta tal cual.","Si dice 'No te muevas', no hagas nada.","\u00BFPuedes distinguirlo?",null],
   statusNormal: "Desobedece",
   statusObey: "Obedece",
   statusWait: "No te muevas",

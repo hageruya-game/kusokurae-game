@@ -58,7 +58,7 @@ rule: {
   labelObey: "Montée",
   descObey: "Obéis à l'ordre",
   labelWait: "Danger",
-  descWait: "Ne fais rien (attends)",
+  descWait: "Ne bouge pas",
   labelTap: "Emprise",
   descTap: "Touche le bon élément",
   note: "Game over si l'emprise atteint 100%.",
@@ -75,7 +75,7 @@ state: {
 // === Slash ===
 slash: {
   layerNames: ["Strate 1 : Éveil","Strate 2 : Doute","Strate 3 : Silence","Strate 4 : Chaos","Strate finale : Verdict"],
-  hints: ["Tranche l'opposé.","Si on dit « obéis », tranche comme ordonné.","Si on dit « attends », ne bouge pas.","Discerne.",null],
+  hints: ["Tranche l'opposé.","Si on dit « obéis », tranche comme ordonné.","Si on dit « Ne bouge pas », ne fais rien.","Discerne.",null],
   statusNormal: "Désobéis",
   statusObey: "Obéis",
   statusWait: "Ne bouge pas",

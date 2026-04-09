@@ -56,7 +56,7 @@ rule: {
   labelObey: "Rising",
   descObey: "Obey the order",
   labelWait: "Danger",
-  descWait: "Do nothing (wait)",
+  descWait: "Don't move",
   labelTap: "Control",
   descTap: "Tap the right one",
   note: "Game over if control reaches 100%.",
@@ -73,7 +73,7 @@ state: {
 // === Slash ===
 slash: {
   layerNames: ["Layer 1: Awakening","Layer 2: Doubt","Layer 3: Silence","Layer 4: Chaos","Final Layer: Resolve"],
-  hints: ["Slash the opposite.","If told to obey, slash as ordered.","If told to wait, don't move.","Read it carefully.",null],
+  hints: ["Slash the opposite.","If told to obey, slash as ordered.","If told 'Don't move', do nothing.","Read it carefully.",null],
   statusNormal: "Defy",
   statusObey: "Obey",
   statusWait: "Don't move",

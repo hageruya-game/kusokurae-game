@@ -6146,7 +6146,7 @@ const CROWD_LAYERS = [
   { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation"] },
   { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.75, axes: ["offset","scale","rotation","flip"] },
   { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.55, axes: ["offset","scale","rotation","flip"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 3500, types: ["find"], diffStrength: 0.40, axes: ["offset","scale","rotation","flip"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 4200, types: ["find"], diffStrength: 0.40, axes: ["offset","scale","rotation","flip"] },
 ];
 
 const CROWD_LAYER_TAUNTS = [
@@ -6624,6 +6624,9 @@ const Crowd = {
         self._stopCellJitter();
         self._startCellJitter();
       }, syncDur);
+
+      // ④ モーションヒント: 一瞬パルスで違和感を見せる（正解+フェイク）
+      self._applyMotionHints();
     }, 400);
   },
 
@@ -6736,6 +6739,77 @@ const Crowd = {
       var box = c.querySelector(".cw-box");
       if (box) { box.style.transition = ""; box.style.transform = ""; }
     });
+  },
+
+  // === モーションヒント: 一瞬パルスで「違和感」を見せる（正解+フェイク） ===
+  _applyMotionHints() {
+    if (this.currentLayer < 1 || this.oddIndex < 0 || !this.diffShape) return;
+    var cells = this.el.grid.querySelectorAll(".cw-cell");
+    if (!cells.length) return;
+    var sid = this.sessionId;
+    var self = this;
+
+    var startDelay = 600 + Math.random() * 600; // 0.6〜1.2s後に発動
+    var tid = setTimeout(function() {
+      if (self.sessionId !== sid || self.answered) return;
+
+      // 正解セル: diff方向に一瞬パルス（差異を一瞬だけ増幅）
+      var oddOrb = cells[self.oddIndex].querySelector(".cw-shape");
+      if (oddOrb) {
+        var origT = oddOrb.style.transform || "";
+        // diff方向に小さくパルス（答えを「教える」のではなく「揺らす」量）
+        var px = (self.diffShape.offsetX || 0) * 0.5;
+        var py = (self.diffShape.offsetY || 0) * 0.5;
+        // 元のtranslateを保持して加算
+        var baseMatch = origT.match(/translate\(([^,]+),\s*([^)]+)\)/);
+        var bx = baseMatch ? parseFloat(baseMatch[1]) : 0;
+        var by = baseMatch ? parseFloat(baseMatch[2]) : 0;
+        oddOrb.style.transition = "transform 0.08s ease-out";
+        oddOrb.style.transform = "translate(" + (bx + px).toFixed(1) + "%, " + (by + py).toFixed(1) + "%)";
+        setTimeout(function() {
+          if (self.sessionId !== sid) return;
+          oddOrb.style.transition = "transform 0.1s ease-in";
+          oddOrb.style.transform = origT;
+          setTimeout(function() { if (oddOrb) oddOrb.style.transition = ""; }, 120);
+        }, 80);
+      }
+
+      // フェイクセル: ランダム方向にパルス（1-2個）
+      var fakeCount = self.currentLayer >= 2 ? 2 : 1;
+      var candidates = [];
+      for (var i = 0; i < cells.length; i++) {
+        if (i !== self.oddIndex) candidates.push(i);
+      }
+      for (var i = candidates.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = candidates[i]; candidates[i] = candidates[j]; candidates[j] = tmp;
+      }
+      var fakes = candidates.slice(0, fakeCount);
+      fakes.forEach(function(fi, fIdx) {
+        var fakeDelay = fIdx * 60 + Math.random() * 80;
+        var ftid = setTimeout(function() {
+          if (self.sessionId !== sid || self.answered) return;
+          var fOrb = cells[fi].querySelector(".cw-shape");
+          if (!fOrb) return;
+          var origFT = fOrb.style.transform || "";
+          var fpx = (Math.random() * 2 - 1) * 4;
+          var fpy = (Math.random() * 2 - 1) * 3;
+          var fMatch = origFT.match(/translate\(([^,]+),\s*([^)]+)\)/);
+          var fbx = fMatch ? parseFloat(fMatch[1]) : 0;
+          var fby = fMatch ? parseFloat(fMatch[2]) : 0;
+          fOrb.style.transition = "transform 0.08s ease-out";
+          fOrb.style.transform = "translate(" + (fbx + fpx).toFixed(1) + "%, " + (fby + fpy).toFixed(1) + "%)";
+          setTimeout(function() {
+            if (self.sessionId !== sid) return;
+            fOrb.style.transition = "transform 0.1s ease-in";
+            fOrb.style.transform = origFT;
+            setTimeout(function() { if (fOrb) fOrb.style.transition = ""; }, 120);
+          }, 80);
+        }, fakeDelay);
+        self._fakeHintTimers.push(ftid);
+      });
+    }, startDelay);
+    self._fakeHintTimers.push(tid);
   },
 
   // === フェイク差異（Pattern C）: 正解でないセルに"正解っぽい"挙動を混ぜる ===
@@ -7481,36 +7555,47 @@ const Crowd = {
   onCorrectFind(tappedCell) {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
-    // 0.06s静寂 → 正解音（カタルシス）
-    setTimeout(function() { SoundSystem.crowdHit(); }, 60);
     this.updateComboUI();
 
-    // 画面一瞬明転
+    // ① 0ms: jitter停止 → 一瞬の静寂（時間停止感）
+    this._stopCellJitter();
+
+    // 画面フラッシュ（暗転→明転）
     var screen = this.el.screen;
     screen.classList.remove("cw-correct-flash");
     void screen.offsetWidth;
     screen.classList.add("cw-correct-flash");
 
-    // 潰しアニメーション
-    tappedCell.classList.add("cw-cell-crush");
+    // ② 正解セルをパルス光で強調（crush前の0.18s）
+    tappedCell.classList.add("cw-cell-hit");
 
-    // タイムフリーズ: 100ms後に他セルをフェードアウト
+    // ③ 60ms: 正解音 1回目
+    setTimeout(function() { SoundSystem.crowdHit(); }, 60);
+
+    // ④ 180ms: パルス光終了→潰し開始、他セルfade
     var cells = this.el.grid.querySelectorAll(".cw-cell");
+    var sid = this.sessionId;
+    var self = this;
     setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      tappedCell.classList.remove("cw-cell-hit");
+      tappedCell.classList.add("cw-cell-crush");
       cells.forEach(function(c) {
         if (c !== tappedCell) c.classList.add("cw-cell-fade");
       });
-    }, 100);
+    }, 180);
+
+    // ⑤ 250ms: 正解音 2回目（追い打ち）
+    setTimeout(function() { SoundSystem.crowdHit(); }, 250);
 
     this.el.command.textContent = I18n.t("crowd.found");
     this.el.command.style.color = "#60ff90";
 
-    const sid = this.sessionId;
-    setTimeout(() => {
-      if (this.sessionId !== sid) return;
-      this.el.command.style.color = "";
-      this.advanceRound();
-    }, 800);
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      self.el.command.style.color = "";
+      self.advanceRound();
+    }, 900);
   },
 
   onNoneSuccess() {

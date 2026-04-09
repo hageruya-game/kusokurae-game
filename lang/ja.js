@@ -56,7 +56,7 @@ rule: {
   labelObey: "上昇中",
   descObey: "命令に従え",
   labelWait: "危険",
-  descWait: "何もするな（待て）",
+  descWait: "動くな",
   labelTap: "支配",
   descTap: "正しいものをタップしろ",
   note: "支配度が100%になるとゲームオーバー。",
@@ -73,7 +73,7 @@ state: {
 // === Slash ===
 slash: {
   layerNames: ["第一層：覚醒","第二層：惑い","第三層：静寂","第四層：混乱","最深層：決断"],
-  hints: ["逆を斬れ。","「従え」なら、そのまま斬れ。","「待て」なら、動くな。","見極めろ。",null],
+  hints: ["逆を斬れ。","「従え」なら、そのまま斬れ。","「動くな」なら、何もするな。","見極めろ。",null],
   statusNormal: "逆らえ",
   statusObey: "従え",
   statusWait: "動くな",

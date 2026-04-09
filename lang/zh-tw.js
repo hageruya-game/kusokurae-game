@@ -56,7 +56,7 @@ rule: {
   labelObey: "上升中",
   descObey: "服從命令",
   labelWait: "危險",
-  descWait: "什麼都別做（等待）",
+  descWait: "別動",
   labelTap: "支配",
   descTap: "點擊正確的那個",
   note: "支配度到100%就結束了。",
@@ -73,7 +73,7 @@ state: {
 // === Slash ===
 slash: {
   layerNames: ["第一層：覺醒","第二層：迷惘","第三層：沉默","第四層：混亂","最深層：抉擇"],
-  hints: ["斬反的。","「服從」的話，直接斬。","「等待」的話，別動。","看清楚。",null],
+  hints: ["斬反的。","「服從」的話，直接斬。","「別動」的話，什麼都別做。","看清楚。",null],
   statusNormal: "違抗",
   statusObey: "服從",
   statusWait: "別動",

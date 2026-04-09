@@ -3810,6 +3810,17 @@ body::before {
   0%,100% { filter: drop-shadow(0 0 4px rgba(255,50,40,0.25)); }
   50%     { filter: drop-shadow(0 0 8px rgba(255,60,30,0.45)); }
 }
+/* === 正解: パルス光（crush前の一瞬強調） === */
+.cw-cell-hit {
+  animation: cwCellHit 0.18s ease-out forwards;
+  z-index: 10;
+  position: relative;
+}
+@keyframes cwCellHit {
+  0%   { transform: scale(1); filter: brightness(1); }
+  50%  { transform: scale(1.2); filter: brightness(2.5) drop-shadow(0 0 20px rgba(255,220,100,0.9)); }
+  100% { transform: scale(1.15); filter: brightness(1.8) drop-shadow(0 0 12px rgba(255,220,100,0.6)); }
+}
 /* === 正解: 潰しアニメーション === */
 .cw-cell-crush {
   animation: cwCrush 0.45s ease-out forwards;
@@ -4075,7 +4086,8 @@ body::before {
 }
 @keyframes cwCorrectFlash {
   0%   { filter: brightness(1); }
-  12%  { filter: brightness(1.5); }
+  8%   { filter: brightness(0.6); }
+  20%  { filter: brightness(1.8); }
   100% { filter: brightness(1); }
 }
 /* 層パーフェクトクリア演出 */
