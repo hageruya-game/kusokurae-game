@@ -1785,39 +1785,57 @@ const Game = {
     }
   },
 
-  // === Stage1 導入演出 ===
+  // === Stage1 導入演出（タップで次行 / 自動進行） ===
   _showStage1Intro(callback) {
     var self = this;
     var sid = this.sessionId;
     var el = this.el.commandText;
+    var lines = [
+      I18n.t("intro.line1"),
+      I18n.t("intro.line2"),
+      I18n.t("intro.line3")
+    ];
+    var step = 0;
+    var autoTimer = null;
+    var AUTO_DELAY = 1100;
 
-    el.textContent = I18n.t("intro.line1");
-    el.className = "command-text s1-intro-text";
-
-    var t2 = setTimeout(function() {
+    function showLine() {
       if (self.sessionId !== sid) return;
+      if (step >= lines.length) {
+        dismiss();
+        return;
+      }
       el.className = "command-text";
       void el.offsetWidth;
-      el.textContent = I18n.t("intro.line2");
+      el.textContent = lines[step];
       el.className = "command-text s1-intro-text";
-    }, 700);
+      step++;
+      autoTimer = setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        showLine();
+      }, AUTO_DELAY);
+    }
 
-    var t3 = setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      el.className = "command-text";
-      void el.offsetWidth;
-      el.textContent = I18n.t("intro.line3");
-      el.className = "command-text s1-intro-text";
-    }, 1400);
-
-    var dismiss = setTimeout(function() {
+    function dismiss() {
+      if (autoTimer) clearTimeout(autoTimer);
+      autoTimer = null;
+      self.el.screenGame.removeEventListener("pointerdown", onTap);
       if (self.sessionId !== sid) return;
       el.className = "command-text";
       el.textContent = "";
       if (callback) callback();
-    }, 2100);
+    }
 
-    this._introTimers = [t2, t3, dismiss];
+    function onTap() {
+      if (self.sessionId !== sid) { self.el.screenGame.removeEventListener("pointerdown", onTap); return; }
+      if (autoTimer) clearTimeout(autoTimer);
+      autoTimer = null;
+      showLine();
+    }
+
+    this.el.screenGame.addEventListener("pointerdown", onTap);
+    showLine();
+    this._introTimers = [];
   },
 
   // === デバッグラベル ===

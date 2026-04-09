@@ -2797,6 +2797,7 @@ body::before {
 /* ボタン配置 */
 #screen-title .btn-start {
   margin-top: max(3vh, 16px);
+  margin-bottom: max(5vh, 40px);
 }
 .btn-continue {
   background: rgba(80, 50, 120, 0.4);
