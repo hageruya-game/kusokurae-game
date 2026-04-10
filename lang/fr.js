@@ -65,6 +65,9 @@ stageIntro: {
   final1: "Ce ne sera plus évident.",
   final2: "Compare.",
   final3: "Même en doutant, tranche.",
+  demo1: "Compare.",
+  demo2: "Un seul diffère.",
+  demoEnd: "Tu le vois ? Touche.",
 },
 
 // === Règles ===

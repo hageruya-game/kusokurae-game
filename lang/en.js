@@ -63,6 +63,9 @@ stageIntro: {
   final1: "It won't be obvious anymore.",
   final2: "Compare.",
   final3: "Even if you doubt, decide.",
+  demo1: "Compare.",
+  demo2: "One is off.",
+  demoEnd: "See it? Tap it.",
 },
 
 // === Rules ===

@@ -63,6 +63,9 @@ stageIntro: {
   final1: "Ya no será tan obvio.",
   final2: "Compara.",
   final3: "Aunque dudes, decide.",
+  demo1: "Compara.",
+  demo2: "Uno es distinto.",
+  demoEnd: "¿Lo ves? Tócalo.",
 },
 
 

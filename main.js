@@ -6723,6 +6723,65 @@ const Crowd = {
     }, 2100);
   },
 
+  // === Stage4 デモラウンド（初見導入用） ===
+  _runStage4Demo(callback) {
+    var demos = [
+      { cols: 3, rows: 3, timer: 8000, diffStrength: 1.2, axes: ["offset", "scale"], textKey: "stageIntro.demo1" },
+      { cols: 4, rows: 4, timer: 7000, diffStrength: 0.75, axes: ["offset", "scale", "rotation"], textKey: "stageIntro.demo2" }
+    ];
+    var demoIdx = 0;
+    var self = this;
+    this._isDemoRound = true;
+
+    function runOne() {
+      if (demoIdx >= demos.length) {
+        self._isDemoRound = false;
+        self._demoCallback = null;
+        self.cleanup();
+        self.el.command.textContent = I18n.t("stageIntro.demoEnd");
+        self.el.command.style.color = "#80e0ff";
+        var sid = self.sessionId;
+        setTimeout(function() {
+          if (self.sessionId !== sid) return;
+          self.el.command.textContent = "";
+          self.el.command.style.color = "";
+          callback();
+        }, 800);
+        return;
+      }
+
+      var d = demos[demoIdx];
+      self.cleanup();
+      self.el.command.textContent = I18n.t(d.textKey);
+      self.el.command.style.color = "#80e0ff";
+
+      var sid = self.sessionId;
+      setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        self.el.command.textContent = "";
+        self.el.command.style.color = "";
+
+        // startRound相当の初期化
+        self.answered = false;
+        self.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash");
+        self.roundType = "find";
+        self._roundDiffScale = 1.0;
+        self._roundInterferenceBoost = false;
+        self._isLastRound = false;
+        self._gazeTrapFired = false;
+
+        self._demoCallback = function() {
+          demoIdx++;
+          runOne();
+        };
+
+        self._startRoundCore(d);
+      }, 700);
+    }
+
+    runOne();
+  },
+
   // === 最終撃破演出 ===
   _showFinalDefeat(callback) {
     var sid = this.sessionId;
@@ -7062,8 +7121,8 @@ const Crowd = {
         self._startSyncJitter();
       }
 
-      // 時間差差異: 全セルに分散（Layer1以降、Layer3-4は強制適用）
-      if (self.currentLayer >= 1 || self._forceTemporalDiff) {
+      // 時間差差異: 全セルに分散（Layer1以降、Layer3-4は強制適用）— デモはスキップ
+      if (!self._isDemoRound && (self.currentLayer >= 1 || self._forceTemporalDiff)) {
         self._applyTemporalDiff();
       }
 
@@ -7270,7 +7329,7 @@ const Crowd = {
 
   // === フェイク差異（Pattern C）: 正解でないセルに"正解っぽい"挙動を混ぜる ===
   _applyFakeHints() {
-    if (this.currentLayer < 1) return; // Layer0はフェイクなし（ルール理解フェーズ）
+    if (this.currentLayer < 1 || this._isDemoRound) return; // Layer0・デモはフェイクなし
     var cells = this.el.grid.querySelectorAll(".cw-cell");
     if (!cells.length) return;
     var candidates = [];
@@ -7709,6 +7768,7 @@ const Crowd = {
   },
 
   playInterferenceSequence(layer) {
+    if (this._isDemoRound) return;
     var count = this.getInterferenceCount(this.currentLayer);
     // 強化ラウンド: 妨害数+1
     if (this._roundInterferenceBoost && count < 4) count++;
@@ -8009,9 +8069,11 @@ const Crowd = {
   },
 
   onCorrectFind(tappedCell) {
-    this.comboCount++;
-    if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
-    this.updateComboUI();
+    if (!this._isDemoRound) {
+      this.comboCount++;
+      if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+      this.updateComboUI();
+    }
 
     // ① 0ms: jitter停止 → 完全静止（時間停止感）
     this._stopCellJitter();
@@ -8055,6 +8117,7 @@ const Crowd = {
     // ⑥ 1100ms: 次ラウンド（テキスト表示なし — セルの発光が主役）
     setTimeout(function() {
       if (self.sessionId !== sid) return;
+      if (self._isDemoRound) { self._demoCallback(); return; }
       self.advanceRound();
     }, 1100);
   },
@@ -8084,13 +8147,15 @@ const Crowd = {
 
   onWrongTap(tappedCell) {
     var hadCombo = this.comboCount >= 3;
-    this.comboCount = 0;
-    this.totalMisses++;
-    this._layerMisses++;
-    this.lives--;
-    this.updateLivesUI(this.lives);
+    if (!this._isDemoRound) {
+      this.comboCount = 0;
+      this.totalMisses++;
+      this._layerMisses++;
+      this.lives--;
+      this.updateLivesUI(this.lives);
+    }
     SoundSystem.crowdMiss();
-    SoundSystem.updateSlashTension(this.calcTension());
+    if (!this._isDemoRound) SoundSystem.updateSlashTension(this.calcTension());
     if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
 
     tappedCell.classList.add("cw-cell-wrong");
@@ -8114,19 +8179,21 @@ const Crowd = {
     this.el.command.style.color = "#ff4060";
 
     // コンボブレイク
-    if (hadCombo) {
-      this.el.comboEl.textContent = "BREAK";
-      this.el.comboEl.classList.remove("cw-combo-hot");
-      this.el.comboEl.classList.add("cw-combo-show", "cw-combo-break");
-      setTimeout(() => {
-        this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-break");
-        this.el.comboEl.textContent = "";
-      }, 700);
-    } else {
-      this.updateComboUI();
+    if (!this._isDemoRound) {
+      if (hadCombo) {
+        this.el.comboEl.textContent = "BREAK";
+        this.el.comboEl.classList.remove("cw-combo-hot");
+        this.el.comboEl.classList.add("cw-combo-show", "cw-combo-break");
+        setTimeout(() => {
+          this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-break");
+          this.el.comboEl.textContent = "";
+        }, 700);
+      } else {
+        this.updateComboUI();
+      }
     }
 
-    if (this.lives <= 0) {
+    if (!this._isDemoRound && this.lives <= 0) {
       const sid = this.sessionId;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
@@ -8140,19 +8207,22 @@ const Crowd = {
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.command.style.color = "";
+      if (this._isDemoRound) { this._demoCallback(); return; }
       this.advanceRound();
     }, 1000);
   },
 
   onMiss() {
     var hadCombo = this.comboCount >= 3;
-    this.comboCount = 0;
-    this.totalMisses++;
-    this._layerMisses++;
-    this.lives--;
-    this.updateLivesUI(this.lives);
+    if (!this._isDemoRound) {
+      this.comboCount = 0;
+      this.totalMisses++;
+      this._layerMisses++;
+      this.lives--;
+      this.updateLivesUI(this.lives);
+    }
     SoundSystem.crowdMiss();
-    SoundSystem.updateSlashTension(this.calcTension());
+    if (!this._isDemoRound) SoundSystem.updateSlashTension(this.calcTension());
     if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
 
     // 暗転 + 赤フラッシュ
@@ -8177,19 +8247,21 @@ const Crowd = {
     this.el.command.textContent = I18n.t("crowd.missed");
     this.el.command.style.color = "#ff4060";
 
-    if (hadCombo) {
-      this.el.comboEl.textContent = "BREAK";
-      this.el.comboEl.classList.remove("cw-combo-hot");
-      this.el.comboEl.classList.add("cw-combo-show", "cw-combo-break");
-      setTimeout(() => {
-        this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-break");
-        this.el.comboEl.textContent = "";
-      }, 700);
-    } else {
-      this.updateComboUI();
+    if (!this._isDemoRound) {
+      if (hadCombo) {
+        this.el.comboEl.textContent = "BREAK";
+        this.el.comboEl.classList.remove("cw-combo-hot");
+        this.el.comboEl.classList.add("cw-combo-show", "cw-combo-break");
+        setTimeout(() => {
+          this.el.comboEl.classList.remove("cw-combo-show", "cw-combo-break");
+          this.el.comboEl.textContent = "";
+        }, 700);
+      } else {
+        this.updateComboUI();
+      }
     }
 
-    if (this.lives <= 0) {
+    if (!this._isDemoRound && this.lives <= 0) {
       const sid = this.sessionId;
       setTimeout(() => {
         if (this.sessionId !== sid) return;
@@ -8203,6 +8275,7 @@ const Crowd = {
     setTimeout(() => {
       if (this.sessionId !== sid) return;
       this.el.command.style.color = "";
+      if (this._isDemoRound) { this._demoCallback(); return; }
       this.advanceRound();
     }, 1000);
   },
@@ -8234,7 +8307,7 @@ const Crowd = {
           } else if (self.currentLayer === 3) {
             showStageRank("stage3", self.totalMisses, self.el.command, function() {
               self._showStage3Breakthrough(function() {
-                self._showFinalIntro(function() { self.showLayerTitle(); });
+                self._showFinalIntro(function() { self._runStage4Demo(function() { self.showLayerTitle(); }); });
               });
             });
           } else {
