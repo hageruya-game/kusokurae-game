@@ -51,7 +51,7 @@ intro: {
   line1: "Te darán órdenes.",
   line2: "No obedezcas.",
   line3: "Descifra la regla.",
-  hint: "Esta vez, aquí.",
+  hint: "Sigue la regla. Este.",
 },
 
 // === Stage Intros ===
@@ -284,6 +284,19 @@ stages: {
     { command: "¡El cerdo escapa! ¡Atrápalo!", choices: null, wrongReaction: "La urgencia te hizo actuar", rightReaction: "Dejarlo ir era lo correcto", misdirect: "¡Se escapa! ¡Atrápalo ya!", alts: ["mosca", "cerdo"] },
   ],
 },
+
+// === Stage Rank ===
+    stageRank: {
+      stage1S: "…Perfecto. Se pone peor.",
+      stage1A: "…Nada mal. Pero no será fácil.",
+      stage1B: "…Sobreviviste. Con eso basta.",
+      stage2S: "…Ni un solo error.",
+      stage2A: "…Observaste bien.",
+      stage2B: "…Por los pelos.",
+      stage3S: "…Lo viste todo. Te espera el final.",
+      stage3A: "…Buena vista. La prueba final espera.",
+      stage3B: "…Sigues en pie. Ve hasta el final.",
+    },
 
 // === Comentarios ===
 comments: {

@@ -51,7 +51,7 @@ intro: {
   line1: "You'll be ordered.",
   line2: "Don't obey.",
   line3: "Read the pattern.",
-  hint: "This one.",
+  hint: "Follow the rule. This one.",
 },
 
 // === Stage Intros ===
@@ -282,6 +282,19 @@ stages: {
     { command: "Grab the orb!", choices: null, wrongReaction: "You gave in to temptation", rightReaction: "Courage to touch nothing", misdirect: "Pick one! Now!", alts: ["Orb", "Burger"] },
     { command: "The pig's escaping! Catch it!", choices: null, wrongReaction: "Panic made you lunge", rightReaction: "Letting go was the answer", misdirect: "Don't let it go! Grab it!", alts: ["Fly", "Pig"] },
   ],
+},
+
+// === Stage Rank ===
+stageRank: {
+  stage1S: "…Perfect. It gets harder.",
+  stage1A: "…Not bad. But it won't be easy.",
+  stage1B: "…You survived. That's enough.",
+  stage2S: "…Not a single slip.",
+  stage2A: "…You were watching closely.",
+  stage2B: "…Barely made it.",
+  stage3S: "…You saw through everything. The last one awaits.",
+  stage3A: "…Your eyes are sharp. The final test awaits.",
+  stage3B: "…Still standing. Go to the end.",
 },
 
 // === Comments ===

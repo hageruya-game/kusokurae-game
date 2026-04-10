@@ -3928,9 +3928,9 @@ body::before {
 }
 @keyframes cwCellHit {
   0%   { transform: scale(1); filter: brightness(1); }
-  20%  { transform: scale(1.35); filter: brightness(4) drop-shadow(0 0 35px rgba(255,255,200,1)); }
-  50%  { transform: scale(1.25); filter: brightness(2.8) drop-shadow(0 0 25px rgba(255,235,120,0.9)); }
-  100% { transform: scale(1.2); filter: brightness(2.0) drop-shadow(0 0 18px rgba(255,215,80,0.6)); }
+  20%  { transform: scale(1.35); filter: brightness(4) drop-shadow(0 0 35px rgba(0,255,200,1)); }
+  50%  { transform: scale(1.25); filter: brightness(2.8) drop-shadow(0 0 25px rgba(0,255,180,0.9)); }
+  100% { transform: scale(1.2); filter: brightness(2.0) drop-shadow(0 0 18px rgba(0,230,150,0.6)); }
 }
 /* === 正解: 潰しアニメーション === */
 .cw-cell-crush {
@@ -3939,13 +3939,14 @@ body::before {
 }
 @keyframes cwCrush {
   0%   { transform: scale(1); opacity: 1; filter: brightness(1) drop-shadow(0 0 0 transparent); }
-  15%  { transform: scale(1.35); opacity: 1; filter: brightness(2.5) drop-shadow(0 0 40px rgba(255, 120, 80, 0.9)); }
-  50%  { transform: scale(0.25); opacity: 0.4; filter: brightness(0.4) drop-shadow(0 0 12px rgba(255, 80, 60, 0.3)); }
+  15%  { transform: scale(1.35); opacity: 1; filter: brightness(2.5) drop-shadow(0 0 40px rgba(0, 255, 200, 0.9)); }
+  50%  { transform: scale(0.25); opacity: 0.4; filter: brightness(0.4) drop-shadow(0 0 12px rgba(0, 200, 150, 0.3)); }
   100% { transform: scale(0); opacity: 0; filter: brightness(0) drop-shadow(0 0 0 transparent); }
 }
 /* === 不正解シェイク === */
 .cw-cell-wrong {
   animation: cwWrongShake 0.4s ease-out;
+  filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 40, 80, 0.8));
 }
 @keyframes cwWrongShake {
   0%, 100% { transform: translateX(0); }
@@ -3979,9 +3980,9 @@ body::before {
 }
 @keyframes cwExpose {
   0%   { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
-  30%  { transform: scale(1.2); filter: drop-shadow(0 0 12px rgba(255, 60, 60, 0.7)); }
-  70%  { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255, 40, 40, 0.5)); }
-  100% { transform: scale(1.1); filter: drop-shadow(0 0 5px rgba(255, 40, 40, 0.3)); }
+  30%  { transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(0, 255, 200, 0.8)); }
+  70%  { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(0, 255, 180, 0.6)); }
+  100% { transform: scale(1.1); filter: drop-shadow(0 0 6px rgba(0, 230, 150, 0.4)); }
 }
 /* === ミス時に正解シルエットを明るく強調 === */
 .cw-shape-mock {

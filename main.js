@@ -457,59 +457,71 @@ const SoundSystem = {
     ping.stop(t + 0.15);
   },
 
-  // --- 審眼正解: 重い衝撃（crowdHit の強化版） ---
+  // --- 審眼正解: 太く刺さる衝撃（スマホスピーカー対応） ---
   crowdCorrectHit() {
     if (!this.enabled) return;
     this.resume();
     var ctx = this.ctx;
     var t = ctx.currentTime;
-    // 深いサブベース thump（より低く、より重く）
+    // ベース thump（スマホで聞こえる帯域）
     var thump = ctx.createOscillator();
     var thumpGain = ctx.createGain();
     thump.connect(thumpGain);
     thumpGain.connect(ctx.destination);
     thump.type = "sine";
-    thump.frequency.setValueAtTime(45, t);
-    thump.frequency.exponentialRampToValueAtTime(30, t + 0.10);
-    thumpGain.gain.setValueAtTime(0.35, t);
+    thump.frequency.setValueAtTime(65, t);
+    thump.frequency.exponentialRampToValueAtTime(40, t + 0.10);
+    thumpGain.gain.setValueAtTime(0.40, t);
     thumpGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
     thump.start(t);
     thump.stop(t + 0.18);
-    // サブハーモニック層（倍音追加で太さ）
-    var sub = ctx.createOscillator();
-    var subGain = ctx.createGain();
-    sub.connect(subGain);
-    subGain.connect(ctx.destination);
-    sub.type = "sine";
-    sub.frequency.setValueAtTime(22, t);
-    subGain.gain.setValueAtTime(0.20, t);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-    sub.start(t);
-    sub.stop(t + 0.15);
-    // 金属的クラック（より鋭い、より大きい）
-    var bufSize = Math.floor(ctx.sampleRate * 0.06);
+    // ミッドヒット（スマホで明確に聞こえる中域）
+    var mid = ctx.createOscillator();
+    var midGain = ctx.createGain();
+    mid.connect(midGain);
+    midGain.connect(ctx.destination);
+    mid.type = "triangle";
+    mid.frequency.setValueAtTime(220, t);
+    mid.frequency.exponentialRampToValueAtTime(120, t + 0.12);
+    midGain.gain.setValueAtTime(0.20, t);
+    midGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    mid.start(t);
+    mid.stop(t + 0.12);
+    // 金属的クラック（鋭く大きく）
+    var bufSize = Math.floor(ctx.sampleRate * 0.05);
     var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
     var data = buf.getChannelData(0);
     for (var i = 0; i < bufSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.7;
+      data[i] = (Math.random() * 2 - 1) * 0.8;
     }
     var noise = ctx.createBufferSource();
     noise.buffer = buf;
     var bandpass = ctx.createBiquadFilter();
     bandpass.type = "bandpass";
-    bandpass.frequency.value = 3500;
-    bandpass.Q.value = 3.0;
+    bandpass.frequency.value = 4000;
+    bandpass.Q.value = 4.0;
     var noiseGain = ctx.createGain();
     noise.connect(bandpass);
     bandpass.connect(noiseGain);
     noiseGain.connect(ctx.destination);
-    noiseGain.gain.setValueAtTime(0.22, t);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    noiseGain.gain.setValueAtTime(0.30, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
     noise.start(t);
-    noise.stop(t + 0.07);
+    noise.stop(t + 0.06);
+    // アタック感（短い高音ピング）
+    var ping = ctx.createOscillator();
+    var pingGain = ctx.createGain();
+    ping.connect(pingGain);
+    pingGain.connect(ctx.destination);
+    ping.type = "sine";
+    ping.frequency.setValueAtTime(800, t);
+    pingGain.gain.setValueAtTime(0.12, t);
+    pingGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    ping.start(t);
+    ping.stop(t + 0.05);
   },
 
-  // --- 幕間突破: 勝利の上昇音 ---
+  // --- 幕間突破: 勝利の上昇音（強化版） ---
   breakthroughChime() {
     if (!this.enabled) return;
     this.resume();
@@ -521,12 +533,23 @@ const SoundSystem = {
     thump.connect(thumpGain);
     thumpGain.connect(ctx.destination);
     thump.type = "sine";
-    thump.frequency.setValueAtTime(50, t);
-    thump.frequency.exponentialRampToValueAtTime(35, t + 0.12);
-    thumpGain.gain.setValueAtTime(0.25, t);
+    thump.frequency.setValueAtTime(110, t);
+    thump.frequency.exponentialRampToValueAtTime(55, t + 0.12);
+    thumpGain.gain.setValueAtTime(0.30, t);
     thumpGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
     thump.start(t);
     thump.stop(t + 0.3);
+    // 温かみのあるサブ
+    var warm = ctx.createOscillator();
+    var warmGain = ctx.createGain();
+    warm.connect(warmGain);
+    warmGain.connect(ctx.destination);
+    warm.type = "sine";
+    warm.frequency.setValueAtTime(110, t);
+    warmGain.gain.setValueAtTime(0.12, t);
+    warmGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    warm.start(t);
+    warm.stop(t + 0.4);
     // 上昇トライアド（C5→E5→G5）
     var notes = [523, 659, 784];
     for (var i = 0; i < notes.length; i++) {
@@ -537,7 +560,7 @@ const SoundSystem = {
         g.connect(ctx.destination);
         osc.type = "sine";
         osc.frequency.setValueAtTime(freq, t + delay);
-        g.gain.setValueAtTime(0.10, t + delay);
+        g.gain.setValueAtTime(0.15, t + delay);
         g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.4);
         osc.start(t + delay);
         osc.stop(t + delay + 0.4);
@@ -550,7 +573,7 @@ const SoundSystem = {
     shimmer.frequency.setValueAtTime(1568, t + 0.2);
     shimmer.connect(shG);
     shG.connect(ctx.destination);
-    shG.gain.setValueAtTime(0.04, t + 0.2);
+    shG.gain.setValueAtTime(0.08, t + 0.2);
     shG.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
     shimmer.start(t + 0.2);
     shimmer.stop(t + 0.7);
@@ -575,43 +598,43 @@ const SoundSystem = {
     osc.stop(t + 0.25);
   },
 
-  // --- 審眼ミス: 重く不快な下降 + 残響テール ---
+  // --- 審眼ミス: 嫌な不協和音 + 重い下降（スマホ対応） ---
   crowdMiss() {
     if (!this.enabled) return;
     this.resume();
     var ctx = this.ctx;
     var t = ctx.currentTime;
 
-    // 粗い下降波（sawtooth + lowpass で重い質感）
+    // 粗い下降波（sawtooth + lowpass）
     var osc = ctx.createOscillator();
     var oscLP = ctx.createBiquadFilter();
     var oscGain = ctx.createGain();
     osc.type = "sawtooth";
     oscLP.type = "lowpass";
-    oscLP.frequency.setValueAtTime(600, t);
+    oscLP.frequency.setValueAtTime(800, t);
     oscLP.frequency.exponentialRampToValueAtTime(150, t + 0.5);
     osc.connect(oscLP);
     oscLP.connect(oscGain);
     oscGain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(160, t);
-    osc.frequency.exponentialRampToValueAtTime(50, t + 0.45);
-    oscGain.gain.setValueAtTime(0.16, t);
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.45);
+    oscGain.gain.setValueAtTime(0.22, t);
     oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
     osc.start(t);
     osc.stop(t + 0.5);
 
-    // サブベース落下（腹に来る重さ）
-    var sub = ctx.createOscillator();
-    var subGain = ctx.createGain();
-    sub.connect(subGain);
-    subGain.connect(ctx.destination);
-    sub.type = "sine";
-    sub.frequency.setValueAtTime(80, t);
-    sub.frequency.exponentialRampToValueAtTime(25, t + 0.3);
-    subGain.gain.setValueAtTime(0.12, t);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-    sub.start(t);
-    sub.stop(t + 0.35);
+    // 不協和音（デチューンされた矩形波 — 嫌な感じ）
+    var dis = ctx.createOscillator();
+    var disGain = ctx.createGain();
+    dis.connect(disGain);
+    disGain.connect(ctx.destination);
+    dis.type = "square";
+    dis.frequency.setValueAtTime(210, t);
+    dis.frequency.exponentialRampToValueAtTime(55, t + 0.4);
+    disGain.gain.setValueAtTime(0.10, t);
+    disGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    dis.start(t);
+    dis.stop(t + 0.45);
 
     // 重い残響ノイズテール
     var bufSize = Math.floor(ctx.sampleRate * 0.4);
@@ -624,13 +647,13 @@ const SoundSystem = {
     noise.buffer = buf;
     var lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(500, t);
+    lp.frequency.setValueAtTime(600, t);
     lp.frequency.exponentialRampToValueAtTime(100, t + 0.5);
     var noiseGain = ctx.createGain();
     noise.connect(lp);
     lp.connect(noiseGain);
     noiseGain.connect(ctx.destination);
-    noiseGain.gain.setValueAtTime(0.07, t + 0.05);
+    noiseGain.gain.setValueAtTime(0.10, t + 0.05);
     noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
     noise.start(t + 0.05);
     noise.stop(t + 0.55);
@@ -650,12 +673,12 @@ const SoundSystem = {
     var sdG = ctx.createGain();
     subDrop.connect(sdG); sdG.connect(master);
     subDrop.type = "sine";
-    subDrop.frequency.setValueAtTime(80, t);
-    subDrop.frequency.exponentialRampToValueAtTime(35, t + 0.3);
-    subDrop.frequency.setValueAtTime(35, t + 0.3);
-    subDrop.frequency.exponentialRampToValueAtTime(30, t + 2.5);
-    sdG.gain.setValueAtTime(0.22, t);
-    sdG.gain.setValueAtTime(0.15, t + 0.5);
+    subDrop.frequency.setValueAtTime(100, t);
+    subDrop.frequency.exponentialRampToValueAtTime(45, t + 0.3);
+    subDrop.frequency.setValueAtTime(45, t + 0.3);
+    subDrop.frequency.exponentialRampToValueAtTime(35, t + 2.5);
+    sdG.gain.setValueAtTime(0.28, t);
+    sdG.gain.setValueAtTime(0.18, t + 0.5);
     sdG.gain.exponentialRampToValueAtTime(0.001, t + 2.8);
     subDrop.start(t); subDrop.stop(t + 2.8);
     // 2. 低い芯（C4 → 長い余韻）
@@ -664,8 +687,8 @@ const SoundSystem = {
     o1.connect(g1); g1.connect(master);
     o1.type = "sine";
     o1.frequency.setValueAtTime(262, t);
-    g1.gain.setValueAtTime(0.24, t);
-    g1.gain.setValueAtTime(0.24, t + 0.4);
+    g1.gain.setValueAtTime(0.30, t);
+    g1.gain.setValueAtTime(0.30, t + 0.4);
     g1.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
     o1.start(t); o1.stop(t + 2.5);
     // 3. 5度（G4）
@@ -674,7 +697,7 @@ const SoundSystem = {
     o2.connect(g2); g2.connect(master);
     o2.type = "sine";
     o2.frequency.setValueAtTime(392, t + 0.15);
-    g2.gain.setValueAtTime(0.18, t + 0.15);
+    g2.gain.setValueAtTime(0.22, t + 0.15);
     g2.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
     o2.start(t + 0.15); o2.stop(t + 2.2);
     // 4. オクターブ（C5）
@@ -683,7 +706,7 @@ const SoundSystem = {
     o3.connect(g3); g3.connect(master);
     o3.type = "sine";
     o3.frequency.setValueAtTime(523, t + 0.3);
-    g3.gain.setValueAtTime(0.14, t + 0.3);
+    g3.gain.setValueAtTime(0.18, t + 0.3);
     g3.gain.exponentialRampToValueAtTime(0.001, t + 2.3);
     o3.start(t + 0.3); o3.stop(t + 2.3);
     // 5. きらめき（E5）
@@ -719,7 +742,7 @@ const SoundSystem = {
     shimmer.type = "sine";
     shimmer.frequency.setValueAtTime(1320, t + 0.4);
     shimmer.connect(shG); shG.connect(master);
-    shG.gain.setValueAtTime(0.07, t + 0.4);
+    shG.gain.setValueAtTime(0.10, t + 0.4);
     shG.gain.exponentialRampToValueAtTime(0.001, t + 2.8);
     var shLFO = ctx.createOscillator();
     var shLG = ctx.createGain();
@@ -763,9 +786,18 @@ const SoundSystem = {
     nwLPF.frequency.value = 500;
     var nwG = ctx.createGain();
     nwNoise.connect(nwLPF); nwLPF.connect(nwG); nwG.connect(master);
-    nwG.gain.setValueAtTime(0.05, t + 0.2);
+    nwG.gain.setValueAtTime(0.08, t + 0.2);
     nwG.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
     nwNoise.start(t + 0.2); nwNoise.stop(t + 2.5);
+    // 11. 温かいtriangle倍音（C4）
+    var tri = ctx.createOscillator();
+    var triG = ctx.createGain();
+    tri.connect(triG); triG.connect(master);
+    tri.type = "triangle";
+    tri.frequency.setValueAtTime(262, t);
+    triG.gain.setValueAtTime(0.08, t);
+    triG.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+    tri.start(t); tri.stop(t + 2.0);
   },
 
   // --- ランク出現SE: 溜め→解放三和音 ---
@@ -1666,6 +1698,30 @@ const SoundSystem = {
   },
 };
 
+// ----- ステージランク表示 -----
+function showStageRank(stage, misses, displayEl, callback) {
+  var rank;
+  if (misses <= 0) rank = "S";
+  else if (misses <= 2) rank = "A";
+  else rank = "B";
+  var key = "stageRank." + stage + rank;
+  var text = I18n.t(key);
+  var colors = { S: "#ffd700", A: "#c0c0ff", B: "#a0c0e0" };
+  displayEl.textContent = text;
+  displayEl.style.color = colors[rank];
+  displayEl.style.textShadow = rank === "S"
+    ? "0 0 18px rgba(255,215,0,0.7)"
+    : rank === "A"
+      ? "0 0 12px rgba(192,192,255,0.5)"
+      : "0 0 10px rgba(160,192,224,0.4)";
+  setTimeout(function() {
+    displayEl.textContent = "";
+    displayEl.style.color = "";
+    displayEl.style.textShadow = "";
+    if (callback) callback();
+  }, 1500);
+}
+
 // ----- ゲーム本体 -----
 const Game = {
   currentRound: 0,
@@ -1941,7 +1997,7 @@ const Game = {
     }
   },
 
-  // === Stage1 導入演出（タップで次行 / 自動進行） ===
+  // === Stage1 導入演出（タップで次行 / 最終行のみ自動dismiss） ===
   _showStage1Intro(callback) {
     var self = this;
     var sid = this.sessionId;
@@ -1952,13 +2008,15 @@ const Game = {
       I18n.t("intro.line3")
     ];
     var step = 0;
-    var autoTimer = null;
-    var AUTO_DELAY = 1100;
+    var dismissTimer = null;
 
     function showLine() {
       if (self.sessionId !== sid) return;
       if (step >= lines.length) {
-        dismiss();
+        // 全行表示済み → 1200ms後に自動dismiss
+        dismissTimer = setTimeout(function() {
+          dismiss();
+        }, 1200);
         return;
       }
       el.className = "command-text";
@@ -1966,15 +2024,12 @@ const Game = {
       el.textContent = lines[step];
       el.className = "command-text s1-intro-text";
       step++;
-      autoTimer = setTimeout(function() {
-        if (self.sessionId !== sid) return;
-        showLine();
-      }, AUTO_DELAY);
+      // 自動進行なし — タップ待ち
     }
 
     function dismiss() {
-      if (autoTimer) clearTimeout(autoTimer);
-      autoTimer = null;
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = null;
       self.el.screenGame.removeEventListener("pointerdown", onTap);
       if (self.sessionId !== sid) return;
       el.className = "command-text";
@@ -1984,8 +2039,7 @@ const Game = {
 
     function onTap() {
       if (self.sessionId !== sid) { self.el.screenGame.removeEventListener("pointerdown", onTap); return; }
-      if (autoTimer) clearTimeout(autoTimer);
-      autoTimer = null;
+      if (dismissTimer) { clearTimeout(dismissTimer); dismiss(); return; }
       showLine();
     }
 
@@ -2691,9 +2745,12 @@ const Game = {
     function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
     var interludeTimer;
 
-    // キモキャラ割り込み演出
-    setTimeout(function() {
+    // ステージランク → キモキャラ割り込み演出
+    var stage1Misses = ROUNDS_PER_GAME - self.score;
+    showStageRank("stage1", stage1Misses, text, function() {
+      text.textContent = "";
       if (self.sessionId !== gid) return;
+      // キモキャラ割り込み演出
       interImg.src = "assets/image_0.png";
       interImg.style.display = "";
       interImg.classList.add("dg-interlude-show");
@@ -2706,7 +2763,7 @@ const Game = {
         if (self.sessionId !== gid) return;
         proceed();
       }, 2400);
-    }, 400);
+    });
   },
 
   showResult() {
@@ -4903,9 +4960,11 @@ const Slash = {
     function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
     var interludeTimer;
 
-    // キモキャラ割り込み演出
-    setTimeout(function() {
+    // ステージランク → キモキャラ割り込み演出
+    showStageRank("stage2", self.totalMisses, text, function() {
+      text.textContent = "";
       if (self.sessionId !== sid) return;
+      // キモキャラ割り込み演出
       interImg.src = "assets/image_0.png";
       interImg.style.display = "";
       interImg.classList.add("dg-interlude-show");
@@ -4918,7 +4977,7 @@ const Slash = {
         if (self.sessionId !== sid) return;
         proceed();
       }, 2400);
-    }, 400);
+    });
   },
 
   showOX(isCorrect) {
@@ -8173,8 +8232,10 @@ const Crowd = {
           if (self.currentLayer === 1) {
             self._showPostLayer0(function() { self.showLayerTitle(); });
           } else if (self.currentLayer === 3) {
-            self._showStage3Breakthrough(function() {
-              self._showFinalIntro(function() { self.showLayerTitle(); });
+            showStageRank("stage3", self.totalMisses, self.el.command, function() {
+              self._showStage3Breakthrough(function() {
+                self._showFinalIntro(function() { self.showLayerTitle(); });
+              });
             });
           } else {
             self.showLayerTitle();

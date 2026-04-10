@@ -53,7 +53,7 @@ intro: {
   line1: "On va t'ordonner.",
   line2: "N'obéis pas.",
   line3: "Trouve la règle.",
-  hint: "Cette fois, ici.",
+  hint: "Suis la règle. Celui-ci.",
 },
 
 // === Stage Intros ===
@@ -285,6 +285,19 @@ stages: {
     { command: "Le cochon s'enfuit ! Attrape-le !", choices: null, wrongReaction: "La panique t'a fait bondir", rightReaction: "Le laisser fuir, c'était la réponse", misdirect: "Ne le laisse pas filer ! Attrape !", alts: ["Mouche", "Cochon"] },
   ],
 },
+
+    // === Stage Rank ===
+    stageRank: {
+      stage1S: "…Parfait. Ça va empirer.",
+      stage1A: "…Pas mal. Mais ça ne sera pas facile.",
+      stage1B: "…Tu as survécu. C'est déjà ça.",
+      stage2S: "…Pas une seule erreur.",
+      stage2A: "…Tu regardais bien.",
+      stage2B: "…De justesse.",
+      stage3S: "…Tu as tout vu. Le dernier t'attend.",
+      stage3A: "…Bon regard. L'épreuve finale attend.",
+      stage3B: "…Encore debout. Va jusqu'au bout.",
+    },
 
 // === Commentaires ===
 comments: {

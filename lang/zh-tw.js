@@ -51,7 +51,7 @@ intro: {
   line1: "你會被命令。",
   line2: "別服從。",
   line3: "看穿規則。",
-  hint: "這次，按這邊。",
+  hint: "依照法則，按這邊。",
 },
 
 // === Stage Intros ===
@@ -283,6 +283,19 @@ stages: {
     { command: "豬要跑了！抓住牠！", choices: null, wrongReaction: "慌張之下撲上去了", rightReaction: "讓牠跑才是正確答案", misdirect: "別讓牠跑了！抓住！", alts: ["蒼蠅", "豬"] },
   ],
 },
+
+// === Stage Rank ===
+    stageRank: {
+      stage1S: "…完美。接下來更難。",
+      stage1A: "…不錯。但不會輕鬆。",
+      stage1B: "…活下來了。這就夠了。",
+      stage2S: "…一個都沒漏。",
+      stage2A: "…你看得很仔細。",
+      stage2B: "…好險。",
+      stage3S: "…全都看穿了。最後一關在等你。",
+      stage3A: "…眼力不錯。最終考驗來了。",
+      stage3B: "…還站著。走到最後。",
+    },
 
 // === 留言 ===
 comments: {
