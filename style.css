@@ -59,8 +59,8 @@ body {
   width: min(40vw, 160px);
   height: auto;
   display: block;
-  filter: drop-shadow(0 0 15px rgba(140, 0, 220, 0.5))
-          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 2px 12px rgba(140, 0, 220, 0.5));
+  -webkit-backface-visibility: hidden;
 }
 .title-main {
   font-family: "Hiragino Kaku Gothic StdN", "Noto Sans JP", sans-serif;
@@ -735,10 +735,11 @@ body {
   height: 0;
   overflow: visible;
   opacity: 0;
+  visibility: hidden;
   transition: opacity 0.2s;
   pointer-events: none;
 }
-.tap-guide.active { opacity: 1; }
+.tap-guide.active { opacity: 1; visibility: visible; }
 .tap-guide-img {
   width: 24px;
   height: auto;

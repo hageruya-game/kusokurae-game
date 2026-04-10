@@ -288,13 +288,13 @@ stages: {
 stageRank: {
   stage1S: "…Perfect. It gets harder.",
   stage1A: "…Not bad. But it won't be easy.",
-  stage1B: "…You survived. That's enough.",
+  stage1B: "…Don't get comfortable.",
   stage2S: "…Not a single slip.",
   stage2A: "…You were watching closely.",
-  stage2B: "…Barely made it.",
+  stage2B: "…Just luck.",
   stage3S: "…You saw through everything. The last one awaits.",
   stage3A: "…Your eyes are sharp. The final test awaits.",
-  stage3B: "…Still standing. Go to the end.",
+  stage3B: "…This is just the beginning.",
 },
 
 // === Comments ===

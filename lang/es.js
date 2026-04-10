@@ -289,13 +289,13 @@ stages: {
     stageRank: {
       stage1S: "…Perfecto. Se pone peor.",
       stage1A: "…Nada mal. Pero no será fácil.",
-      stage1B: "…Sobreviviste. Con eso basta.",
+      stage1B: "…No te conformes con eso.",
       stage2S: "…Ni un solo error.",
       stage2A: "…Observaste bien.",
-      stage2B: "…Por los pelos.",
+      stage2B: "…Solo fue suerte.",
       stage3S: "…Lo viste todo. Te espera el final.",
       stage3A: "…Buena vista. La prueba final espera.",
-      stage3B: "…Sigues en pie. Ve hasta el final.",
+      stage3B: "…Esto apenas empieza.",
     },
 
 // === Comentarios ===
