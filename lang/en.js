@@ -60,12 +60,10 @@ stageIntro: {
   crowd1: "They look the same.",
   crowd2: "One is different.",
   crowd3: "Find it.",
-  final1: "It won't be obvious anymore.",
-  final2: "Compare.",
-  final3: "Even if you doubt, decide.",
-  demo1: "Compare.",
-  demo2: "One is off.",
-  demoEnd: "See it? Tap it.",
+  s4line1: "Among these,",
+  s4line2: "only one",
+  s4line3: "feels off.",
+  s4line4: "Find it.",
 },
 
 // === Rules ===

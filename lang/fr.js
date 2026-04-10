@@ -62,12 +62,10 @@ stageIntro: {
   crowd1: "Ils se ressemblent tous.",
   crowd2: "Un seul diffère.",
   crowd3: "Repère-le.",
-  final1: "Ce ne sera plus évident.",
-  final2: "Compare.",
-  final3: "Même en doutant, tranche.",
-  demo1: "Compare.",
-  demo2: "Un seul diffère.",
-  demoEnd: "Tu le vois ? Touche.",
+  s4line1: "Parmi eux,",
+  s4line2: "un seul",
+  s4line3: "semble différent.",
+  s4line4: "Trouve-le.",
 },
 
 // === Règles ===

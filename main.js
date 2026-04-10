@@ -2446,11 +2446,19 @@ const Game = {
       correctBtn.classList.add("s1-tap-here");
       var sid = this.sessionId;
       var self = this;
-      this._tutorialHintTimer = setTimeout(function() {
-        if (self.sessionId !== sid) return;
+      // タップで即消し（慣れた人は待たない）
+      function dismissHint() {
+        if (self._tutorialHintTimer) clearTimeout(self._tutorialHintTimer);
+        self._tutorialHintTimer = null;
         correctBtn.classList.remove("s1-tap-here");
         delete correctBtn.dataset.tutorialText;
-      }, 900);
+        self.el.screenGame.removeEventListener("pointerdown", dismissHint);
+      }
+      this.el.screenGame.addEventListener("pointerdown", dismissHint);
+      this._tutorialHintTimer = setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        dismissHint();
+      }, 2500);
     } else {
       this.startTimer();
     }
@@ -6698,94 +6706,51 @@ const Crowd = {
     }, 300);
   },
 
-  // === Stage4 導入演出（3行・強め） ===
-  _showFinalIntro(callback) {
+  // === Stage4 タップ送り導入テキスト ===
+  _showStage4Intro(callback) {
+    var self = this;
     var sid = this.sessionId;
-    var self = this;
-    this.el.command.textContent = I18n.t("stageIntro.final1");
-    this.el.command.classList.add("cw-final-intro-text");
-
-    var t2 = setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      self.el.command.classList.remove("cw-final-intro-text");
-      void self.el.command.offsetWidth;
-      self.el.command.textContent = I18n.t("stageIntro.final2");
-      self.el.command.classList.add("cw-final-intro-text");
-    }, 700);
-
-    var t3 = setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      self.el.command.classList.remove("cw-final-intro-text");
-      void self.el.command.offsetWidth;
-      self.el.command.textContent = I18n.t("stageIntro.final3");
-      self.el.command.classList.add("cw-final-intro-text");
-    }, 1400);
-
-    var dismiss = setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      self.el.command.classList.remove("cw-final-intro-text");
-      self.el.command.textContent = "";
-      if (callback) callback();
-    }, 2100);
-  },
-
-  // === Stage4 デモラウンド（初見導入用） ===
-  _runStage4Demo(callback) {
-    var demos = [
-      { cols: 3, rows: 3, timer: 8000, diffStrength: 1.2, axes: ["offset", "scale"], textKey: "stageIntro.demo1" },
-      { cols: 4, rows: 4, timer: 7000, diffStrength: 0.75, axes: ["offset", "scale", "rotation"], textKey: "stageIntro.demo2" }
+    var el = this.el.command;
+    var lines = [
+      I18n.t("stageIntro.s4line1"),
+      I18n.t("stageIntro.s4line2"),
+      I18n.t("stageIntro.s4line3"),
+      I18n.t("stageIntro.s4line4")
     ];
-    var demoIdx = 0;
-    var self = this;
-    this._isDemoRound = true;
+    var step = 0;
+    var dismissTimer = null;
 
-    function runOne() {
-      if (demoIdx >= demos.length) {
-        self._isDemoRound = false;
-        self._demoCallback = null;
-        self.cleanup();
-        self.el.command.textContent = I18n.t("stageIntro.demoEnd");
-        self.el.command.style.color = "#80e0ff";
-        var sid = self.sessionId;
-        setTimeout(function() {
-          if (self.sessionId !== sid) return;
-          self.el.command.textContent = "";
-          self.el.command.style.color = "";
-          callback();
-        }, 800);
+    function showLine() {
+      if (self.sessionId !== sid) return;
+      if (step >= lines.length) {
+        dismissTimer = setTimeout(function() { dismiss(); }, 800);
         return;
       }
-
-      var d = demos[demoIdx];
-      self.cleanup();
-      self.el.command.textContent = I18n.t(d.textKey);
-      self.el.command.style.color = "#80e0ff";
-
-      var sid = self.sessionId;
-      setTimeout(function() {
-        if (self.sessionId !== sid) return;
-        self.el.command.textContent = "";
-        self.el.command.style.color = "";
-
-        // startRound相当の初期化
-        self.answered = false;
-        self.el.screen.classList.remove("cw-miss-flash", "cw-miss-darken", "cw-correct-flash");
-        self.roundType = "find";
-        self._roundDiffScale = 1.0;
-        self._roundInterferenceBoost = false;
-        self._isLastRound = false;
-        self._gazeTrapFired = false;
-
-        self._demoCallback = function() {
-          demoIdx++;
-          runOne();
-        };
-
-        self._startRoundCore(d);
-      }, 700);
+      el.classList.remove("cw-final-intro-text");
+      void el.offsetWidth;
+      el.textContent = lines[step];
+      el.classList.add("cw-final-intro-text");
+      step++;
     }
 
-    runOne();
+    function dismiss() {
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = null;
+      self.el.screen.removeEventListener("pointerdown", onTap);
+      if (self.sessionId !== sid) return;
+      el.classList.remove("cw-final-intro-text");
+      el.textContent = "";
+      if (callback) callback();
+    }
+
+    function onTap() {
+      if (self.sessionId !== sid) { self.el.screen.removeEventListener("pointerdown", onTap); return; }
+      if (dismissTimer) { clearTimeout(dismissTimer); dismiss(); return; }
+      showLine();
+    }
+
+    this.el.screen.addEventListener("pointerdown", onTap);
+    showLine();
   },
 
   // === 最終撃破演出 ===
@@ -7499,6 +7464,11 @@ const Crowd = {
 
       var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, flipX: false };
 
+      // === 差異軸ハンドラ ===
+      // 現在: offset, scale, rotation, flip
+      // 拡張候補: symmetry-break, relation-based, temporal-shift, color-hue, shape-morph
+      // 新軸追加手順: ① CROWD_LAYERS[].axes に軸名追加 ② ここに else if ブロック追加
+      // 軸の組み合わせで問題パターンを指数的に増やせる設計
       for (var a = 0; a < chosenAxes.length; a++) {
         var axis = chosenAxes[a];
         var s = Math.min(1.0, layer.diffStrength * (this._roundDiffScale || 1.0));
@@ -8315,7 +8285,7 @@ const Crowd = {
           } else if (self.currentLayer === 3) {
             showStageRank("stage3", self.totalMisses, self.el.command, function() {
               self._showStage3Breakthrough(function() {
-                self._showFinalIntro(function() { self._runStage4Demo(function() { self.showLayerTitle(); }); });
+                self._showStage4Intro(function() { self.showLayerTitle(); });
               });
             });
           } else {

@@ -60,12 +60,10 @@ stageIntro: {
   crowd1: "Parecen iguales.",
   crowd2: "Solo uno es distinto.",
   crowd3: "Encuéntralo.",
-  final1: "Ya no será tan obvio.",
-  final2: "Compara.",
-  final3: "Aunque dudes, decide.",
-  demo1: "Compara.",
-  demo2: "Uno es distinto.",
-  demoEnd: "¿Lo ves? Tócalo.",
+  s4line1: "Entre estos,",
+  s4line2: "solo uno",
+  s4line3: "es distinto.",
+  s4line4: "Encuéntralo.",
 },
 
 
