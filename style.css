@@ -3922,7 +3922,7 @@ body::before {
   50%     { filter: drop-shadow(0 0 8px rgba(255,60,30,0.45)); }
 }
 /* === 正解: パルス光（crush前の強調） === */
-.cw-cell-hit {
+.cw-cell.cw-cell-hit {
   animation: cwCellHit 0.35s ease-out forwards;
   z-index: 10;
   position: relative;
@@ -3934,7 +3934,7 @@ body::before {
   100% { transform: scale(1.2); filter: brightness(2.0) drop-shadow(0 0 18px rgba(0,230,150,0.6)); }
 }
 /* === 正解: 潰しアニメーション === */
-.cw-cell-crush {
+.cw-cell.cw-cell-crush {
   animation: cwCrush 0.45s ease-out forwards;
   pointer-events: none;
 }
@@ -3945,7 +3945,7 @@ body::before {
   100% { transform: scale(0); opacity: 0; filter: brightness(0) drop-shadow(0 0 0 transparent); }
 }
 /* === 不正解シェイク === */
-.cw-cell-wrong {
+.cw-cell.cw-cell-wrong {
   animation: cwWrongShake 0.4s ease-out;
   filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 40, 80, 0.8));
 }
@@ -3976,7 +3976,7 @@ body::before {
   transition: opacity 0.12s, filter 0.12s !important;
 }
 /* === 暴露アニメーション（ミス時に正解セルを示す） === */
-.cw-cell-expose {
+.cw-cell.cw-cell-expose {
   animation: cwExpose 0.5s ease-out forwards;
 }
 @keyframes cwExpose {

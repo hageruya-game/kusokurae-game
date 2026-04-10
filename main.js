@@ -205,6 +205,9 @@ const SaveSystem = {
       Crowd.maxCombo = 0;
       Crowd.lives = Crowd.maxLives;
       Crowd._lastRoundIntroPlayed = false;
+      Crowd._isDemoRound = false;
+      Crowd._demoCallback = null;
+      Crowd._isLastRound = false;
       SoundSystem.init();
       SoundSystem.stopAmbient();
       SoundSystem.startSlashAmbient(0.3);
@@ -6596,6 +6599,9 @@ const Crowd = {
     this._layerMisses = 0;
     this.lives = this.maxLives;
     this._lastRoundIntroPlayed = false;
+    this._isDemoRound = false;
+    this._demoCallback = null;
+    this._isLastRound = false;
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0.3);
@@ -6812,6 +6818,8 @@ const Crowd = {
   goTitle() {
     this.sessionId++;
     this.cleanup();
+    this._isDemoRound = false;
+    this._demoCallback = null;
     this.clearEffects();
     SoundSystem.stopSlashAmbient();
     SoundSystem.startTitleAmbient();
