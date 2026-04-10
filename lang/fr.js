@@ -62,10 +62,6 @@ stageIntro: {
   crowd1: "Ils se ressemblent tous.",
   crowd2: "Un seul diffère.",
   crowd3: "Repère-le.",
-  s4line1: "Parmi eux,",
-  s4line2: "un seul",
-  s4line3: "semble différent.",
-  s4line4: "Trouve-le.",
 },
 
 // === Règles ===
@@ -137,11 +133,12 @@ crowd: {
   rankA: "Regard aiguisé.",
   rankB: "Tu voyais. À peine.",
   epilogue: "Tu as désobéi aux ordres.\nTu as manié la lame.\nTu as gardé les yeux ouverts dans la foule.\n\n…plus personne ne te contrôle.",
-  tutorialLine1: "Ils se ressemblent tous.",
-  tutorialLine2: "Un seul diffère.",
+  tutorialLine1: "Parmi eux,",
+  tutorialLine2: "un seul",
   postLayer0: "…c'était juste l'échauffement.",
   perfectClear: ["Percé à jour.", "Sans hésiter.", "Lecture parfaite.", "Impeccable."],
-  tutorialLine3: "Repère-le.",
+  tutorialLine3: "semble différent.",
+  tutorialLine4: "Trouve-le.",
   interlude1: "…Pas mal.",
   interlude2: "…Tu es tenace.",
   interlude3: "…Tu t'en es sorti.",
@@ -295,9 +292,6 @@ stages: {
       stage2S: "…Pas une seule erreur.",
       stage2A: "…Tu regardais bien.",
       stage2B: "…Juste de la chance.",
-      stage3S: "…Tu as tout vu. Le dernier t'attend.",
-      stage3A: "…Bon regard. L'épreuve finale attend.",
-      stage3B: "…Ça ne fait que commencer.",
     },
 
 // === Commentaires ===

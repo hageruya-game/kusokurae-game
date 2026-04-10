@@ -62,9 +62,6 @@ stageRank: {
   stage2S: "…一撃も許さなかった。",
   stage2A: "…よく見ていた。",
   stage2B: "…運が良かっただけだ。",
-  stage3S: "…全て見抜いた。最後が待っている。",
-  stage3A: "…目は確かだ。最後に試される。",
-  stage3B: "…まだ始まったばかりだ。",
 },
 
 // === ステージ導入 ===
@@ -73,10 +70,6 @@ stageIntro: {
   crowd1: "同じに見える。",
   crowd2: "1つだけ違う。",
   crowd3: "見抜け。",
-  s4line1: "この中に、",
-  s4line2: "1つだけ、",
-  s4line3: "違和感がある。",
-  s4line4: "見抜け。",
 },
 
 // === ルール説明 ===
@@ -148,14 +141,15 @@ crowd: {
   rankA: "鋭い目だ。",
   rankB: "見えてはいた。",
   epilogue: "命令に逆らい、\n刃を振り、\n群衆の中で目を開けた。\n\n…お前はもう、誰の支配も受けない。",
-  tutorialLine1: "同じに見える。",
-  tutorialLine2: "1つだけ違う。",
+  tutorialLine1: "この中に、",
+  tutorialLine2: "1つだけ、",
   postLayer0: "…それはウォーミングアップだ。",
   perfectClear: ["見抜いた。", "迷いなし。", "完全看破。", "完全突破。"],
-  tutorialLine3: "見抜け。",
+  tutorialLine3: "違和感がある。",
+  tutorialLine4: "見抜け。",
   interlude1: "…やるじゃないか。",
   interlude2: "…しぶといな。",
-  interlude3: "…よく抜けたな。",
+  interlude3: "…よく見抜けたな。",
   finalDefeat: "…見抜いたな。",
 },
 

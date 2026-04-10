@@ -60,10 +60,6 @@ stageIntro: {
   crowd1: "看起來都一樣。",
   crowd2: "只有一個不同。",
   crowd3: "找出來。",
-  s4line1: "這之中，",
-  s4line2: "只有一個，",
-  s4line3: "有違和感。",
-  s4line4: "找出來。",
 },
 
 // === 規則說明 ===
@@ -135,11 +131,12 @@ crowd: {
   rankA: "銳利的眼光。",
   rankB: "至少還看得見。",
   epilogue: "違抗了命令，\n揮下了刀，\n在群眾中睜開了眼。\n\n…你已經不受任何人支配了。",
-  tutorialLine1: "看起來都一樣。",
-  tutorialLine2: "只有一個不同。",
+  tutorialLine1: "這之中，",
+  tutorialLine2: "只有一個，",
   postLayer0: "…那只是熱身。",
   perfectClear: ["看穿了。", "毫不猶豫。", "完美看破。", "完美突破。"],
-  tutorialLine3: "找出來。",
+  tutorialLine3: "有違和感。",
+  tutorialLine4: "找出來。",
   interlude1: "…還不錯。",
   interlude2: "…真頑固。",
   interlude3: "…你竟然撐過來了。",
@@ -293,9 +290,6 @@ stages: {
       stage2S: "…一個都沒漏。",
       stage2A: "…你看得很仔細。",
       stage2B: "…只是運氣好。",
-      stage3S: "…全都看穿了。最後一關在等你。",
-      stage3A: "…眼力不錯。最終考驗來了。",
-      stage3B: "…才剛開始而已。",
     },
 
 // === 留言 ===

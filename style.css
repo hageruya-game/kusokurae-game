@@ -1055,20 +1055,6 @@ body {
   100% { opacity: 0; }
 }
 
-/* === Stage4 導入テキスト（3行・強め） === */
-.cw-final-intro-text {
-  animation: cwFinalIntroFade 0.7s ease-in-out forwards;
-  color: #e8d0d0;
-  font-size: clamp(15px, 4.5vw, 20px);
-  text-shadow: 0 0 12px rgba(255, 100, 100, 0.3);
-}
-@keyframes cwFinalIntroFade {
-  0%   { opacity: 0; transform: translateY(6px); }
-  15%  { opacity: 1; transform: translateY(0); }
-  85%  { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
 /* === 最終撃破フラッシュ === */
 .cw-final-defeat-flash {
   animation: cwFinalDefeatFlash 0.8s ease-out forwards;

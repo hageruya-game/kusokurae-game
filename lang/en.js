@@ -60,10 +60,6 @@ stageIntro: {
   crowd1: "They look the same.",
   crowd2: "One is different.",
   crowd3: "Find it.",
-  s4line1: "Among these,",
-  s4line2: "only one",
-  s4line3: "feels off.",
-  s4line4: "Find it.",
 },
 
 // === Rules ===
@@ -135,11 +131,12 @@ crowd: {
   rankA: "Sharp eyes.",
   rankB: "You could see. Barely.",
   epilogue: "You defied the orders.\nYou swung the blade.\nYou kept your eyes open in the crowd.\n\n...no one controls you anymore.",
-  tutorialLine1: "They look the same.",
-  tutorialLine2: "One is different.",
+  tutorialLine1: "Among these,",
+  tutorialLine2: "only one",
   postLayer0: "...that was just a warm-up.",
   perfectClear: ["Seen through.", "No hesitation.", "Perfect read.", "Flawless."],
-  tutorialLine3: "Find it.",
+  tutorialLine3: "feels off.",
+  tutorialLine4: "Find it.",
   interlude1: "…Not bad.",
   interlude2: "…You're stubborn.",
   interlude3: "…You made it through.",
@@ -293,9 +290,6 @@ stageRank: {
   stage2S: "…Not a single slip.",
   stage2A: "…You were watching closely.",
   stage2B: "…Just luck.",
-  stage3S: "…You saw through everything. The last one awaits.",
-  stage3A: "…Your eyes are sharp. The final test awaits.",
-  stage3B: "…This is just the beginning.",
 },
 
 // === Comments ===

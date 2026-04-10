@@ -60,10 +60,6 @@ stageIntro: {
   crowd1: "Parecen iguales.",
   crowd2: "Solo uno es distinto.",
   crowd3: "Encuéntralo.",
-  s4line1: "Entre estos,",
-  s4line2: "solo uno",
-  s4line3: "es distinto.",
-  s4line4: "Encuéntralo.",
 },
 
 
@@ -136,11 +132,12 @@ crowd: {
   rankA: "Mirada aguda.",
   rankB: "Algo veías.",
   epilogue: "Desobedeciste órdenes,\nblandiste la hoja,\ny abriste los ojos entre la masa.\n\n…Ya nadie te domina.",
-  tutorialLine1: "Parecen iguales.",
-  tutorialLine2: "Solo uno es distinto.",
+  tutorialLine1: "Entre estos,",
+  tutorialLine2: "solo uno",
   postLayer0: "…eso fue solo calentamiento.",
   perfectClear: ["Visto.", "Sin dudar.", "Lectura perfecta.", "Impecable."],
-  tutorialLine3: "Encuéntralo.",
+  tutorialLine3: "es distinto.",
+  tutorialLine4: "Encuéntralo.",
   interlude1: "…Nada mal.",
   interlude2: "…Eres terco.",
   interlude3: "…Lograste pasar.",
@@ -294,9 +291,6 @@ stages: {
       stage2S: "…Ni un solo error.",
       stage2A: "…Observaste bien.",
       stage2B: "…Solo fue suerte.",
-      stage3S: "…Lo viste todo. Te espera el final.",
-      stage3A: "…Buena vista. La prueba final espera.",
-      stage3B: "…Esto apenas empieza.",
     },
 
 // === Comentarios ===

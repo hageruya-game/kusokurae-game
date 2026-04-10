@@ -6626,99 +6626,19 @@ const Crowd = {
   },
 
   _showCrowdTutorial(callback) {
-    var sid = this.sessionId;
-    var self = this;
-    this.el.screen.classList.add("cw-tutorial-intro");
-    this.el.command.textContent = I18n.t("crowd.tutorialLine1");
-    this.el.command.classList.add("cw-tutorial-text-in");
-
-    var line2Timeout = setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      self.el.command.classList.remove("cw-tutorial-text-in");
-      void self.el.command.offsetWidth;
-      self.el.command.textContent = I18n.t("crowd.tutorialLine2");
-      self.el.command.classList.add("cw-tutorial-text-in");
-    }, 1000);
-
-    var line3Timeout = setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      self.el.command.classList.remove("cw-tutorial-text-in");
-      void self.el.command.offsetWidth;
-      self.el.command.textContent = I18n.t("crowd.tutorialLine3");
-      self.el.command.classList.add("cw-tutorial-text-in");
-    }, 2000);
-
-    var dismiss = function() {
-      clearTimeout(line2Timeout);
-      clearTimeout(line3Timeout);
-      clearTimeout(self._tutorialDismissTimeout);
-      self._tutorialDismissTimeout = null;
-      self.el.screen.classList.remove("cw-tutorial-intro");
-      self.el.command.classList.remove("cw-tutorial-text-in");
-      self.el.command.textContent = "";
-      self.el.screen.removeEventListener("click", dismiss);
-      if (self.sessionId === sid && callback) callback();
-    };
-
-    this.el.screen.addEventListener("click", dismiss);
-    this._tutorialDismissTimeout = setTimeout(dismiss, 3000);
-  },
-
-  // === Stage3→4 突破インタールード ===
-  _showStage3Breakthrough(callback) {
-    var overlay = document.getElementById("dungeon-transition");
-    var text = document.getElementById("dg-transition-text");
-    var interImg = document.getElementById("dg-interlude-img");
-    overlay.classList.add("dg-trans-active");
-    var sid = this.sessionId;
-    var self = this;
-
-    var proceeded = false;
-    function proceed() {
-      if (proceeded) return;
-      proceeded = true;
-      overlay.removeEventListener("click", skipInterlude);
-      interImg.classList.remove("dg-interlude-show");
-      interImg.style.display = "none";
-      interImg.src = "";
-      text.classList.remove("dg-interlude-text-show");
-      text.textContent = "";
-      overlay.classList.remove("dg-trans-active", "dg-breakthrough-flash");
-      if (self.sessionId === sid && callback) callback();
-    }
-    function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
-    var interludeTimer;
-
-    setTimeout(function() {
-      if (self.sessionId !== sid) return;
-      interImg.src = "assets/image_0.png";
-      interImg.style.display = "";
-      interImg.classList.add("dg-interlude-show");
-      text.textContent = I18n.t("crowd.interlude3");
-      text.classList.add("dg-interlude-text-show");
-      overlay.classList.add("dg-breakthrough-flash");
-      SoundSystem.breakthroughChime();
-      overlay.addEventListener("click", skipInterlude);
-      interludeTimer = setTimeout(function() {
-        if (self.sessionId !== sid) return;
-        proceed();
-      }, 2000);
-    }, 300);
-  },
-
-  // === Stage4 タップ送り導入テキスト ===
-  _showStage4Intro(callback) {
     var self = this;
     var sid = this.sessionId;
     var el = this.el.command;
     var lines = [
-      I18n.t("stageIntro.s4line1"),
-      I18n.t("stageIntro.s4line2"),
-      I18n.t("stageIntro.s4line3"),
-      I18n.t("stageIntro.s4line4")
+      I18n.t("crowd.tutorialLine1"),
+      I18n.t("crowd.tutorialLine2"),
+      I18n.t("crowd.tutorialLine3"),
+      I18n.t("crowd.tutorialLine4")
     ];
     var step = 0;
     var dismissTimer = null;
+
+    this.el.screen.classList.add("cw-tutorial-intro");
 
     function showLine() {
       if (self.sessionId !== sid) return;
@@ -6726,10 +6646,10 @@ const Crowd = {
         dismissTimer = setTimeout(function() { dismiss(); }, 800);
         return;
       }
-      el.classList.remove("cw-final-intro-text");
+      el.classList.remove("cw-tutorial-text-in");
       void el.offsetWidth;
       el.textContent = lines[step];
-      el.classList.add("cw-final-intro-text");
+      el.classList.add("cw-tutorial-text-in");
       step++;
     }
 
@@ -6738,7 +6658,8 @@ const Crowd = {
       dismissTimer = null;
       self.el.screen.removeEventListener("pointerdown", onTap);
       if (self.sessionId !== sid) return;
-      el.classList.remove("cw-final-intro-text");
+      self.el.screen.classList.remove("cw-tutorial-intro");
+      el.classList.remove("cw-tutorial-text-in");
       el.textContent = "";
       if (callback) callback();
     }
@@ -8282,12 +8203,6 @@ const Crowd = {
         var proceedToNext = function() {
           if (self.currentLayer === 1) {
             self._showPostLayer0(function() { self.showLayerTitle(); });
-          } else if (self.currentLayer === 3) {
-            showStageRank("stage3", self.totalMisses, self.el.command, function() {
-              self._showStage3Breakthrough(function() {
-                self._showStage4Intro(function() { self.showLayerTitle(); });
-              });
-            });
           } else {
             self.showLayerTitle();
           }
