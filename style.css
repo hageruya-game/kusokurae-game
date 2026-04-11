@@ -31,6 +31,7 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;  /* ダブルタップズーム防止 */
 }
 .screen.active { display: flex; }
 

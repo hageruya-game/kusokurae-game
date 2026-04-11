@@ -167,6 +167,7 @@ const SaveSystem = {
     return !!this.load();
   },
   resume() {
+    if (!Game._guardTransition()) return false;
     var data = this.load();
     if (!data) return false;
     if (data.lang) I18n.setLang(data.lang);
@@ -1866,6 +1867,15 @@ const Game = {
     CommentSystem.show("title", this.el.titleComment);
   },
 
+  // ★★★ グローバル遷移ガード（連打・多重起動防止）★★★
+  _transLock: 0,
+  _guardTransition() {
+    var now = Date.now();
+    if (now - this._transLock < 500) return false;
+    this._transLock = now;
+    return true;
+  },
+
   // ★★★ 全画面ビジュアル完全リセット（transform残留バグの根本対策）★★★
   // すべてのゲームモード遷移・開始・復帰時に呼び、画面拡大・ズレを100%防止する。
   _resetAllVisualState() {
@@ -2008,6 +2018,7 @@ const Game = {
   },
 
   startGame() {
+    if (!this._guardTransition()) return;
     this._resetAllVisualState();
     this.sessionId++;
     this.answered = true;
@@ -2016,6 +2027,8 @@ const Game = {
     clearTimeout(this.hintTimeout);
     clearTimeout(this.mockeryTimeout);
     clearTimeout(this.tauntTimeout);
+    clearTimeout(this._s1IntroDismissTimer);
+    this._s1IntroDismissTimer = null;
     if (this._introTimers) this._introTimers.forEach(clearTimeout);
 
     SoundSystem.init();
@@ -2069,15 +2082,15 @@ const Game = {
       I18n.t("intro.line3")
     ];
     var step = 0;
-    var dismissTimer = null;
+    var dismissed = false;    // ★ 多重dismiss防止
+    var tapLocked = false;    // ★ 連打デバウンス
+
+    this._s1IntroDismissTimer = null;
 
     function showLine() {
-      if (self.sessionId !== sid) return;
+      if (self.sessionId !== sid || dismissed) return;
       if (step >= lines.length) {
-        // 全行表示済み → 1200ms後に自動dismiss
-        dismissTimer = setTimeout(function() {
-          dismiss();
-        }, 1200);
+        self._s1IntroDismissTimer = setTimeout(function() { dismiss(); }, 1200);
         return;
       }
       el.className = "command-text";
@@ -2085,12 +2098,13 @@ const Game = {
       el.textContent = lines[step];
       el.className = "command-text s1-intro-text";
       step++;
-      // 自動進行なし — タップ待ち
     }
 
     function dismiss() {
-      if (dismissTimer) clearTimeout(dismissTimer);
-      dismissTimer = null;
+      if (dismissed) return;  // ★ 一回しか実行しない
+      dismissed = true;
+      if (self._s1IntroDismissTimer) clearTimeout(self._s1IntroDismissTimer);
+      self._s1IntroDismissTimer = null;
       self.el.screenGame.removeEventListener("pointerdown", onTap);
       if (self.sessionId !== sid) return;
       el.className = "command-text";
@@ -2098,9 +2112,13 @@ const Game = {
       if (callback) callback();
     }
 
-    function onTap() {
+    function onTap(e) {
+      e.preventDefault();     // ★ ブラウザズーム防止
+      if (dismissed || tapLocked) return;  // ★ 多重・連打ガード
       if (self.sessionId !== sid) { self.el.screenGame.removeEventListener("pointerdown", onTap); return; }
-      if (dismissTimer) { clearTimeout(dismissTimer); dismiss(); return; }
+      tapLocked = true;
+      setTimeout(function() { tapLocked = false; }, 120);
+      if (self._s1IntroDismissTimer) { clearTimeout(self._s1IntroDismissTimer); dismiss(); return; }
       showLine();
     }
 
@@ -3435,6 +3453,7 @@ const Dungeon = {
   },
 
   goTitle() {
+    if (!Game._guardTransition()) return;
     this.sessionId++;
     this.cleanup();
     SoundSystem.stopAmbient();
@@ -3454,6 +3473,7 @@ const Dungeon = {
   },
 
   start() {
+    if (!Game._guardTransition()) return;
     this.sessionId++;
     SoundSystem.init();
     const s = this.stage();
@@ -4072,6 +4092,7 @@ const Slash = {
   },
 
   goTitle() {
+    if (!Game._guardTransition()) return;
     Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
@@ -4127,6 +4148,7 @@ const Slash = {
   },
 
   start() {
+    if (!Game._guardTransition()) return;
     Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
@@ -5363,6 +5385,7 @@ const JudgeRoom = {
   },
 
   goTitle() {
+    if (!Game._guardTransition()) return;
     this.cleanup();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
@@ -5384,6 +5407,7 @@ const JudgeRoom = {
   },
 
   start() {
+    if (!Game._guardTransition()) return;
     this.cleanup();
 
     SoundSystem.init();
@@ -5717,6 +5741,7 @@ const Corridor = {
   },
 
   goTitle() {
+    if (!Game._guardTransition()) return;
     this.cleanup();
     SoundSystem.startTitleAmbient();
     Game.showScreen(document.getElementById("screen-title"));
@@ -5827,6 +5852,7 @@ const Corridor = {
 
   // --- ゲーム開始 ---
   startScreen() {
+    if (!Game._guardTransition()) return;
     SoundSystem.init();
     Game.showScreen(this.el.screen);
     this.el.tutorial.classList.add("cr-tutorial-show");
@@ -5834,6 +5860,7 @@ const Corridor = {
   },
 
   startGame() {
+    if (!Game._guardTransition()) return;
     // ★ 前ゲームの全タイマー・遅延を確実に破棄
     this.cleanup();
 
@@ -6657,6 +6684,7 @@ const Crowd = {
   },
 
   start() {
+    if (!Game._guardTransition()) return;
     Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
@@ -6697,14 +6725,17 @@ const Crowd = {
       I18n.t("crowd.tutorialLine4")
     ];
     var step = 0;
-    var dismissTimer = null;
+    var dismissed = false;    // ★ 多重dismiss防止
+    var tapLocked = false;    // ★ 連打デバウンス
 
+    // cleanup()からクリアできるようthisに保持
+    this._tutorialDismissTimer = null;
     this.el.screen.classList.add("cw-tutorial-intro");
 
     function showLine() {
-      if (self.sessionId !== sid) return;
+      if (self.sessionId !== sid || dismissed) return;
       if (step >= lines.length) {
-        dismissTimer = setTimeout(function() { dismiss(); }, 800);
+        self._tutorialDismissTimer = setTimeout(function() { dismiss(); }, 800);
         return;
       }
       el.classList.remove("cw-tutorial-text-in");
@@ -6715,8 +6746,10 @@ const Crowd = {
     }
 
     function dismiss() {
-      if (dismissTimer) clearTimeout(dismissTimer);
-      dismissTimer = null;
+      if (dismissed) return;  // ★ 一回しか実行しない
+      dismissed = true;
+      if (self._tutorialDismissTimer) clearTimeout(self._tutorialDismissTimer);
+      self._tutorialDismissTimer = null;
       self.el.screen.removeEventListener("pointerdown", onTap);
       if (self.sessionId !== sid) return;
       self.el.screen.classList.remove("cw-tutorial-intro");
@@ -6725,9 +6758,13 @@ const Crowd = {
       if (callback) callback();
     }
 
-    function onTap() {
+    function onTap(e) {
+      e.preventDefault();     // ★ ブラウザズーム/スクロール防止
+      if (dismissed || tapLocked) return;  // ★ 多重・連打ガード
       if (self.sessionId !== sid) { self.el.screen.removeEventListener("pointerdown", onTap); return; }
-      if (dismissTimer) { clearTimeout(dismissTimer); dismiss(); return; }
+      tapLocked = true;
+      setTimeout(function() { tapLocked = false; }, 120);  // ★ 120msクールダウン
+      if (self._tutorialDismissTimer) { clearTimeout(self._tutorialDismissTimer); dismiss(); return; }
       showLine();
     }
 
@@ -6763,6 +6800,7 @@ const Crowd = {
   },
 
   goTitle() {
+    if (!Game._guardTransition()) return;
     Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
@@ -6802,6 +6840,7 @@ const Crowd = {
     clearTimeout(this.tauntTimeout);
     clearTimeout(this._jitterTimeout);
     clearTimeout(this._tutorialDismissTimeout);
+    clearTimeout(this._tutorialDismissTimer);
     clearTimeout(this._comebackTimeout);
     clearTimeout(this._syncToIndivTimeout);
     this.timerTimeout = null;
@@ -6812,6 +6851,7 @@ const Crowd = {
     this.tauntTimeout = null;
     this._jitterTimeout = null;
     this._tutorialDismissTimeout = null;
+    this._tutorialDismissTimer = null;
     this._comebackTimeout = null;
     this._syncToIndivTimeout = null;
     // フェイクヒントタイマークリア
@@ -6835,6 +6875,9 @@ const Crowd = {
       this.el.cross.classList.remove("cw-cross-ltr", "cw-cross-rtl");
       this.el.cross.style.cssText = "opacity:0";
     }
+    // チュートリアルオーバーレイ強制除去
+    this.el.screen.classList.remove("cw-tutorial-intro");
+    this.el.command.classList.remove("cw-tutorial-text-in");
     // スクリーン横ズレ安全弁
     this.el.screen.scrollLeft = 0;
     this.el.screen.scrollTop = 0;
@@ -8512,6 +8555,19 @@ const TitlePrologue = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  // ★ ページロード時にビジュアル状態を強制リセット（リロード後の拡大残留防止）
+  document.querySelectorAll(".screen").forEach(function(s) {
+    s.style.transform = "";
+    s.style.filter = "";
+    s.style.animation = "";
+    s.style.overflow = "";
+    s.scrollLeft = 0;
+    s.scrollTop = 0;
+  });
+  document.documentElement.style.transform = "";
+  document.body.style.transform = "";
+  window.scrollTo(0, 0);
+
   // i18n初期化
   I18n.init();
 
