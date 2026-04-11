@@ -3878,6 +3878,7 @@ const Dungeon = {
   showGameOver() {
     this.resultShown = true;
     this.cleanup();
+    SaveSystem.clear();
     // 赤フラッシュ演出
     this.el.screen.classList.remove("dg-gameover-flash");
     void this.el.screen.offsetWidth;
@@ -4161,6 +4162,8 @@ const Slash = {
     this.totalMisses = 0;
     this.lives = this.maxLives;
     this.lastDecision = "";
+    this.layerTutorialShown = new Set();
+    SaveSystem.clear();
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0);
@@ -4934,6 +4937,8 @@ const Slash = {
     const sid = this.sessionId;
     this.cleanup();
     SoundSystem.stopSlashAmbient();
+    // ★ チェックポイントを破棄（リロード後も途中再開させない）
+    SaveSystem.clear();
 
     // 崩壊演出を停止
     if (this.collapseRAF) {
@@ -6699,6 +6704,8 @@ const Crowd = {
     this._isDemoRound = false;
     this._demoCallback = null;
     this._isLastRound = false;
+    this.layerTutorialShown = new Set();  // ★ キモキャラ演出を全層で再表示
+    SaveSystem.clear();                   // ★ 古いチェックポイントを破棄
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0.3);
@@ -8487,6 +8494,8 @@ const Crowd = {
     const sid = this.sessionId;
     this.cleanup();
     SoundSystem.stopSlashAmbient();
+    // ★ チェックポイントを破棄（リロード後も途中再開させない）
+    SaveSystem.clear();
 
     var reached = 0;
     for (var li = 0; li < this.currentLayer; li++) reached += CROWD_LAYERS[li].rounds;
