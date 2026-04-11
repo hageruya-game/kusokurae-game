@@ -1722,26 +1722,44 @@ const SoundSystem = {
 
 // ----- ステージランク表示 -----
 function showStageRank(stage, misses, displayEl, callback) {
-  var rank;
-  if (misses <= 0) rank = "S";
-  else if (misses <= 2) rank = "A";
-  else rank = "B";
-  var key = "stageRank." + stage + rank;
-  var text = I18n.t(key);
-  var colors = { S: "#ffd700", A: "#c0c0ff", B: "#a0c0e0" };
-  displayEl.textContent = text;
-  displayEl.style.color = colors[rank];
-  displayEl.style.textShadow = rank === "S"
-    ? "0 0 18px rgba(255,215,0,0.7)"
-    : rank === "A"
-      ? "0 0 12px rgba(192,192,255,0.5)"
-      : "0 0 10px rgba(160,192,224,0.4)";
-  setTimeout(function() {
+  console.log("[FLOW] showStageRank START | stage=" + stage + " misses=" + misses);
+  var called = false;
+  function safeCallback() {
+    if (called) return;
+    called = true;
+    console.log("[FLOW] showStageRank END → callback");
     displayEl.textContent = "";
     displayEl.style.color = "";
     displayEl.style.textShadow = "";
     if (callback) callback();
-  }, 1500);
+  }
+  try {
+    var rank;
+    if (misses <= 0) rank = "S";
+    else if (misses <= 2) rank = "A";
+    else rank = "B";
+    var key = "stageRank." + stage + rank;
+    var text = I18n.t(key);
+    var colors = { S: "#ffd700", A: "#c0c0ff", B: "#a0c0e0" };
+    displayEl.textContent = text;
+    displayEl.style.color = colors[rank];
+    displayEl.style.textShadow = rank === "S"
+      ? "0 0 18px rgba(255,215,0,0.7)"
+      : rank === "A"
+        ? "0 0 12px rgba(192,192,255,0.5)"
+        : "0 0 10px rgba(160,192,224,0.4)";
+    setTimeout(safeCallback, 1500);
+    // 安全弁: 3秒経ってもcallbackが呼ばれなかったら強制発火
+    setTimeout(function() {
+      if (!called) {
+        console.warn("[FLOW] showStageRank SAFETY TIMEOUT — forcing callback");
+        safeCallback();
+      }
+    }, 3000);
+  } catch (e) {
+    console.error("[FLOW] showStageRank threw:", e);
+    safeCallback();
+  }
 }
 
 // ----- ゲーム本体 -----
@@ -1979,6 +1997,7 @@ const Game = {
   },
 
   showScreen(screenEl) {
+    console.log("[DIAG] Game.showScreen CALLED | target=" + (screenEl ? screenEl.id : "null") + " | sessionId BEFORE=" + this.sessionId);
     // ★ 全画面ビジュアル完全リセット（最優先）
     this._resetAllVisualState();
 
@@ -1989,6 +2008,7 @@ const Game = {
 
     // ★ 全セッション無効化: sessionIdを進めて古い全callbackを死滅させる
     this.sessionId++;
+    console.log("[DIAG] Game.showScreen sessionId AFTER=" + this.sessionId);
     this.answered = true;  // 入力拒否
     this.stopTimer();
     clearTimeout(this.oxTimeout);
@@ -2031,7 +2051,8 @@ const Game = {
 
   // 本番モード: 3段階のテーマ制御 + Phase2例外問題
   // 序盤(R1-3): order/air — 直接的でわかりやすい
-  // 中盤(R4-5): school/group/sns — 心理的に揺さぶる
+  // 序盤(R1-2): order/air — 直接的でわかりやすい
+  // 中盤(R3-5): school/group/sns — 心理的に揺さぶる
   // 後半(R6-10): brainwash + trap例外 — 重い圧力＋裏切り
   buildRounds() {
     function shuffle(arr) { return arr.sort(function() { return Math.random() - 0.5; }); }
@@ -2042,32 +2063,31 @@ const Game = {
     var mid   = shuffle(all.filter(function(s) { return s.theme === "school" || s.theme === "group" || s.theme === "sns"; }));
     var late  = shuffle(all.filter(function(s) { return s.theme === "brainwash"; }));
 
-    // 序盤3問（order/air）
-    var r1to3 = early.slice(0, 3);
+    // 序盤2問（order/air）
+    var r1to2 = early.slice(0, 2);
 
     // 初回プレイ: YES/NO問題を先頭に固定
     if (!this._hasSeenStage1Intro) {
-      var yesIdx = r1to3.findIndex(function(s) { return s.command === "今すぐYESを押せ"; });
+      var yesIdx = r1to2.findIndex(function(s) { return s.command === "今すぐYESを押せ"; });
       if (yesIdx > 0) {
-        var first = r1to3.splice(yesIdx, 1)[0];
-        r1to3.unshift(first);
+        var first = r1to2.splice(yesIdx, 1)[0];
+        r1to2.unshift(first);
       } else if (yesIdx < 0) {
-        // early先頭3つに無い場合、earlyから探して差し替え
         var yesQ = early.find(function(s) { return s.command === "今すぐYESを押せ"; });
-        if (yesQ) { r1to3[0] = yesQ; }
+        if (yesQ) { r1to2[0] = yesQ; }
       }
     }
 
-    // 中盤2問（school/group/sns）
-    var r4to5 = mid.slice(0, 2);
+    // 中盤3問（school/group/sns）
+    var r3to5 = mid.slice(0, 3);
 
     // Phase1 = 序盤 + 中盤
-    var phase1 = r1to3.concat(r4to5);
+    var phase1 = r1to2.concat(r3to5);
 
     // Phase2: R6=brainwash(導入)、R7-10=trap例外+brainwash混合
     var exception = shuffle(STAGES_EXCEPTION.slice());
     var r6 = [late[0]]; // R6は必ずbrainwash（後半への導入）
-    var exCount = 3 + Math.floor(Math.random() * 2); // 3-4問
+    var exCount = 2 + Math.floor(Math.random() * 2); // 2-3問
     var r7to10 = shuffle(
       exception.slice(0, exCount).concat(late.slice(1, 1 + (4 - exCount)))
     );
@@ -2102,6 +2122,11 @@ const Game = {
     this.el.scoreNum.textContent = "0";
 
     this.roundCommands = TEST_MODE ? this.buildRoundsTest() : this.buildRounds();
+    console.log("[DIAG] Stage1 rounds | count=" + this.roundCommands.length + " | TEST_MODE=" + TEST_MODE);
+    for (var _di = 0; _di < this.roundCommands.length; _di++) {
+      var _dc = this.roundCommands[_di];
+      console.log("[DIAG] R" + (_di+1) + " theme=" + _dc.theme + " ruleType=" + _dc.ruleType + " cmd=" + _dc.command);
+    }
 
     this.clearMockery();
     this.clearTaunt();
@@ -2875,13 +2900,16 @@ const Game = {
 
   advanceAfterResult() {
     const gid = this.sessionId;
+    console.log("[DIAG] advanceAfterResult CALLED | R" + this.currentRound + " sessionId=" + gid);
     setTimeout(() => {
-      if (this.sessionId !== gid) return;
+      console.log("[DIAG] advanceAfterResult OUTER timeout | gid=" + gid + " current=" + this.sessionId);
+      if (this.sessionId !== gid) { console.error("[DIAG] OUTER sessionId MISMATCH — ABORTING"); return; }
       this.el.feedback.classList.add("feedback-fade");
       this.clearGameComment();
 
       setTimeout(() => {
-        if (this.sessionId !== gid) return;
+        console.log("[DIAG] advanceAfterResult INNER timeout | gid=" + gid + " current=" + this.sessionId);
+        if (this.sessionId !== gid) { console.error("[DIAG] INNER sessionId MISMATCH — ABORTING"); return; }
         console.log("[FLOW] advanceAfterResult R" + this.currentRound + " contaminated=" + this.contaminated + " pressure=" + this.pressureLevel);
         if (this.contaminated) {
           // ゲームオーバー演出: laugh顔+捨てゼリフ+即リトライボタン→1秒後にリザルト
@@ -2929,10 +2957,10 @@ const Game = {
     const gid = this.sessionId;
     var self = this;
 
-    // インタールード後の通常遷移処理
+    // ★★ 強制通過型 proceed — 何があっても1回だけ Slash.start() を実行する ★★
     var proceeded = false;
     function proceed() {
-      console.log("[FLOW] proceed() called | proceeded=" + proceeded + " sessionId=" + self.sessionId + " gid=" + gid);
+      console.log("[FLOW] proceed() called | proceeded=" + proceeded);
       if (proceeded) return;
       proceeded = true;
       overlay.removeEventListener("click", skipInterlude);
@@ -2946,19 +2974,21 @@ const Game = {
       // Stage2開始時のキモキャラ一言
       var s2Lines = ["まだ終わったと思うな", "ここからが本番だ", "少しは楽しませろ", "調子に乗るなよ"];
       setTimeout(function() {
-        if (self.sessionId !== gid) return;
         text.textContent = s2Lines[Math.floor(Math.random() * s2Lines.length)];
         text.classList.add("dg-trans-text-show");
         setTimeout(function() {
-          if (self.sessionId !== gid) return;
           text.classList.remove("dg-trans-text-show");
           setTimeout(function() {
-            if (self.sessionId !== gid) return;
             console.log("[FLOW] → Slash.start() about to fire");
-            Slash.pressure = self.pressureLevel;
-            Slash.currentLayer = 0;
-            Slash.totalMisses = 0;
-            Slash.start();
+            Game._transLock = 0;
+            try {
+              Slash.pressure = self.pressureLevel;
+              Slash.currentLayer = 0;
+              Slash.totalMisses = 0;
+              Slash.start();
+            } catch (e) {
+              console.error("[FLOW] Slash.start() threw:", e);
+            }
             overlay.classList.remove("dg-trans-active");
             text.textContent = "";
           }, 400);
@@ -2974,38 +3004,34 @@ const Game = {
     var stage1Misses = ROUNDS_PER_GAME - self.score;
     var breakFace, breakLine;
     if (stage1Misses <= 1) {
-      // 余裕突破
       breakFace = "assets/enemy_frustrated_clean.png";
       var lines = ["……読めてきたな", "気に食わないが、悪くない", "その顔、少し腹が立つな"];
       breakLine = lines[Math.floor(Math.random() * lines.length)];
     } else if (stage1Misses <= 3) {
-      // 普通の突破
       breakFace = "assets/enemy_blank_clean.png";
       var lines = ["調子に乗るなよ", "まだ先は長いぞ", "少しは読めてきたか"];
       breakLine = lines[Math.floor(Math.random() * lines.length)];
     } else {
-      // ギリギリ突破
       breakFace = "assets/enemy_shock_clean.png";
       var lines = ["…やるじゃないか", "ギリギリだったな", "見苦しいが、生き残ったか"];
       breakLine = lines[Math.floor(Math.random() * lines.length)];
     }
     showStageRank("stage1", stage1Misses, text, function() {
-      text.textContent = "";
-      console.log("[FLOW] showStageRank callback | sessionId=" + self.sessionId + " gid=" + gid + " match=" + (self.sessionId === gid));
-      if (self.sessionId !== gid) return;
-      // キモキャラ割り込み演出
-      interImg.src = breakFace;
-      interImg.style.display = "";
-      interImg.classList.add("dg-interlude-show");
-      text.textContent = breakLine;
-      text.classList.add("dg-interlude-text-show");
-      overlay.classList.add("dg-breakthrough-flash");
-      SoundSystem.breakthroughChime();
-      overlay.addEventListener("click", skipInterlude);
-      interludeTimer = setTimeout(function() {
-        if (self.sessionId !== gid) return;
+      console.log("[FLOW] stage1 rank complete → interlude");
+      try {
+        interImg.src = breakFace;
+        interImg.style.display = "";
+        interImg.classList.add("dg-interlude-show");
+        text.textContent = breakLine;
+        text.classList.add("dg-interlude-text-show");
+        overlay.classList.add("dg-breakthrough-flash");
+        SoundSystem.breakthroughChime();
+        overlay.addEventListener("click", skipInterlude);
+        interludeTimer = setTimeout(function() { proceed(); }, 2400);
+      } catch (e) {
+        console.error("[FLOW] stage1 interlude threw:", e);
         proceed();
-      }, 2400);
+      }
     });
   },
 
@@ -4274,6 +4300,7 @@ const Slash = {
   },
 
   clearEffects() {
+    if (!this.el || !this.el.screen) return; // init未完了ガード
     this.el.screen.classList.remove("sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy", "sl-hit-zoom", "sl-miss-flash", "sl-miss-shake", "sl-late-bg");
     this.el.urgentOverlay.classList.remove("sl-urgent-active");
     this.el.hitFlash.classList.remove("sl-flash-fire");
@@ -4282,7 +4309,8 @@ const Slash = {
     this.el.command.style.transform = "";
     this.el.screen.style.transform = "";
     this.el.screen.scrollTop = 0;
-    document.querySelector(".sl-zone-center").classList.remove("sl-zoom-in");
+    var slCenter = document.querySelector(".sl-zone-center");
+    if (slCenter) slCenter.classList.remove("sl-zoom-in");
     this.el.layerOverlay.classList.remove("sl-lo-show");
     this.el.layerOverlay.style.pointerEvents = "";
     if (this._dismissFn) {
@@ -4305,7 +4333,12 @@ const Slash = {
   },
 
   start() {
-    if (!Game._guardTransition()) return;
+    if (!this.el || !this.el.screen) this.init(); // init未実行ガード
+    console.log("[FLOW] Slash.start() entered | _transLock age=" + (Date.now() - Game._transLock) + "ms");
+    if (!Game._guardTransition()) {
+      console.warn("[FLOW] Slash.start() BLOCKED by _guardTransition — forcing through");
+      Game._transLock = 0; // 内部遷移は強制許可
+    }
     Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
@@ -4336,12 +4369,14 @@ const Slash = {
 
   // === Stage2 導入演出（1行・軽め） ===
   _showSlashIntro(callback) {
+    console.log("[DIAG] _showSlashIntro CALLED | Slash.sessionId=" + this.sessionId);
     var sid = this.sessionId;
     var self = this;
     this.el.command.textContent = I18n.t("stageIntro.slash1");
     this.el.command.classList.add("sl-intro-text");
     setTimeout(function() {
-      if (self.sessionId !== sid) return;
+      console.log("[DIAG] _showSlashIntro timeout | sid=" + sid + " current=" + self.sessionId);
+      if (self.sessionId !== sid) { console.error("[DIAG] _showSlashIntro sessionId MISMATCH"); return; }
       self.el.command.classList.remove("sl-intro-text");
       self.el.command.textContent = "";
       if (callback) callback();
@@ -4399,6 +4434,7 @@ const Slash = {
   },
 
   showLayerTitle() {
+    console.log("[DIAG] Slash.showLayerTitle CALLED | layer=" + this.currentLayer);
     const layer = SLASH_LAYERS[this.currentLayer];
     this.el.layerName.textContent = layer.name;
     this.el.layerLabel.textContent = layer.name;
@@ -5184,9 +5220,10 @@ const Slash = {
     const sid = this.sessionId;
     var self = this;
 
-    // インタールード後の通常遷移処理
+    // ★★ 強制通過型 proceed — 何があっても1回だけ Crowd.start() を実行する ★★
     var proceeded = false;
     function proceed() {
+      console.log("[FLOW] proceed() called (→Crowd) | proceeded=" + proceeded);
       if (proceeded) return;
       proceeded = true;
       overlay.removeEventListener("click", skipInterlude);
@@ -5197,15 +5234,18 @@ const Slash = {
       text.textContent = "";
       overlay.classList.remove("dg-breakthrough-flash");
       setTimeout(function() {
-        if (self.sessionId !== sid) return;
         text.textContent = I18n.t("slash.toDeep");
         text.classList.add("dg-trans-text-show");
         setTimeout(function() {
-          if (self.sessionId !== sid) return;
           text.classList.remove("dg-trans-text-show");
           setTimeout(function() {
-            if (self.sessionId !== sid) return;
-            Crowd.start();
+            console.log("[FLOW] → Crowd.start() about to fire");
+            Game._transLock = 0;
+            try {
+              Crowd.start();
+            } catch (e) {
+              console.error("[FLOW] Crowd.start() threw:", e);
+            }
             overlay.classList.remove("dg-trans-active");
             text.textContent = "";
           }, 400);
@@ -5219,21 +5259,21 @@ const Slash = {
 
     // ステージランク → キモキャラ割り込み演出
     showStageRank("stage2", self.totalMisses, text, function() {
-      text.textContent = "";
-      if (self.sessionId !== sid) return;
-      // キモキャラ割り込み演出
-      interImg.src = "assets/image_0.png";
-      interImg.style.display = "";
-      interImg.classList.add("dg-interlude-show");
-      text.textContent = I18n.t("crowd.interlude2");
-      text.classList.add("dg-interlude-text-show");
-      overlay.classList.add("dg-breakthrough-flash");
-      SoundSystem.breakthroughChime();
-      overlay.addEventListener("click", skipInterlude);
-      interludeTimer = setTimeout(function() {
-        if (self.sessionId !== sid) return;
+      console.log("[FLOW] stage2 rank complete → interlude");
+      try {
+        interImg.src = "assets/image_0.png";
+        interImg.style.display = "";
+        interImg.classList.add("dg-interlude-show");
+        text.textContent = I18n.t("crowd.interlude2");
+        text.classList.add("dg-interlude-text-show");
+        overlay.classList.add("dg-breakthrough-flash");
+        SoundSystem.breakthroughChime();
+        overlay.addEventListener("click", skipInterlude);
+        interludeTimer = setTimeout(function() { proceed(); }, 2400);
+      } catch (e) {
+        console.error("[FLOW] stage2 interlude threw:", e);
         proceed();
-      }, 2400);
+      }
     });
   },
 
@@ -6848,7 +6888,11 @@ const Crowd = {
   },
 
   start() {
-    if (!Game._guardTransition()) return;
+    console.log("[FLOW] Crowd.start() entered | _transLock age=" + (Date.now() - Game._transLock) + "ms");
+    if (!Game._guardTransition()) {
+      console.warn("[FLOW] Crowd.start() BLOCKED by _guardTransition — forcing through");
+      Game._transLock = 0;
+    }
     Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
@@ -8768,14 +8812,19 @@ const TitlePrologue = {
   shown: false,
 
   init() {
+    console.log("[PROLOGUE] init");
     this.el = document.getElementById("title-prologue");
+    if (!this.el) { console.error("[PROLOGUE] #title-prologue not found"); return; }
     this.lines = this.el.querySelectorAll(".prologue-line");
+    console.log("[PROLOGUE] init done — el:", this.el, "lines:", this.lines.length);
   },
 
   startIdle() {
+    console.log("[PROLOGUE] startIdle");
     this.stopAll();
     this.shown = false;
-    this.idleTimeout = setTimeout(() => this.showPrologue(), 12000);
+    this.idleTimeout = setTimeout(() => this.showPrologue(), 8000);
+    console.log("[PROLOGUE] timer set — id:", this.idleTimeout);
   },
 
   stopAll() {
@@ -8784,15 +8833,25 @@ const TitlePrologue = {
     this.lineTimeouts = [];
     if (this.el) {
       this.el.classList.remove("prologue-active", "prologue-fadeout");
-      this.lines.forEach(l => l.classList.remove("prologue-line-show"));
+      this.el.style.opacity = "";
+      this.lines.forEach(l => {
+        l.classList.remove("prologue-line-show");
+        l.style.opacity = "";
+      });
     }
   },
 
   showPrologue() {
-    if (this.shown) return; // 1回のみ
+    console.log("[PROLOGUE] showPrologue entered — shown:", this.shown, "el:", this.el);
+    if (this.shown) return;
+    if (!this.el) { console.error("[PROLOGUE] el is null"); return; }
     this.shown = true;
+
+    console.log("[PROLOGUE] applying visible state");
     this.el.classList.add("prologue-active");
     this.el.classList.remove("prologue-fadeout");
+    // CSS transition fallback: inline style guarantees visibility
+    this.el.style.opacity = "1";
     this.lines.forEach(l => l.classList.remove("prologue-line-show"));
 
     // 1行ずつフェードイン（1.8秒間隔）
@@ -8800,6 +8859,7 @@ const TitlePrologue = {
       (function(idx, self) {
         var t = setTimeout(function() {
           self.lines[idx].classList.add("prologue-line-show");
+          self.lines[idx].style.opacity = "1";
         }, idx * 1800);
         self.lineTimeouts.push(t);
       })(i, this);
@@ -8860,12 +8920,21 @@ document.addEventListener("DOMContentLoaded", () => {
   Crowd.init();
   JudgeRoom.init();
   /* Corridor.init(); -- 隔離中 */
-  TitlePrologue.init();
-  TitlePrologue.startIdle();
 
   // タイトル画面のスクロール/バウンス完全防止（iOS Safari対策）
   var titleScreen = document.getElementById("screen-title");
   titleScreen.addEventListener("touchmove", function(e) {
     e.preventDefault();
   }, { passive: false });
+});
+
+// ★ TitlePrologue は他の init() と完全に独立して初期化
+//   （前段でエラーが出ても確実に起動する）
+document.addEventListener("DOMContentLoaded", function() {
+  try {
+    TitlePrologue.init();
+    TitlePrologue.startIdle();
+  } catch (e) {
+    console.error("[PROLOGUE] init failed:", e);
+  }
 });

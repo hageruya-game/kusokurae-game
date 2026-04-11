@@ -58,6 +58,7 @@ var I18n = {
   },
 
   applyToDOM: function() {
+    document.documentElement.setAttribute("data-lang", this._lang);
     var els = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
