@@ -170,6 +170,7 @@ const SaveSystem = {
     var data = this.load();
     if (!data) return false;
     if (data.lang) I18n.setLang(data.lang);
+    Game._resetAllVisualState();
 
     if (data.mode === "slash") {
       Slash.sessionId++;
@@ -1865,23 +1866,79 @@ const Game = {
     CommentSystem.show("title", this.el.titleComment);
   },
 
-  showScreen(screenEl) {
-    document.querySelectorAll(".screen").forEach((s) => {
-      s.classList.remove("active", "fade-in");
-      // 全スクリーンのinline transform/filter/animation残留を強制クリア
+  // ★★★ 全画面ビジュアル完全リセット（transform残留バグの根本対策）★★★
+  // すべてのゲームモード遷移・開始・復帰時に呼び、画面拡大・ズレを100%防止する。
+  _resetAllVisualState() {
+    // === 全screenのインラインスタイル + 効果系CSSクラスを強制クリア ===
+    document.querySelectorAll(".screen").forEach(function(s) {
       s.style.transform = "";
       s.style.filter = "";
       s.style.animation = "";
       s.style.left = "";
       s.style.top = "";
+      s.style.marginLeft = "";
+      s.style.overflow = "";
+      s.scrollLeft = 0;
+      s.scrollTop = 0;
+      s.classList.remove(
+        // Crowd effects
+        "cw-tutorial-intro", "cw-miss-flash", "cw-miss-darken",
+        "cw-correct-flash", "cw-perfect-flash", "cw-last-intro",
+        "cw-final-defeat-flash",
+        // Slash effects
+        "sl-screen-shake", "sl-screen-shake-light", "sl-screen-shake-heavy",
+        "sl-hit-zoom", "sl-miss-flash", "sl-miss-shake", "sl-late-bg"
+      );
     });
-    screenEl.classList.add("active", "fade-in");
-    // スクロール位置リセット（横ズレ防止: 全要素のscrollLeftも強制0）
-    window.scrollTo(0, 0);
+
+    // === html / body の transform・scroll・overflow 強制リセット ===
+    document.documentElement.style.transform = "";
+    document.documentElement.style.overflow = "";
     document.documentElement.scrollLeft = 0;
     document.documentElement.scrollTop = 0;
+    document.body.style.transform = "";
+    document.body.style.overflow = "";
     document.body.scrollLeft = 0;
     document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+
+    // === 全セル・グリッド要素の transform / transition / filter クリア ===
+    document.querySelectorAll(".cw-cell, .cw-box, .cw-orb").forEach(function(el) {
+      el.style.transform = "";
+      el.style.transition = "";
+      el.style.filter = "";
+    });
+    var cwGrid = document.getElementById("cw-grid");
+    if (cwGrid) cwGrid.style.transform = "";
+
+    // === Slashゾーンのzoomクラス + RAF停止 ===
+    var slCenter = document.querySelector(".sl-zone-center");
+    if (slCenter) slCenter.classList.remove("sl-zoom-in");
+    // collapseRAFが生きているとscale()を毎フレーム再セットするため強制停止
+    if (typeof Slash !== "undefined" && Slash.collapseRAF) {
+      cancelAnimationFrame(Slash.collapseRAF);
+      Slash.collapseRAF = null;
+    }
+
+    // === 遷移オーバーレイの強制クリア ===
+    var dgTrans = document.getElementById("dungeon-transition");
+    if (dgTrans) {
+      dgTrans.classList.remove("dg-trans-active", "dg-breakthrough-flash");
+      var dgText = document.getElementById("dg-transition-text");
+      var dgImg = document.getElementById("dg-interlude-img");
+      if (dgText) { dgText.classList.remove("dg-interlude-text-show"); dgText.textContent = ""; }
+      if (dgImg) { dgImg.classList.remove("dg-interlude-show"); dgImg.style.display = "none"; dgImg.src = ""; }
+    }
+  },
+
+  showScreen(screenEl) {
+    // ★ 全画面ビジュアル完全リセット（最優先）
+    this._resetAllVisualState();
+
+    document.querySelectorAll(".screen").forEach((s) => {
+      s.classList.remove("active", "fade-in");
+    });
+    screenEl.classList.add("active", "fade-in");
 
     // ★ 全セッション無効化: sessionIdを進めて古い全callbackを死滅させる
     this.sessionId++;
@@ -1951,6 +2008,7 @@ const Game = {
   },
 
   startGame() {
+    this._resetAllVisualState();
     this.sessionId++;
     this.answered = true;
     this.stopTimer();
@@ -4014,6 +4072,7 @@ const Slash = {
   },
 
   goTitle() {
+    Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
     this.clearEffects();
@@ -4068,6 +4127,7 @@ const Slash = {
   },
 
   start() {
+    Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
     this.guideShown = false;
@@ -6597,6 +6657,7 @@ const Crowd = {
   },
 
   start() {
+    Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
     this.currentLayer = 0;
@@ -6702,6 +6763,7 @@ const Crowd = {
   },
 
   goTitle() {
+    Game._resetAllVisualState();
     this.sessionId++;
     this.cleanup();
     this._isDemoRound = false;
