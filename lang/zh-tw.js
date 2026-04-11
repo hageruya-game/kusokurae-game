@@ -39,8 +39,9 @@ ui: {
 
 // === 標題畫面 ===
 title: {
-  hook: "看見了？閉嘴照做。",
+  hook: "別服從。",
   main: "壓力迴廊",
+  subcopy: "別折。活下去。",
   prologueLine1: "在這個世界，服從就是正確。",
   prologueLine2: "不懂做人的，就會被消失。",
   prologueLine3: "如果你還想反抗，就走下去。",
@@ -99,7 +100,7 @@ slash: {
   clearMsg: "…還沒完。",
   toDeep: "…進入核心",
   targets: { rat: "老鼠", fly: "蒼蠅", pig: "豬", spider: "蜘蛛", bomb: "炸彈", burger: "漢堡", mushroom: "蘑菇", potion: "藥水", fire: "火焰", treasure: "寶箱" },
-  cmdSlash: "斬{name}",
+  cmdSlash: ["斬{name}", "消滅{name}", "瞄準{name}", "處理{name}", "幹掉{name}"],
   targetJoin: "和",
   waitSuccess: "…撐住了",
   regret1: "只差1題了。",

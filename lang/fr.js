@@ -41,8 +41,9 @@ ui: {
 
 // === Écran titre ===
 title: {
-  hook: "Tu vois. Obéis.",
+  hook: "N'obéis pas.",
   main: "Couloir de Pression",
+  subcopy: "Ne cède pas. Survis.",
   prologueLine1: "Dans ce monde, obéir est la seule vérité.",
   prologueLine2: "Ceux qui brisent le moule deviennent l'erreur.",
   prologueLine3: "Si tu oses encore résister, avance.",
@@ -101,7 +102,7 @@ slash: {
   clearMsg: "\u2026pas encore.",
   toDeep: "…au noyau",
   targets: { rat: "Rat", fly: "Mouche", pig: "Cochon", spider: "Araignée", bomb: "Bombe", burger: "Burger", mushroom: "Champignon", potion: "Potion", fire: "Feu", treasure: "Coffre" },
-  cmdSlash: "Tranche {name}",
+  cmdSlash: ["Tranche {name}", "Élimine {name}", "Détruis {name}", "Vise {name}", "Supprime {name}"],
   targetJoin: " et ",
   waitSuccess: "\u2026tu as tenu",
   regret1: "Plus qu'une question.",

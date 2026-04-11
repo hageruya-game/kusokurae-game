@@ -39,8 +39,9 @@ ui: {
 
 // === Pantalla de título ===
 title: {
-  hook: "Lo ves. Obedece.",
+  hook: "No obedezcas.",
   main: "Corredor de presión",
+  subcopy: "No te rompas. Sobrevive.",
   prologueLine1: "En este mundo, obedecer es lo correcto.",
   prologueLine2: "Quien no sigue al grupo, se convierte en el error.",
   prologueLine3: "Si aún así te atreves, avanza.",
@@ -100,7 +101,7 @@ slash: {
   clearMsg: "\u2026aún no.",
   toDeep: "…al núcleo",
   targets: { rat: "Rata", fly: "Mosca", pig: "Cerdo", spider: "Araña", bomb: "Bomba", burger: "Hamburguesa", mushroom: "Hongo", potion: "Poción", fire: "Fuego", treasure: "Cofre" },
-  cmdSlash: "Corta a {name}",
+  cmdSlash: ["Corta a {name}", "Elimina a {name}", "Destruye a {name}", "Apunta a {name}", "Acaba con {name}"],
   targetJoin: " y ",
   waitSuccess: "\u2026Aguantaste",
   regret1: "Faltaba 1 pregunta.",

@@ -39,8 +39,9 @@ ui: {
 
 // === Title Screen ===
 title: {
-  hook: "See it. Obey anyway.",
+  hook: "Don't obey.",
   main: "Conformity Corridor",
+  subcopy: "Don't break. Survive.",
   prologueLine1: "In this world, obedience is the only truth.",
   prologueLine2: "Those who won't read the room are made wrong.",
   prologueLine3: "If you still dare to resist, step forward.",
@@ -99,7 +100,7 @@ slash: {
   clearMsg: "...not yet.",
   toDeep: "...to the core",
   targets: { rat: "Rat", fly: "Fly", pig: "Pig", spider: "Spider", bomb: "Bomb", burger: "Burger", mushroom: "Mushroom", potion: "Potion", fire: "Fire", treasure: "Treasure" },
-  cmdSlash: "Slash the {name}",
+  cmdSlash: ["Slash the {name}", "Cut down the {name}", "Eliminate the {name}", "Target the {name}", "Destroy the {name}"],
   targetJoin: " & ",
   waitSuccess: "...you held",
   regret1: "One more to go.",

@@ -39,8 +39,9 @@ ui: {
 
 // === タイトル画面 ===
 title: {
-  hook: "見えても、従え。",
+  hook: "従うな",
   main: "圧力回廊",
+  subcopy: "折れるな。生き残れ。",
   prologueLine1: "この世界では、従うことが正しさになる。",
   prologueLine2: "空気を読まない者は、間違いにされる。",
   prologueLine3: "それでも抗うなら、進め。",
@@ -109,7 +110,7 @@ slash: {
   clearMsg: "…まだだ。",
   toDeep: "…中枢へ",
   targets: { rat: "ネズミ", fly: "ハエ", pig: "ブタ", spider: "クモ", bomb: "爆弾", burger: "バーガー", mushroom: "キノコ", potion: "ポーション", fire: "炎", treasure: "宝箱" },
-  cmdSlash: "{name}を斬れ",
+  cmdSlash: ["{name}を斬れ", "{name}を切り裂け", "{name}を消せ", "{name}だけ狙え", "{name}を処理しろ"],
   targetJoin: "と",
   waitSuccess: "…耐えたな",
   regret1: "あと1問だった。",

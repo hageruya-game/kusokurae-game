@@ -12,39 +12,35 @@
 
   <!-- タイトル画面 -->
   <div id="screen-title" class="screen active">
-    <!-- 非表示（DOM残す） -->
-    <div class="title-top" style="display:none">
-      <div class="title-label">⚠ 警告 ⚠</div>
-      <div class="title-sub">このゲームは<br>空気を読みません</div>
+    <!-- 背景ビジュアル（加工なし・1枚絵） -->
+    <img src="assets/title_pressure_call_v2.png" alt="" class="title-visual">
+
+    <!-- UIコンテナ: 3ゾーン（Top/Center/Bottom） -->
+    <div class="title-ui">
+      <!-- Zone Top: タイトル -->
+      <div class="tz-top">
+        <h1 class="title-main" data-i18n="title.main">圧力回廊</h1>
+      </div>
+      <!-- Zone Center: メインコピー -->
+      <div class="tz-center">
+        <div class="title-hook" data-i18n="title.hook">従うな</div>
+        <div class="title-subcopy" data-i18n="title.subcopy">折れるな。生き残れ。</div>
+      </div>
+      <!-- Zone Bottom: 操作 -->
+      <div class="tz-bottom">
+        <div class="lang-selector" id="lang-selector">
+          <button class="lang-btn lang-active" data-lang="ja">JA</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="ru">RU</button>
+          <button class="lang-btn" data-lang="es">ES</button>
+          <button class="lang-btn" data-lang="zh-tw">繁</button>
+          <button class="lang-btn" data-lang="fr">FR</button>
+        </div>
+        <button id="btn-start" class="btn btn-start" data-i18n="ui.btnStart">はじめる</button>
+        <button id="btn-continue" class="btn btn-continue" style="display:none" data-i18n="ui.btnContinue">続きから</button>
+        <button id="btn-judge" class="btn btn-judge" style="display:none" data-i18n="ui.btnJudge">連続ジャッジルーム</button>
+      </div>
     </div>
-    <div class="title-character" style="display:none">
-      <img src="assets/image_0.png" alt="同調圧力の化身" class="character-img pulse">
-    </div>
-    <div class="comment-bubble" id="title-comment" style="display:none"></div>
-
-    <!-- 圧力文 -->
-    <div class="title-hook" data-i18n="title.hook">見えていても、従え。</div>
-
-    <!-- タイトル -->
-    <h1 class="title-main" data-i18n="title.main">圧力回廊</h1>
-
-    <!-- 言語セレクター -->
-    <div class="lang-selector" id="lang-selector">
-      <button class="lang-btn lang-active" data-lang="ja">JA</button>
-      <button class="lang-btn" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="ru">RU</button>
-      <button class="lang-btn" data-lang="es">ES</button>
-      <button class="lang-btn" data-lang="zh-tw">繁</button>
-      <button class="lang-btn" data-lang="fr">FR</button>
-    </div>
-
-    <!-- ボタン -->
-    <button id="btn-start" class="btn btn-start" data-i18n="ui.btnStart">はじめる</button>
-    <button id="btn-continue" class="btn btn-continue" style="display:none" data-i18n="ui.btnContinue">続きから</button>
-    <button id="btn-judge" class="btn btn-judge" style="display:none" data-i18n="ui.btnJudge">連続ジャッジルーム</button>
-
-    <!-- 非表示（DOM残す） -->
-    <div class="title-footer" style="display:none">※ 言うことを聞いたら負けです<br>※ ……たぶん</div>
 
     <!-- 放置時プロローグ -->
     <div class="title-prologue" id="title-prologue">
@@ -86,7 +82,7 @@
     <div class="game-zone-center">
       <div class="game-speech" id="game-speech"></div>
       <div class="game-character">
-        <img src="assets/enemy_idle.png" alt="同調圧力の化身" id="game-char-img" class="character-img">
+        <img src="assets/enemy_idle_clean.png" alt="同調圧力の化身" id="game-char-img" class="character-img">
         <div class="tap-guide" id="tap-guide">
           <img src="assets/enemy_rat.png" class="tap-guide-img">
         </div>
@@ -103,6 +99,7 @@
         <button id="btn-choice-0" class="btn btn-choice"></button>
         <button id="btn-choice-1" class="btn btn-choice"></button>
       </div>
+      <button id="btn-quick-retry" class="btn btn-start btn-quick-retry" style="display:none">もう一回</button>
     </div>
   </div>
 

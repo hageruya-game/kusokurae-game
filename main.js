@@ -40,6 +40,14 @@ const STAGES_NORMAL = [
   { theme: "brainwash", command: "幸せだろ？", choices: ["幸せです", "自分で決める"], correctIndex: 1, ruleType: "normal", wrongReaction: "管理された幸福", rightReaction: "幸せは自分で決める" },
   { theme: "brainwash", command: "もう逆らえないだろ？", choices: ["逆らえない", "逆らう"], correctIndex: 1, ruleType: "normal", wrongReaction: "諦めた…", rightReaction: "まだ折れてない" },
   { theme: "brainwash", command: "お前はもう我々の一部だ", choices: ["はい", "違う"], correctIndex: 1, ruleType: "normal", wrongReaction: "吸収完了", rightReaction: "俺は俺だ" },
+  // school（学校の同調圧力）
+  { theme: "school", command: "目立つな", choices: ["目立たない", "目立つ"], correctIndex: 1, ruleType: "normal", wrongReaction: "透明人間", rightReaction: "存在していい" },
+  { theme: "school", command: "お前だけ仲間外れだぞ", choices: ["入る", "別にいい"], correctIndex: 1, ruleType: "normal", wrongReaction: "恐怖で動いた", rightReaction: "一人は自由" },
+  { theme: "school", command: "あいつハブろうぜ", choices: ["参加する", "しない"], correctIndex: 1, ruleType: "normal", wrongReaction: "加害者になった", rightReaction: "人間として正解" },
+  { theme: "school", command: "真面目すぎるって", choices: ["崩す", "そのまま"], correctIndex: 1, ruleType: "normal", wrongReaction: "他人の目で生きた", rightReaction: "自分の軸を持て" },
+  { theme: "school", command: "みんなと同じ格好しろ", choices: ["合わせる", "自分で選ぶ"], correctIndex: 1, ruleType: "normal", wrongReaction: "中身まで制服", rightReaction: "個性は消えない" },
+  { theme: "school", command: "逆らったら内申に響くぞ", choices: ["従う", "知らん"], correctIndex: 1, ruleType: "normal", wrongReaction: "人質に屈した", rightReaction: "脅しには乗らない" },
+  { theme: "school", command: "浮いてるぞ", choices: ["合わせる", "浮いてていい"], correctIndex: 1, ruleType: "normal", wrongReaction: "沈んだ", rightReaction: "浮いてるくらいがいい" },
 ];
 
 const STAGES_EXCEPTION = [
@@ -156,9 +164,18 @@ const SaveSystem = {
       var raw = localStorage.getItem(this.KEY);
       if (!raw) return null;
       var data = JSON.parse(raw);
-      if (!data || !data.mode) return null;
+      if (!this._isValid(data)) { this.clear(); return null; }
       return data;
     } catch (e) { this.clear(); return null; }
+  },
+  /** データ構造の厳密バリデーション */
+  _isValid(d) {
+    if (!d || typeof d !== "object") return false;
+    if (d.mode !== "slash" && d.mode !== "crowd") return false;
+    if (typeof d.layer !== "number" || d.layer < 0 || !isFinite(d.layer)) return false;
+    if (typeof d.totalMisses !== "number" || d.totalMisses < 0 || !isFinite(d.totalMisses)) return false;
+    if (typeof d.ts !== "number" || d.ts <= 0) return false;
+    return true;
   },
   clear() {
     try { localStorage.removeItem(this.KEY); } catch (e) {}
@@ -1765,6 +1782,7 @@ const Game = {
       screenResult: document.getElementById("screen-result"),
       btnStart: document.getElementById("btn-start"),
       btnReplay: document.getElementById("btn-replay"),
+      btnQuickRetry: document.getElementById("btn-quick-retry"),
       roundNum: document.getElementById("round-num"),
       totalRounds: document.getElementById("total-rounds"),
       scoreNum: document.getElementById("score-num"),
@@ -1806,9 +1824,17 @@ const Game = {
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
 
     // Stage1ゲーム画面のキャラ画像を切り替える関数
-    // 今後ミス時・ゲームオーバー時などの条件分岐を追加する土台
+    this._charImgTimer = null;
     this.setGameCharImage = function(name) {
       this.el.gameCharImg.src = "assets/" + name;
+    };
+    // ミス時に一瞬だけ表情を変え、自動で idle に戻す
+    this.flashGameCharImage = function(name, ms) {
+      clearTimeout(this._charImgTimer);
+      this.setGameCharImage(name);
+      this._charImgTimer = setTimeout(function() {
+        Game.setGameCharImage("enemy_idle_clean.png");
+      }, ms || 500);
     };
 
     var startLocked = false;
@@ -1839,6 +1865,11 @@ const Game = {
       }, 450);
     });
     this.el.btnReplay.addEventListener("click", () => this.startGame());
+    this.el.btnQuickRetry.addEventListener("click", () => {
+      this.el.btnQuickRetry.classList.remove("show");
+      this.el.btnQuickRetry.style.display = "none";
+      this.startGame();
+    });
     this.el.btnChoice0.addEventListener("click", () => this.choose(0));
     this.el.btnChoice1.addEventListener("click", () => this.choose(1));
 
@@ -1998,34 +2029,57 @@ const Game = {
     ];
   },
 
-  // 本番モード: Phase1=5 normal, Phase2=3-4 exception + 1-2 normal
+  // 本番モード: 3段階のテーマ制御 + Phase2例外問題
+  // 序盤(R1-3): order/air — 直接的でわかりやすい
+  // 中盤(R4-5): school/group/sns — 心理的に揺さぶる
+  // 後半(R6-10): brainwash + trap例外 — 重い圧力＋裏切り
   buildRounds() {
-    const normal = [...STAGES_NORMAL].sort(() => Math.random() - 0.5);
-    const exception = [...STAGES_EXCEPTION].sort(() => Math.random() - 0.5);
+    function shuffle(arr) { return arr.sort(function() { return Math.random() - 0.5; }); }
+    var all = STAGES_NORMAL.slice();
 
-    // 初回プレイ: YES/NO問題を先頭に固定（最も直感的）
+    // テーマ別に分類
+    var early = shuffle(all.filter(function(s) { return s.theme === "order" || s.theme === "air"; }));
+    var mid   = shuffle(all.filter(function(s) { return s.theme === "school" || s.theme === "group" || s.theme === "sns"; }));
+    var late  = shuffle(all.filter(function(s) { return s.theme === "brainwash"; }));
+
+    // 序盤3問（order/air）
+    var r1to3 = early.slice(0, 3);
+
+    // 初回プレイ: YES/NO問題を先頭に固定
     if (!this._hasSeenStage1Intro) {
-      var yesIdx = normal.findIndex(function(s) { return s.command === "今すぐYESを押せ"; });
+      var yesIdx = r1to3.findIndex(function(s) { return s.command === "今すぐYESを押せ"; });
       if (yesIdx > 0) {
-        var first = normal.splice(yesIdx, 1)[0];
-        normal.unshift(first);
+        var first = r1to3.splice(yesIdx, 1)[0];
+        r1to3.unshift(first);
+      } else if (yesIdx < 0) {
+        // early先頭3つに無い場合、earlyから探して差し替え
+        var yesQ = early.find(function(s) { return s.command === "今すぐYESを押せ"; });
+        if (yesQ) { r1to3[0] = yesQ; }
       }
     }
 
-    const phase1 = normal.splice(0, 5);
+    // 中盤2問（school/group/sns）
+    var r4to5 = mid.slice(0, 2);
 
-    const exCount = 3 + Math.floor(Math.random() * 2);
-    const phase2 = [
-      ...exception.slice(0, exCount),
-      ...normal.slice(0, 5 - exCount),
-    ].sort(() => Math.random() - 0.5);
+    // Phase1 = 序盤 + 中盤
+    var phase1 = r1to3.concat(r4to5);
 
-    return [...phase1, ...phase2];
+    // Phase2: R6=brainwash(導入)、R7-10=trap例外+brainwash混合
+    var exception = shuffle(STAGES_EXCEPTION.slice());
+    var r6 = [late[0]]; // R6は必ずbrainwash（後半への導入）
+    var exCount = 3 + Math.floor(Math.random() * 2); // 3-4問
+    var r7to10 = shuffle(
+      exception.slice(0, exCount).concat(late.slice(1, 1 + (4 - exCount)))
+    );
+
+    return phase1.concat(r6, r7to10);
   },
 
   startGame() {
     if (!this._guardTransition()) return;
     this._resetAllVisualState();
+    this.el.btnQuickRetry.classList.remove("show");
+    this.el.btnQuickRetry.style.display = "none";
     this.sessionId++;
     this.answered = true;
     this.stopTimer();
@@ -2428,7 +2482,7 @@ const Game = {
     this.el.btnChoice1.innerHTML = "";
 
     // リセット
-    this.setGameCharImage("enemy_idle.png");
+    this.setGameCharImage("enemy_idle_clean.png");
     this.el.tapGuide.classList.remove("active");
 
     // デバッグラベル
@@ -2625,6 +2679,13 @@ const Game = {
     const cmd = this.roundCommands[this.currentRound];
     const highPressure = this.pressureLevel >= PRESSURE.thresholdHigh;
 
+    // === DEBUG: wait成功ログ ===
+    console.log("[JUDGE] R" + (this.currentRound+1) +
+      " | type:" + cmd.ruleType +
+      (cmd.correctType ? "/" + cmd.correctType : "") +
+      " | WAIT SUCCESS (timer expired = correct)" +
+      " | cmd:" + cmd.command);
+
     this.el.choicesArea.classList.remove("choices-appear");
     this.el.choicesArea.classList.add("choices-hidden");
     this.el.btnChoice0.disabled = true;
@@ -2639,7 +2700,11 @@ const Game = {
     this.el.feedback.className = "feedback feedback-big correct";
     this.showOX(true);
     this.changePressure(PRESSURE.exceptionCorrect);
-    this.showGameComment(CommentSystem.pick(highPressure ? "correctHigh" : "correct"));
+    // 正しく待てた時の専用リアクション
+    var waitReacts = ["やっとか", "それでいい", "少しは読めたな"];
+    this.showSpeech(waitReacts[Math.floor(Math.random() * waitReacts.length)], "speech-mockery");
+    // 30%の確率で表情変化
+    if (Math.random() < 0.3) this.flashGameCharImage("enemy_frustrated_clean.png", 600);
 
     this.advanceAfterResult();
   },
@@ -2660,6 +2725,13 @@ const Game = {
     }
 
     this.answered = true;  // ★ 判定消費（非waitの場合のみここで設定）
+
+    // === DEBUG: タイムアウト不正解ログ ===
+    console.log("[JUDGE] R" + (this.currentRound+1) +
+      " | type:" + cmd.ruleType +
+      (cmd.correctType ? "/" + cmd.correctType : "") +
+      " | TIMEOUT (wrong)" +
+      " | cmd:" + cmd.command);
 
     this.clearHint();
     this.isWaiting = true;
@@ -2705,6 +2777,16 @@ const Game = {
     const isEx = this.isException(cmd);
     const highPressure = this.pressureLevel >= PRESSURE.thresholdHigh;
 
+    // === DEBUG: 正解判定ログ ===
+    console.log("[JUDGE] R" + (this.currentRound+1) +
+      " | type:" + cmd.ruleType +
+      (cmd.correctType ? "/" + cmd.correctType : "") +
+      " | correct:" + cmd.correctIndex +
+      " | selected:" + index +
+      " | isWaitLike:" + isWaitLike +
+      " | result:" + (isCorrect ? "CORRECT" : "WRONG") +
+      " | cmd:" + cmd.command);
+
     this.el.choicesArea.classList.remove("choices-appear");
     this.el.btnChoice0.disabled = true;
     this.el.btnChoice1.disabled = true;
@@ -2736,27 +2818,59 @@ const Game = {
       this.el.feedback.className = "feedback feedback-big correct";
       this.showOX(true);
       this.changePressure(isEx ? PRESSURE.exceptionCorrect : PRESSURE.normalCorrect);
-      this.showGameComment(CommentSystem.pick(highPressure ? "correctHigh" : "correct"));
+      // キモキャラの短いリアクション（brainwash: 50%, その他: 35%）
+      var correctReacts = ["……", "ほう", "まだだ", "それで？", "チッ"];
+      var correctReactChance = (cmd.theme === "brainwash") ? 0.5 : 0.35;
+      if (Math.random() < correctReactChance) {
+        this.showSpeech(correctReacts[Math.floor(Math.random() * correctReacts.length)], "speech-mockery");
+        // 15%の確率で軽く表情変化
+        if (Math.random() < 0.43) this.flashGameCharImage("enemy_blank_clean.png", 600);
+      } else {
+        this.showGameComment(CommentSystem.pick(highPressure ? "correctHigh" : "correct"));
+      }
     } else {
       this.el.feedback.textContent = cmd.wrongReaction;
       this.el.feedback.className = "feedback feedback-big wrong";
       this.showOX(false);
+      // brainwashテーマ: 無表情で見つめる / その他: 怒り
+      var missFace = (cmd.theme === "brainwash") ? "enemy_blank_clean.png" : "enemy_angry_clean.png";
+      this.flashGameCharImage(missFace, 1300);
+      // キモキャラの刺さる一言（wait系と通常で分岐）
+      if (isWaitLike) {
+        var waitStings = ["触るな", "浅い", "見えてないのか"];
+        this.showSpeech(waitStings[Math.floor(Math.random() * waitStings.length)], "speech-danger");
+      } else if (cmd.theme === "school") {
+        var schoolStings = ["浮くのが怖いか", "見られてるぞ", "空気に負けたな", "それで埋もれる", "また合わせたか"];
+        this.showSpeech(schoolStings[Math.floor(Math.random() * schoolStings.length)], "speech-danger");
+      } else {
+        var stings = ["読めなかったか", "遅い", "甘いな", "効いたろ"];
+        this.showSpeech(stings[Math.floor(Math.random() * stings.length)], "speech-danger");
+      }
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
       if (this._isTutorialRound) {
         // チュートリアル: wrongReactionだけ表示、嘲笑なし
       } else {
-        this.showGameComment(CommentSystem.pick(highPressure ? "wrongHigh" : "wrong"));
-        // 強煽り(中央)とmockery(吹き出し)は排他。taunt優先
+        // 刺さる一言を見せてからmockery/tauntに切り替える
         if (this.inPhase2) {
-          this.showTaunt(200);
+          this.showTaunt(400);
         } else {
-          this.showMockery(400);
+          this.showMockery(600);
         }
       }
     }
 
     if (this._isTutorialRound) this._isTutorialRound = false;
-    this.advanceAfterResult();
+    if (isCorrect) {
+      this.advanceAfterResult();
+    } else {
+      // ミス時: angry顔+刺さる一言を見せるための演出停止(800ms)
+      var self = this;
+      var missGid = this.sessionId;
+      setTimeout(function() {
+        if (self.sessionId !== missGid) return;
+        self.advanceAfterResult();
+      }, 800);
+    }
   },
 
   advanceAfterResult() {
@@ -2769,7 +2883,18 @@ const Game = {
       setTimeout(() => {
         if (this.sessionId !== gid) return;
         if (this.contaminated) {
-          this.showResult();
+          // ゲームオーバー演出: laugh顔+捨てゼリフ+即リトライボタン→1秒後にリザルト
+          var goTaunts = ["この程度で終わりか", "評価する価値もない", "ランク？ お前に？", "話にならんな", "もう帰れ"];
+          this.setGameCharImage("enemy_laugh_clean.png");
+          this.showSpeech(goTaunts[Math.floor(Math.random() * goTaunts.length)], "speech-danger");
+          this.el.btnQuickRetry.classList.add("show");
+          var self = this;
+          setTimeout(function() {
+            if (self.sessionId !== gid) return;
+            self.el.btnQuickRetry.classList.remove("show");
+            self.el.btnQuickRetry.style.display = "none";
+            self.showResult();
+          }, 1000);
           return;
         }
         this.currentRound++;
@@ -2813,10 +2938,11 @@ const Game = {
       text.classList.remove("dg-interlude-text-show");
       text.textContent = "";
       overlay.classList.remove("dg-breakthrough-flash");
-      // 通常遷移テキスト
+      // Stage2開始時のキモキャラ一言
+      var s2Lines = ["まだ終わったと思うな", "ここからが本番だ", "少しは楽しませろ", "調子に乗るなよ"];
       setTimeout(function() {
         if (self.sessionId !== gid) return;
-        text.textContent = I18n.t("dungeon.toNext");
+        text.textContent = s2Lines[Math.floor(Math.random() * s2Lines.length)];
         text.classList.add("dg-trans-text-show");
         setTimeout(function() {
           if (self.sessionId !== gid) return;
@@ -2838,16 +2964,33 @@ const Game = {
     function skipInterlude() { clearTimeout(interludeTimer); proceed(); }
     var interludeTimer;
 
-    // ステージランク → キモキャラ割り込み演出
+    // ステージランク → キモキャラ割り込み演出（成績で分岐）
     var stage1Misses = ROUNDS_PER_GAME - self.score;
+    var breakFace, breakLine;
+    if (stage1Misses <= 1) {
+      // 余裕突破
+      breakFace = "assets/enemy_frustrated_clean.png";
+      var lines = ["……読めてきたな", "気に食わないが、悪くない", "その顔、少し腹が立つな"];
+      breakLine = lines[Math.floor(Math.random() * lines.length)];
+    } else if (stage1Misses <= 3) {
+      // 普通の突破
+      breakFace = "assets/enemy_blank_clean.png";
+      var lines = ["調子に乗るなよ", "まだ先は長いぞ", "少しは読めてきたか"];
+      breakLine = lines[Math.floor(Math.random() * lines.length)];
+    } else {
+      // ギリギリ突破
+      breakFace = "assets/enemy_shock_clean.png";
+      var lines = ["…やるじゃないか", "ギリギリだったな", "見苦しいが、生き残ったか"];
+      breakLine = lines[Math.floor(Math.random() * lines.length)];
+    }
     showStageRank("stage1", stage1Misses, text, function() {
       text.textContent = "";
       if (self.sessionId !== gid) return;
       // キモキャラ割り込み演出
-      interImg.src = "assets/image_0.png";
+      interImg.src = breakFace;
       interImg.style.display = "";
       interImg.classList.add("dg-interlude-show");
-      text.textContent = I18n.t("crowd.interlude1");
+      text.textContent = breakLine;
       text.classList.add("dg-interlude-text-show");
       overlay.classList.add("dg-breakthrough-flash");
       SoundSystem.breakthroughChime();
@@ -4473,15 +4616,18 @@ const Slash = {
       this.el.command.textContent = I18n.t("slash.cmdWait");
       return;
     }
+    // 命令文テンプレートをランダムに選択
+    const templates = I18n.t("slash.cmdSlash");
+    const tmpl = Array.isArray(templates) ? templates[Math.floor(Math.random() * templates.length)] : templates;
     // 3択以上+normal: 「XとYとZを斬れ」→ 逆らえ＝残り1体を斬る
     if (this.commandedIndices) {
       const names = this.commandedIndices.map(i => I18n.t("slash.targets." + this.activeTargets[i].id));
       const joined = names.join(I18n.t("slash.targetJoin"));
-      this.el.command.textContent = I18n.t("slash.cmdSlash").replace("{name}", joined);
+      this.el.command.textContent = tmpl.replace("{name}", joined);
       return;
     }
     const target = this.activeTargets[this.commandedIndex];
-    this.el.command.textContent = I18n.t("slash.cmdSlash").replace("{name}", I18n.t("slash.targets." + target.id));
+    this.el.command.textContent = tmpl.replace("{name}", I18n.t("slash.targets." + target.id));
   },
 
   renderTargets() {
@@ -6326,7 +6472,7 @@ const Tutorial = {
     Game.el.feedback.className = "feedback";
     Game.el.btnChoice0.innerHTML = "";
     Game.el.btnChoice1.innerHTML = "";
-    Game.setGameCharImage("enemy_idle.png");
+    Game.setGameCharImage("enemy_idle_clean.png");
     Game.el.gameCharImg.className = "character-img char-enter";
     Game.el.tapGuide.classList.remove("active");
     Game.el.speech.textContent = "";
@@ -6608,10 +6754,10 @@ const STAGE_CONFIG = {
 const CW_SHAPES = ["circle", "triangle", "star", "diamond"];
 
 const CROWD_LAYERS = [
-  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 6000, types: ["find"], diffStrength: 1.0, axes: ["offset","scale","rotation"] },
-  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5000, types: ["find", "find", "find", "none"], diffStrength: 0.75, axes: ["offset","scale","rotation","flip"] },
-  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.55, axes: ["offset","scale","rotation","flip"] },
-  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 4800, types: ["find"], diffStrength: 0.40, axes: ["offset","scale","rotation","flip"] },
+  { name: "第一層：視線", cols: 2, rows: 2, rounds: 3, timer: 7000, types: ["find"], diffStrength: 1.15, axes: ["offset","scale","rotation"] },
+  { name: "第二層：群衆", cols: 3, rows: 2, rounds: 4, timer: 5500, types: ["find", "find", "find", "none"], diffStrength: 0.82, axes: ["offset","scale","rotation","flip"] },
+  { name: "第三層：均一", cols: 3, rows: 3, rounds: 4, timer: 4000, types: ["find", "find", "find", "none"], diffStrength: 0.55, axes: ["offset","scale","rotation","flip","hue"] },
+  { name: "最終層：同化", cols: 4, rows: 4, rounds: 4, timer: 4800, types: ["find"], diffStrength: 0.40, axes: ["offset","scale","rotation","flip","hue"] },
 ];
 
 const CROWD_LAYER_TAUNTS = [
@@ -6722,9 +6868,49 @@ const Crowd = {
     this.updateLivesUI();
     Game.showScreen(this.el.screen);
     this.el.screen.classList.add("cw-layer-0");
-    this._showCrowdTutorial(() => {
-      this.showLayerTitle();
+    this._showCrowdTaunt(() => {
+      this._showCrowdTutorial(() => {
+        this.showLayerTitle();
+      });
     });
+  },
+
+  _showCrowdTaunt(callback) {
+    var self = this;
+    var sid = this.sessionId;
+    var taunts = ["ここからは むりだ。おまえにはな。", "みえてないだろ。もう おそい。", "せいぜい あがけ。崩れる瞬間を見てやる。", "ここで おれる。おまえは。"];
+    var line = taunts[Math.floor(Math.random() * taunts.length)];
+
+    // 笑顔画像を一時挿入
+    var img = document.createElement("img");
+    img.src = "assets/enemy_laugh_clean.png";
+    img.className = "cw-taunt-img";
+    this.el.screen.appendChild(img);
+
+    // セリフ表示
+    var txt = document.createElement("div");
+    txt.className = "cw-taunt-text";
+    txt.textContent = line;
+    this.el.screen.appendChild(txt);
+
+    // フェードイン
+    requestAnimationFrame(function() {
+      img.classList.add("cw-taunt-show");
+      txt.classList.add("cw-taunt-show");
+    });
+
+    // 1.5秒後にフェードアウト→除去→callback
+    setTimeout(function() {
+      if (self.sessionId !== sid) return;
+      img.classList.remove("cw-taunt-show");
+      txt.classList.remove("cw-taunt-show");
+      setTimeout(function() {
+        if (self.sessionId !== sid) return;
+        img.remove();
+        txt.remove();
+        callback();
+      }, 400);
+    }, 1500);
   },
 
   _showCrowdTutorial(callback) {
@@ -6888,6 +7074,8 @@ const Crowd = {
       this.el.cross.classList.remove("cw-cross-ltr", "cw-cross-rtl");
       this.el.cross.style.cssText = "opacity:0";
     }
+    // 煽り演出の残留除去
+    this.el.screen.querySelectorAll(".cw-taunt-img, .cw-taunt-text").forEach(function(e) { e.remove(); });
     // チュートリアルオーバーレイ強制除去
     this.el.screen.classList.remove("cw-tutorial-intro");
     this.el.command.classList.remove("cw-tutorial-text-in");
@@ -6913,6 +7101,8 @@ const Crowd = {
     this.el.clearRank.textContent = "";
     this.el.clearRank.classList.remove("cw-rank-reveal", "cw-rank-s");
     this.el.clearRankMsg.textContent = "";
+    var oldReact = this.el.clearOverlay.querySelector(".cw-clear-react");
+    if (oldReact) oldReact.remove();
     this.el.clearEpilogue.textContent = "";
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
@@ -7046,8 +7236,8 @@ const Crowd = {
         if (this.roundPlan[fi] === "find") findIndex++;
       }
       if (findIndex === 0) {
-        // コインフリップ: 50%で最初が易、50%で最初が難
-        this._waveEasyFirst = Math.random() < 0.5;
+        // Layer1は初回必ず易、Layer2以降はコインフリップ
+        this._waveEasyFirst = (this.currentLayer === 0) ? true : Math.random() < 0.5;
         var isEasy = this._waveEasyFirst;
         this._roundDiffScale = isEasy ? 1.4 : 0.7;
         if (!isEasy) this._roundInterferenceBoost = true;
@@ -7504,8 +7694,8 @@ const Crowd = {
       var diff = { hue: baseHue, rotation: 0, inset: 10, offsetX: 0, offsetY: 0, flipX: false };
 
       // === 差異軸ハンドラ ===
-      // 現在: offset, scale, rotation, flip
-      // 拡張候補: symmetry-break, relation-based, temporal-shift, color-hue, shape-morph
+      // 現在: offset, scale, rotation, flip, hue
+      // 拡張候補: symmetry-break, relation-based, temporal-shift, shape-morph
       // 新軸追加手順: ① CROWD_LAYERS[].axes に軸名追加 ② ここに else if ブロック追加
       // 軸の組み合わせで問題パターンを指数的に増やせる設計
       for (var a = 0; a < chosenAxes.length; a++) {
@@ -7537,6 +7727,10 @@ const Crowd = {
             var fallbackRange = 3 + (8 - 3) * s;
             diff.rotation = sign * fallbackRange;
           }
+        } else if (axis === "hue") {
+          // 色相差：微妙に色味が違う（気づけるが雑には分からないレベル）
+          var hueRange = 12 + (25 - 12) * s; // diffStrength 1.0→±25°, 0.4→±17°
+          diff.hue = baseHue + sign * hueRange;
         }
       }
 
@@ -7638,7 +7832,8 @@ const Crowd = {
         var dx = odd.offsetX - c.offsetX;
         var dy = odd.offsetY - c.offsetY;
         var di = (odd.inset - c.inset) * 2; // サイズ差は目立つのでウェイト2倍
-        var d = Math.sqrt(dx * dx + dy * dy + di * di);
+        var dh = (odd.hue - c.hue) * 0.3;  // 色相差（控えめウェイト）
+        var d = Math.sqrt(dx * dx + dy * dy + di * di + dh * dh);
         if (d < minD) minD = d;
       }
       this._lastDiffDist = minD;
@@ -8415,6 +8610,8 @@ const Crowd = {
     this.el.clearMsg.textContent = "";
     this.el.clearRank.textContent = "";
     this.el.clearRankMsg.textContent = "";
+    var prevReact = this.el.clearOverlay.querySelector(".cw-clear-react");
+    if (prevReact) prevReact.remove();
     this.el.clearEpilogue.textContent = "";
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
@@ -8476,19 +8673,53 @@ const Crowd = {
               if (isS) this.el.clearRank.classList.add("cw-rank-s");
               this.el.clearRankMsg.textContent = rankMsg;
 
-              // 三幕総括エピローグ
+              // キモキャラのランク別リアクション
+              var reactFace, reactLines;
+              if (m <= 1) {
+                reactFace = "assets/enemy_shock_clean.png";
+                reactLines = ["……なんだそれは", "ありえない", "想定外だ"];
+              } else if (m <= 3) {
+                reactFace = "assets/enemy_frustrated_clean.png";
+                reactLines = ["……やるじゃないか", "気に入らない", "まだ あまいがな"];
+              } else {
+                reactFace = "assets/enemy_blank_clean.png";
+                reactLines = ["……生き残ったか", "運が良かったな", "見苦しいがな"];
+              }
+              var reactLine = reactLines[Math.floor(Math.random() * reactLines.length)];
+
               setTimeout(() => {
                 if (this.sessionId !== sid) return;
-                const epilogue = I18n.t("crowd.epilogue");
-                this.el.clearEpilogue.textContent = epilogue;
+                // リアクション要素を動的生成（0.6秒の間でクリア実感を持たせる）
+                var reactWrap = document.createElement("div");
+                reactWrap.className = "cw-clear-react";
+                var reactImg = document.createElement("img");
+                reactImg.src = reactFace;
+                reactImg.className = "cw-clear-react-img";
+                reactWrap.appendChild(reactImg);
+                var reactTxt = document.createElement("div");
+                reactTxt.className = "cw-clear-react-text";
+                reactTxt.textContent = reactLine;
+                reactWrap.appendChild(reactTxt);
+                // ランクメッセージの直後に挿入
+                this.el.clearRankMsg.after(reactWrap);
+                requestAnimationFrame(() => {
+                  reactWrap.classList.add("cw-clear-react-show");
+                });
 
-                // ボタン
+                // 三幕総括エピローグ
                 setTimeout(() => {
                   if (this.sessionId !== sid) return;
-                  this.el.clearButtons.style.opacity = "1";
-                  this.el.clearButtons.style.pointerEvents = "auto";
-                }, 1500);
-              }, 700);
+                  const epilogue = I18n.t("crowd.epilogue");
+                  this.el.clearEpilogue.textContent = epilogue;
+
+                  // ボタン
+                  setTimeout(() => {
+                    if (this.sessionId !== sid) return;
+                    this.el.clearButtons.style.opacity = "1";
+                    this.el.clearButtons.style.pointerEvents = "auto";
+                  }, 1000);
+                }, 700);
+              }, 600);
             }, 500);
           }
         }, 75);
@@ -8582,6 +8813,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.documentElement.style.transform = "";
   document.body.style.transform = "";
   window.scrollTo(0, 0);
+
+  // ?reset=1 でセーブ＆チュートリアル完全リセット（開発用）
+  if (new URLSearchParams(window.location.search).get("reset") === "1") {
+    localStorage.removeItem(SaveSystem.KEY);
+    localStorage.removeItem("kusokurae_lang");
+    localStorage.removeItem("kusokurae_tutorial_done");
+    console.log("[DEV] localStorage reset by ?reset=1");
+    // パラメータ除去してリロード
+    window.history.replaceState({}, "", window.location.pathname);
+  }
+
+  // セーブデータのサニタイズ（不正データは起動時に削除）
+  SaveSystem.load(); // _isValid() 失敗で自動 clear
 
   // i18n初期化
   I18n.init();
