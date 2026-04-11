@@ -2882,6 +2882,7 @@ const Game = {
 
       setTimeout(() => {
         if (this.sessionId !== gid) return;
+        console.log("[FLOW] advanceAfterResult R" + this.currentRound + " contaminated=" + this.contaminated + " pressure=" + this.pressureLevel);
         if (this.contaminated) {
           // ゲームオーバー演出: laugh顔+捨てゼリフ+即リトライボタン→1秒後にリザルト
           var goTaunts = ["この程度で終わりか", "評価する価値もない", "ランク？ お前に？", "話にならんな", "もう帰れ"];
@@ -2906,8 +2907,10 @@ const Game = {
         }
 
         if (this.currentRound < ROUNDS_PER_GAME) {
+          console.log("[FLOW] → startRound R" + this.currentRound);
           this.startRound();
         } else {
+          console.log("[FLOW] → transitionToSlash (R" + this.currentRound + " >= " + ROUNDS_PER_GAME + ")");
           this.transitionToSlash();
         }
       }, TIMING.pausePhase);
@@ -2915,6 +2918,7 @@ const Game = {
   },
 
   transitionToSlash() {
+    console.log("[FLOW] transitionToSlash() ENTERED | sessionId=" + this.sessionId);
     this.stopTimer();
     SoundSystem.stopAmbient();
     SaveSystem.save("slash", 0, 0);
@@ -2928,6 +2932,7 @@ const Game = {
     // インタールード後の通常遷移処理
     var proceeded = false;
     function proceed() {
+      console.log("[FLOW] proceed() called | proceeded=" + proceeded + " sessionId=" + self.sessionId + " gid=" + gid);
       if (proceeded) return;
       proceeded = true;
       overlay.removeEventListener("click", skipInterlude);
@@ -2949,6 +2954,7 @@ const Game = {
           text.classList.remove("dg-trans-text-show");
           setTimeout(function() {
             if (self.sessionId !== gid) return;
+            console.log("[FLOW] → Slash.start() about to fire");
             Slash.pressure = self.pressureLevel;
             Slash.currentLayer = 0;
             Slash.totalMisses = 0;
@@ -2985,6 +2991,7 @@ const Game = {
     }
     showStageRank("stage1", stage1Misses, text, function() {
       text.textContent = "";
+      console.log("[FLOW] showStageRank callback | sessionId=" + self.sessionId + " gid=" + gid + " match=" + (self.sessionId === gid));
       if (self.sessionId !== gid) return;
       // キモキャラ割り込み演出
       interImg.src = breakFace;
