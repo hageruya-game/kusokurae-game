@@ -4243,6 +4243,8 @@ const Slash = {
       gameoverOverlay: document.getElementById("sl-gameover-overlay"),
       gameoverMsg: document.getElementById("sl-gameover-msg"),
       gameoverStats: document.getElementById("sl-gameover-stats"),
+      gameoverFace: document.getElementById("sl-gameover-face"),
+      gameoverLine: document.getElementById("sl-gameover-line"),
     };
 
     document.getElementById("sl-back").addEventListener("click", () => this.goTitle());
@@ -4329,6 +4331,8 @@ const Slash = {
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
     this.el.gameoverOverlay.classList.remove("sl-go-show");
+    if (this.el.gameoverFace) { this.el.gameoverFace.style.display = "none"; this.el.gameoverFace.src = ""; }
+    if (this.el.gameoverLine) { this.el.gameoverLine.textContent = ""; }
     if (this.collapseRAF) { cancelAnimationFrame(this.collapseRAF); this.collapseRAF = null; }
   },
 
@@ -5160,6 +5164,17 @@ const Slash = {
     this.el.gameoverMsg.textContent = I18n.t("slash.gameover");
     this.el.gameoverStats.textContent = I18n.t("slash.statsReached").replace("{reached}", reached).replace("{total}", total)
       + (regret ? "\n" + regret : "");
+
+    // キャラ画像＋煽りセリフ
+    var goLines = ["その程度か", "期待外れだ", "帰れ", "もう来るな", "弱すぎて笑えない"];
+    if (this.el.gameoverFace) {
+      this.el.gameoverFace.src = "assets/enemy_laugh_clean.png";
+      this.el.gameoverFace.style.display = "";
+    }
+    if (this.el.gameoverLine) {
+      this.el.gameoverLine.textContent = goLines[Math.floor(Math.random() * goLines.length)];
+    }
+
     SoundSystem.gameoverSound();
 
     setTimeout(() => {
