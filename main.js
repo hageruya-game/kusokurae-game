@@ -4356,7 +4356,6 @@ const Slash = {
     this.lives = this.maxLives;
     this.lastDecision = "";
     this.layerTutorialShown = new Set();
-    SaveSystem.clear();
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0);
@@ -6933,7 +6932,6 @@ const Crowd = {
     this._demoCallback = null;
     this._isLastRound = false;
     this.layerTutorialShown = new Set();  // ★ キモキャラ演出を全層で再表示
-    SaveSystem.clear();                   // ★ 古いチェックポイントを破棄
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0.3);
