@@ -3057,9 +3057,10 @@ body::before {
   margin-bottom: 4px;
 }
 .sl-back {
-  background: none; border: none;
-  color: #a090c0; font-size: 14px;
-  padding: 4px 8px; cursor: pointer;
+  background: rgba(30, 20, 50, 0.45); border: none;
+  border-radius: 6px;
+  color: #c0b0e0; font-size: 14px;
+  padding: 6px 12px; cursor: pointer;
 }
 .sl-layer-label {
   flex: 1;
