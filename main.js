@@ -5165,10 +5165,20 @@ const Slash = {
     this.el.gameoverStats.textContent = I18n.t("slash.statsReached").replace("{reached}", reached).replace("{total}", total)
       + (regret ? "\n" + regret : "");
 
-    // キャラ画像＋煽りセリフ
-    var goLines = ["その程度か", "期待外れだ", "帰れ", "もう来るな", "弱すぎて笑えない"];
+    // キャラ画像＋煽りセリフ（到達度で分岐）
+    var goFace, goLines;
+    if (remaining <= 4) {
+      goFace = "assets/enemy_frustrated_clean.png";
+      goLines = ["……惜しかったな", "あと少しだったのに", "次は届くか？", "認めてやりたかった"];
+    } else if (reached >= 9) {
+      goFace = "assets/enemy_blank_clean.png";
+      goLines = ["……つまらん", "興味を失った", "もういい", "覚えてもいない"];
+    } else {
+      goFace = "assets/enemy_laugh_clean.png";
+      goLines = ["その程度か", "期待外れだ", "帰れ", "もう来るな", "弱すぎて笑えない"];
+    }
     if (this.el.gameoverFace) {
-      this.el.gameoverFace.src = "assets/enemy_laugh_clean.png";
+      this.el.gameoverFace.src = goFace;
       this.el.gameoverFace.style.display = "";
     }
     if (this.el.gameoverLine) {
