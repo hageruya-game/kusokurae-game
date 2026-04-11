@@ -1805,6 +1805,12 @@ const Game = {
 
     this.el.totalRounds.textContent = ROUNDS_PER_GAME;
 
+    // Stage1ゲーム画面のキャラ画像を切り替える関数
+    // 今後ミス時・ゲームオーバー時などの条件分岐を追加する土台
+    this.setGameCharImage = function(name) {
+      this.el.gameCharImg.src = "assets/" + name;
+    };
+
     var startLocked = false;
     this.el.btnStart.addEventListener("click", () => {
       if (startLocked) return;
@@ -2422,7 +2428,7 @@ const Game = {
     this.el.btnChoice1.innerHTML = "";
 
     // リセット
-    this.el.gameCharImg.src = "assets/image_0.png";
+    this.setGameCharImage("enemy_idle.png");
     this.el.tapGuide.classList.remove("active");
 
     // デバッグラベル
@@ -6320,7 +6326,7 @@ const Tutorial = {
     Game.el.feedback.className = "feedback";
     Game.el.btnChoice0.innerHTML = "";
     Game.el.btnChoice1.innerHTML = "";
-    Game.el.gameCharImg.src = "assets/image_0.png";
+    Game.setGameCharImage("enemy_idle.png");
     Game.el.gameCharImg.className = "character-img char-enter";
     Game.el.tapGuide.classList.remove("active");
     Game.el.speech.textContent = "";
