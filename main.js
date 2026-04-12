@@ -4356,9 +4356,11 @@ const Slash = {
     for (var u = 0; u < unique.length && plan.length < rounds; u++) {
       plan.push(unique[u]);
     }
-    // 残りは重み付きランダムで埋める（types配列の出現頻度が重みになる）
+    // 残りは重み付きランダムで埋める（waitは保証分の1回に制限）
+    var fillTypes = types.filter(function(t) { return t !== "wait"; });
+    if (!fillTypes.length) fillTypes = types;
     while (plan.length < rounds) {
-      plan.push(types[Math.floor(Math.random() * types.length)]);
+      plan.push(fillTypes[Math.floor(Math.random() * fillTypes.length)]);
     }
     // Fisher-Yatesシャッフル
     for (var i = plan.length - 1; i > 0; i--) {
@@ -8869,6 +8871,10 @@ const TitlePrologue = {
     }
   },
 };
+
+// iOS Safari ダブルタップ/ピンチズーム完全防止
+document.addEventListener("gesturestart", function(e) { e.preventDefault(); });
+document.addEventListener("dblclick", function(e) { e.preventDefault(); });
 
 document.addEventListener("DOMContentLoaded", () => {
   // ★ ページロード時にビジュアル状態を強制リセット（リロード後の拡大残留防止）
