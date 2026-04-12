@@ -308,6 +308,15 @@ clearReact: {
   badLines: ["…So you survived", "Just got lucky", "Ugly, but alive"],
 },
 
+// === Score Evaluation ===
+scoreEval: {
+  tier1: "No one can control you",
+  tier2: "I hate to admit it… not bad",
+  tier3: "You did resist, at least",
+  tier4: "You still smell like the herd",
+  tier5: "You went with the flow",
+},
+
 // === Comments ===
 comments: {
   title: ["Everyone's doing it, right?","You can read the room, can't you?","You're the only one who's different.","Don't fight it.","You know you don't fit in, right?"],

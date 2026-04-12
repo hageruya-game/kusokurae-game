@@ -309,6 +309,15 @@ clearReact: {
   badLines: ["…Así que sobreviviste", "Solo fue suerte", "Patético, pero vivo"],
 },
 
+// === Evaluación de puntuación ===
+scoreEval: {
+  tier1: "Nadie puede controlarte",
+  tier2: "Me cuesta admitirlo… nada mal",
+  tier3: "Al menos resististe algo",
+  tier4: "Aún hueles a rebaño",
+  tier5: "Te dejaste llevar",
+},
+
 // === Comentarios ===
 comments: {
   title: ["\u00BFTodos lo hacen, tú no?","\u00BFSabes leer el ambiente, verdad?","Eres el único diferente\u2026","\u00BFVas a llevar la contraria?","¿Te das cuenta de que desentonas?"],

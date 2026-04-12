@@ -4573,6 +4573,56 @@ body::before {
   max-width: 320px;
   min-height: 40px;
 }
+/* スコア表示 */
+.cw-clear-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 16px 0 8px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.cw-clear-score-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.cw-clear-score-main {
+  font-size: clamp(22px, 6vw, 32px);
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  letter-spacing: 2px;
+}
+.cw-clear-score-label {
+  color: #a0a0c0;
+  font-weight: 400;
+  font-size: clamp(14px, 3.5vw, 18px);
+}
+.cw-clear-score-num {
+  font-variant-numeric: tabular-nums;
+}
+.cw-clear-score-best {
+  font-size: clamp(12px, 3vw, 15px);
+  color: #808098;
+  letter-spacing: 1px;
+}
+.cw-clear-score-new {
+  color: #ff6090;
+  font-weight: 700;
+  animation: cwScoreNewPulse 0.8s ease-in-out infinite;
+}
+@keyframes cwScoreNewPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.cw-clear-score-eval {
+  font-size: clamp(13px, 3.5vw, 16px);
+  color: #c0b0d8;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
 .cw-clear-buttons {
   display: flex;
   flex-direction: column;

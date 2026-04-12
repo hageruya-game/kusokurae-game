@@ -310,6 +310,15 @@ clearReact: {
   badLines: ["…Tu as donc survécu", "Juste de la chance", "Misérable, mais vivant"],
 },
 
+// === Évaluation du score ===
+scoreEval: {
+  tier1: "Personne ne peut te contrôler",
+  tier2: "Je déteste l'admettre… pas mal",
+  tier3: "Tu as résisté, au moins",
+  tier4: "Tu sens encore le troupeau",
+  tier5: "Tu t'es laissé porter",
+},
+
 // === Commentaires ===
 comments: {
   title: ["Tout le monde le fait, non ?","Tu sens l'ambiance, quand même ?","T'es le seul à être différent.","Ne fais pas de vagues.","Tu sais que tu détonnes, hein ?"],

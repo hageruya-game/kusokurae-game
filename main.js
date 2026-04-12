@@ -200,6 +200,7 @@ const SaveSystem = {
       Slash.maxCombo = 0;
       Slash.lives = Slash.maxLives;
       Slash.guideShown = false;
+      Game.globalMaxCombo = 0;
       Slash.lastTargetIds = [];
       Slash.lastDecision = "";
       SoundSystem.init();
@@ -224,6 +225,7 @@ const SaveSystem = {
       Crowd.maxCombo = 0;
       Crowd.lives = Crowd.maxLives;
       Crowd._lastRoundIntroPlayed = false;
+      Game.globalMaxCombo = 0;
       Crowd._isDemoRound = false;
       Crowd._demoCallback = null;
       Crowd._isLastRound = false;
@@ -1762,6 +1764,7 @@ function showStageRank(stage, misses, displayEl, callback) {
 const Game = {
   currentRound: 0,
   score: 0,
+  globalMaxCombo: 0,
   pressureLevel: 0,
   roundCommands: [],
   sessionId: 0,  // セッション識別（全非同期処理のガード用）
@@ -4311,6 +4314,7 @@ const Slash = {
     this.totalMisses = 0;
     this.lives = this.maxLives;
     this.lastDecision = "";
+    Game.globalMaxCombo = 0;
     this.layerTutorialShown = new Set();
     SoundSystem.init();
     SoundSystem.stopAmbient();
@@ -4782,6 +4786,7 @@ const Slash = {
   onCorrectSlash(targetEl) {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+    if (this.comboCount > Game.globalMaxCombo) Game.globalMaxCombo = this.comboCount;
     const combo = this.comboCount;
     const isFinal = this.isFinalRound();
 
@@ -5052,6 +5057,7 @@ const Slash = {
   onWaitSuccess() {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+    if (this.comboCount > Game.globalMaxCombo) Game.globalMaxCombo = this.comboCount;
     this.el.command.textContent = I18n.t("slash.waitSuccess");
     this.el.targets.querySelectorAll(".sl-target").forEach(c => c.classList.add("sl-target-fade"));
     this.updateComboUI();
@@ -8299,6 +8305,7 @@ const Crowd = {
     if (!this._isDemoRound) {
       this.comboCount++;
       if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+      if (this.comboCount > Game.globalMaxCombo) Game.globalMaxCombo = this.comboCount;
       this.updateComboUI();
     }
 
@@ -8352,6 +8359,7 @@ const Crowd = {
   onNoneSuccess() {
     this.comboCount++;
     if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+    if (this.comboCount > Game.globalMaxCombo) Game.globalMaxCombo = this.comboCount;
     setTimeout(function() { SoundSystem.correct(); }, 60);
     this.updateComboUI();
 
@@ -8630,6 +8638,92 @@ const Crowd = {
     this.el.clearEpilogue.textContent = "";
     this.el.clearButtons.style.opacity = "0";
     this.el.clearButtons.style.pointerEvents = "none";
+    var prevScore = this.el.clearOverlay.querySelector(".cw-clear-score");
+    if (prevScore) prevScore.remove();
+
+    // ---- スコア表示 → ボタン表示 ----
+    const showScoreSection = () => {
+      if (this.sessionId !== sid) return;
+      var slashTotal = 0;
+      for (var i = 0; i < SLASH_LAYERS.length; i++) slashTotal += SLASH_LAYERS[i].rounds;
+      var crowdTotal = 0;
+      for (var i = 0; i < CROWD_LAYERS.length; i++) crowdTotal += CROWD_LAYERS[i].rounds;
+      var totalCorrect = Game.score + (slashTotal - Slash.totalMisses) + (crowdTotal - this.totalMisses);
+      var finalScore = totalCorrect * 100 + Game.globalMaxCombo * 50 + this.lives * 200;
+
+      var HS_KEY = "kusokurae_highscore";
+      var highScore = 0;
+      try { highScore = parseInt(localStorage.getItem(HS_KEY)) || 0; } catch(e) {}
+      var isNewBest = finalScore > highScore;
+      if (isNewBest) {
+        try { localStorage.setItem(HS_KEY, String(finalScore)); } catch(e) {}
+        highScore = finalScore;
+      }
+
+      var evalMsg;
+      if (finalScore >= 6000) evalMsg = I18n.t("scoreEval.tier1") || "誰にも支配されない";
+      else if (finalScore >= 4500) evalMsg = I18n.t("scoreEval.tier2") || "認めたくないが……悪くない";
+      else if (finalScore >= 3000) evalMsg = I18n.t("scoreEval.tier3") || "抵抗はしたようだな";
+      else if (finalScore >= 2000) evalMsg = I18n.t("scoreEval.tier4") || "まだ群れの匂いがする";
+      else evalMsg = I18n.t("scoreEval.tier5") || "流されたな";
+
+      var scoreWrap = document.createElement("div");
+      scoreWrap.className = "cw-clear-score";
+
+      var scoreLine = document.createElement("div");
+      scoreLine.className = "cw-clear-score-main";
+      var scoreLabel = document.createElement("span");
+      scoreLabel.className = "cw-clear-score-label";
+      scoreLabel.textContent = "SCORE ";
+      var scoreNum = document.createElement("span");
+      scoreNum.className = "cw-clear-score-num";
+      scoreNum.textContent = "0";
+      scoreLine.appendChild(scoreLabel);
+      scoreLine.appendChild(scoreNum);
+      scoreWrap.appendChild(scoreLine);
+
+      var bestLine = document.createElement("div");
+      bestLine.className = "cw-clear-score-best";
+      bestLine.textContent = "BEST " + highScore;
+      if (isNewBest) {
+        var newTag = document.createElement("span");
+        newTag.className = "cw-clear-score-new";
+        newTag.textContent = " NEW!";
+        bestLine.appendChild(newTag);
+      }
+      scoreWrap.appendChild(bestLine);
+
+      var evalLine = document.createElement("div");
+      evalLine.className = "cw-clear-score-eval";
+      evalLine.textContent = evalMsg;
+      scoreWrap.appendChild(evalLine);
+
+      this.el.clearEpilogue.after(scoreWrap);
+      requestAnimationFrame(() => {
+        scoreWrap.classList.add("cw-clear-score-show");
+      });
+
+      // カウントアップアニメーション
+      var duration = 1200;
+      var startTime = null;
+      var countStep = (ts) => {
+        if (this.sessionId !== sid) return;
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        scoreNum.textContent = String(Math.floor(finalScore * eased));
+        if (progress < 1) {
+          requestAnimationFrame(countStep);
+        } else {
+          setTimeout(() => {
+            if (this.sessionId !== sid) return;
+            this.el.clearButtons.style.opacity = "1";
+            this.el.clearButtons.style.pointerEvents = "auto";
+          }, 800);
+        }
+      };
+      requestAnimationFrame(countStep);
+    };
 
     setTimeout(() => {
       if (this.sessionId !== sid) return;
@@ -8756,11 +8850,7 @@ const Crowd = {
                                 ei++;
                               } else {
                                 clearInterval(eTimer2);
-                                setTimeout(() => {
-                                  if (this.sessionId !== sid) return;
-                                  this.el.clearButtons.style.opacity = "1";
-                                  this.el.clearButtons.style.pointerEvents = "auto";
-                                }, 1500);
+                                setTimeout(showScoreSection, 800);
                               }
                             }, 80);
                           }, 400);
@@ -8772,12 +8862,7 @@ const Crowd = {
                       ei++;
                     } else {
                       clearInterval(eTimer);
-                      // ボタン
-                      setTimeout(() => {
-                        if (this.sessionId !== sid) return;
-                        this.el.clearButtons.style.opacity = "1";
-                        this.el.clearButtons.style.pointerEvents = "auto";
-                      }, 1500);
+                      setTimeout(showScoreSection, 800);
                     }
                   }, 80);
                 }, 800);
