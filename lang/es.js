@@ -316,6 +316,7 @@ scoreEval: {
   tier3: "Al menos resististe algo",
   tier4: "Aún hueles a rebaño",
   tier5: "Te dejaste llevar",
+  nearMiss: "Solo {0} puntos te faltaron",
 },
 
 // === Comentarios ===

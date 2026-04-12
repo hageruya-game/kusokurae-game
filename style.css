@@ -4623,6 +4623,11 @@ body::before {
   margin-top: 4px;
   letter-spacing: 1px;
 }
+.cw-clear-score-near {
+  font-size: clamp(11px, 2.8vw, 13px);
+  color: #9080a8;
+  margin-top: 2px;
+}
 .cw-clear-buttons {
   display: flex;
   flex-direction: column;

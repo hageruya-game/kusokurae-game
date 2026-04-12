@@ -315,6 +315,7 @@ scoreEval: {
   tier3: "You did resist, at least",
   tier4: "You still smell like the herd",
   tier5: "You went with the flow",
+  nearMiss: "Just {0} points short",
 },
 
 // === Comments ===

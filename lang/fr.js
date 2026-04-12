@@ -317,6 +317,7 @@ scoreEval: {
   tier3: "Tu as résisté, au moins",
   tier4: "Tu sens encore le troupeau",
   tier5: "Tu t'es laissé porter",
+  nearMiss: "Il ne manquait que {0} points",
 },
 
 // === Commentaires ===

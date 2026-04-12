@@ -8698,6 +8698,14 @@ const Crowd = {
       evalLine.textContent = evalMsg;
       scoreWrap.appendChild(evalLine);
 
+      if (finalScore < 6000) {
+        var nextT = [2000, 3000, 4500, 6000].find(function(t) { return t > finalScore; });
+        var nearLine = document.createElement("div");
+        nearLine.className = "cw-clear-score-near";
+        nearLine.textContent = (I18n.t("scoreEval.nearMiss") || "あと{0}点だったな").replace("{0}", nextT - finalScore);
+        scoreWrap.appendChild(nearLine);
+      }
+
       this.el.clearEpilogue.after(scoreWrap);
       requestAnimationFrame(() => {
         scoreWrap.classList.add("cw-clear-score-show");
