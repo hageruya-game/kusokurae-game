@@ -22,7 +22,7 @@ var I18n = {
     }
     // 遅延ロード
     var script = document.createElement("script");
-    script.src = "lang/" + lang + ".js?v=1";
+    script.src = "lang/" + lang + ".js?v=2";
     var self = this;
     script.onload = function() {
       self._lang = lang;
