@@ -7814,7 +7814,7 @@ const Crowd = {
           }
         } else if (axis === "hue") {
           // 色相差：微妙に色味が違う（気づけるが雑には分からないレベル）
-          var hueRange = 12 + (25 - 12) * s; // diffStrength 1.0→±25°, 0.4→±17°
+          var hueRange = 8 + (15 - 8) * s; // diffStrength 1.0→±15°, 0.4→±11°
           diff.hue = baseHue + sign * hueRange;
         }
       }
