@@ -318,6 +318,20 @@ scoreEval: {
   nearMiss: "Just {0} points short",
 },
 
+// === Reactions ===
+reactions: {
+  waitCorrect: ["Finally", "Good enough", "You read that one"],
+  correct: ["...", "Hm", "Not yet", "And?", "Tch"],
+  timeout: "Time's up",
+  waitMiss: ["Don't touch", "Shallow", "Can't you see?"],
+  schoolMiss: ["Scared to stand out?", "They're watching", "The air won", "You'll blend in now", "Fell in line again"],
+  miss: ["Couldn't read it?", "Too slow", "Naive", "That stung, huh?"],
+  gameoverTaunts: ["Is that all?", "Not worth ranking", "A rank? For you?", "Pathetic", "Just leave"],
+  slashGOClose: ["...So close", "Almost there", "Will you reach it next time?", "I wanted to acknowledge you"],
+  slashGOMid: ["...Boring", "Lost interest", "Enough", "Already forgotten"],
+  slashGOEarly: ["That's it?", "Disappointing", "Get out", "Don't come back", "Too weak to laugh at"],
+},
+
 // === Comments ===
 comments: {
   title: ["Everyone's doing it, right?","You can read the room, can't you?","You're the only one who's different.","Don't fight it.","You know you don't fit in, right?"],

@@ -319,6 +319,20 @@ scoreEval: {
   nearMiss: "Solo {0} puntos te faltaron",
 },
 
+// === Reacciones ===
+reactions: {
+  waitCorrect: ["Por fin", "Suficiente", "Esa la leíste"],
+  correct: ["……", "Hm", "Aún no", "¿Y?", "Tch"],
+  timeout: "Se acabó el tiempo",
+  waitMiss: ["No toques", "Superficial", "¿No lo ves?"],
+  schoolMiss: ["¿Te da miedo destacar?", "Te están mirando", "El ambiente ganó", "Te fundiste", "Otra vez siguiendo"],
+  miss: ["¿No pudiste leerlo?", "Muy lento", "Ingenuo", "Eso dolió, ¿eh?"],
+  gameoverTaunts: ["¿Eso es todo?", "No mereces rango", "¿Un rango? ¿Para ti?", "Patético", "Vete ya"],
+  slashGOClose: ["…Casi", "Estuviste cerca", "¿Llegarás la próxima vez?", "Quería reconocerte"],
+  slashGOMid: ["…Aburrido", "Perdí el interés", "Suficiente", "Ya lo olvidé"],
+  slashGOEarly: ["¿Eso es todo?", "Decepcionante", "Fuera", "No vuelvas", "Muy débil para reírse"],
+},
+
 // === Comentarios ===
 comments: {
   title: ["\u00BFTodos lo hacen, tú no?","\u00BFSabes leer el ambiente, verdad?","Eres el único diferente\u2026","\u00BFVas a llevar la contraria?","¿Te das cuenta de que desentonas?"],

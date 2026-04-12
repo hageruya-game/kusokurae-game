@@ -2741,7 +2741,8 @@ const Game = {
     this.showOX(true);
     this.changePressure(PRESSURE.exceptionCorrect);
     // 正しく待てた時の専用リアクション
-    var waitReacts = ["やっとか", "それでいい", "少しは読めたな"];
+    var waitReacts = I18n.ta("reactions.waitCorrect");
+    if (!waitReacts.length) waitReacts = ["やっとか", "それでいい", "少しは読めたな"];
     this.showSpeech(waitReacts[Math.floor(Math.random() * waitReacts.length)], "speech-mockery");
     // 30%の確率で表情変化
     if (Math.random() < 0.3) this.flashGameCharImage("enemy_frustrated_clean.png", 600);
@@ -2781,7 +2782,7 @@ const Game = {
     this.el.feedback.textContent = CommentSystem.pick("timeout");
     this.el.feedback.className = "feedback feedback-big wrong";
     this.showOX(false);
-    this.showGameComment("時間切れ", "speech-danger");
+    this.showGameComment(I18n.t("reactions.timeout") || "時間切れ", "speech-danger");
     // 強煽り(中央)とmockery(吹き出し)は排他。taunt優先
     if (this.inPhase2) {
       this.showTaunt(200);
@@ -2842,7 +2843,8 @@ const Game = {
       this.showOX(true);
       this.changePressure(isEx ? PRESSURE.exceptionCorrect : PRESSURE.normalCorrect);
       // キモキャラの短いリアクション（brainwash: 50%, その他: 35%）
-      var correctReacts = ["……", "ほう", "まだだ", "それで？", "チッ"];
+      var correctReacts = I18n.ta("reactions.correct");
+      if (!correctReacts.length) correctReacts = ["……", "ほう", "まだだ", "それで？", "チッ"];
       var correctReactChance = (cmd.theme === "brainwash") ? 0.5 : 0.35;
       if (Math.random() < correctReactChance) {
         this.showSpeech(correctReacts[Math.floor(Math.random() * correctReacts.length)], "speech-mockery");
@@ -2860,13 +2862,16 @@ const Game = {
       this.flashGameCharImage(missFace, 1300);
       // キモキャラの刺さる一言（wait系と通常で分岐）
       if (isWaitLike) {
-        var waitStings = ["触るな", "浅い", "見えてないのか"];
+        var waitStings = I18n.ta("reactions.waitMiss");
+        if (!waitStings.length) waitStings = ["触るな", "浅い", "見えてないのか"];
         this.showSpeech(waitStings[Math.floor(Math.random() * waitStings.length)], "speech-danger");
       } else if (cmd.theme === "school") {
-        var schoolStings = ["浮くのが怖いか", "見られてるぞ", "空気に負けたな", "それで埋もれる", "また合わせたか"];
+        var schoolStings = I18n.ta("reactions.schoolMiss");
+        if (!schoolStings.length) schoolStings = ["浮くのが怖いか", "見られてるぞ", "空気に負けたな", "それで埋もれる", "また合わせたか"];
         this.showSpeech(schoolStings[Math.floor(Math.random() * schoolStings.length)], "speech-danger");
       } else {
-        var stings = ["読めなかったか", "遅い", "甘いな", "効いたろ"];
+        var stings = I18n.ta("reactions.miss");
+        if (!stings.length) stings = ["読めなかったか", "遅い", "甘いな", "効いたろ"];
         this.showSpeech(stings[Math.floor(Math.random() * stings.length)], "speech-danger");
       }
       this.changePressure(isEx ? PRESSURE.exceptionWrong : PRESSURE.normalWrong);
@@ -2907,7 +2912,8 @@ const Game = {
         if (this.sessionId !== gid) { return; }
         if (this.contaminated) {
           // ゲームオーバー演出: laugh顔+捨てゼリフ+即リトライボタン→1秒後にリザルト
-          var goTaunts = ["この程度で終わりか", "評価する価値もない", "ランク？ お前に？", "話にならんな", "もう帰れ"];
+          var goTaunts = I18n.ta("reactions.gameoverTaunts");
+          if (!goTaunts.length) goTaunts = ["この程度で終わりか", "評価する価値もない", "ランク？ お前に？", "話にならんな", "もう帰れ"];
           this.setGameCharImage("enemy_laugh_clean.png");
           this.showSpeech(goTaunts[Math.floor(Math.random() * goTaunts.length)], "speech-danger");
           this.el.btnQuickRetry.classList.add("show");
@@ -5144,13 +5150,16 @@ const Slash = {
     var goFace, goLines;
     if (remaining <= 4) {
       goFace = "assets/enemy_frustrated_clean.png";
-      goLines = ["……惜しかったな", "あと少しだったのに", "次は届くか？", "認めてやりたかった"];
+      goLines = I18n.ta("reactions.slashGOClose");
+      if (!goLines.length) goLines = ["……惜しかったな", "あと少しだったのに", "次は届くか？", "認めてやりたかった"];
     } else if (reached >= 9) {
       goFace = "assets/enemy_blank_clean.png";
-      goLines = ["……つまらん", "興味を失った", "もういい", "覚えてもいない"];
+      goLines = I18n.ta("reactions.slashGOMid");
+      if (!goLines.length) goLines = ["……つまらん", "興味を失った", "もういい", "覚えてもいない"];
     } else {
       goFace = "assets/enemy_laugh_clean.png";
-      goLines = ["その程度か", "期待外れだ", "帰れ", "もう来るな", "弱すぎて笑えない"];
+      goLines = I18n.ta("reactions.slashGOEarly");
+      if (!goLines.length) goLines = ["その程度か", "期待外れだ", "帰れ", "もう来るな", "弱すぎて笑えない"];
     }
     if (this.el.gameoverFace) {
       this.el.gameoverFace.src = goFace;

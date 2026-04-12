@@ -320,6 +320,20 @@ scoreEval: {
   nearMiss: "Il ne manquait que {0} points",
 },
 
+// === Réactions ===
+reactions: {
+  waitCorrect: ["Enfin", "Ça ira", "Tu l'as lu, celui-là"],
+  correct: ["……", "Hm", "Pas encore", "Et alors ?", "Tss"],
+  timeout: "Temps écoulé",
+  waitMiss: ["Touche pas", "Superficiel", "Tu ne vois pas ?"],
+  schoolMiss: ["Peur de sortir du lot ?", "On te regarde", "L'ambiance a gagné", "Tu t'es fondu", "Encore suivi le groupe"],
+  miss: ["Pas pu lire ?", "Trop lent", "Naïf", "Ça fait mal, hein ?"],
+  gameoverTaunts: ["C'est tout ?", "Pas digne d'un rang", "Un rang ? Pour toi ?", "Pitoyable", "Dégage"],
+  slashGOClose: ["…Si près", "Presque", "Tu y arriveras la prochaine fois ?", "Je voulais te reconnaître"],
+  slashGOMid: ["…Ennuyeux", "Plus d'intérêt", "Assez", "Déjà oublié"],
+  slashGOEarly: ["C'est tout ?", "Décevant", "Dehors", "Ne reviens pas", "Trop faible pour en rire"],
+},
+
 // === Commentaires ===
 comments: {
   title: ["Tout le monde le fait, non ?","Tu sens l'ambiance, quand même ?","T'es le seul à être différent.","Ne fais pas de vagues.","Tu sais que tu détonnes, hein ?"],
