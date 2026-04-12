@@ -130,7 +130,7 @@ const STAGES_EXCEPTION = [
 
 // ----- 定数 -----
 const ROUNDS_PER_GAME = 10;
-const PHASE_CHANGE_ROUND = 5; // R5終了後（0-indexed: currentRoundが5になった時）
+const PHASE_CHANGE_ROUND = 4; // R4終了後（0-indexed: currentRoundが4になった時）
 
 const TIMING = {
   pressurePhase: 1400,
@@ -262,7 +262,7 @@ function getTimeLimit(roundIndex) {
 
 const PRESSURE = {
   initial: 20,
-  max: 100,
+  max: 80,
   min: 0,
   normalCorrect: -6,
   normalWrong: 12,
@@ -2052,8 +2052,8 @@ const Game = {
   // 本番モード: 3段階のテーマ制御 + Phase2例外問題
   // 序盤(R1-3): order/air — 直接的でわかりやすい
   // 序盤(R1-2): order/air — 直接的でわかりやすい
-  // 中盤(R3-5): school/group/sns — 心理的に揺さぶる
-  // 後半(R6-10): brainwash + trap例外 — 重い圧力＋裏切り
+  // 中盤(R3-4): school/group/sns — 心理的に揺さぶる
+  // 後半(R5-10): brainwash + trap例外 — 重い圧力＋裏切り
   buildRounds() {
     function shuffle(arr) { return arr.sort(function() { return Math.random() - 0.5; }); }
     var all = STAGES_NORMAL.slice();
@@ -2078,21 +2078,23 @@ const Game = {
       }
     }
 
-    // 中盤3問（school/group/sns）
-    var r3to5 = mid.slice(0, 3);
+    // 中盤2問（school/group/sns）
+    var r3to4 = mid.slice(0, 2);
 
-    // Phase1 = 序盤 + 中盤
-    var phase1 = r1to2.concat(r3to5);
+    // Phase1 = 序盤 + 中盤（4問）
+    var phase1 = r1to2.concat(r3to4);
 
-    // Phase2: R6=brainwash(導入)、R7-10=trap例外+brainwash混合
+    // Phase2: R5=brainwash(導入)、R6-10=trap例外+brainwash+mid混合（6問）
     var exception = shuffle(STAGES_EXCEPTION.slice());
-    var r6 = [late[0]]; // R6は必ずbrainwash（後半への導入）
-    var exCount = 2 + Math.floor(Math.random() * 2); // 2-3問
-    var r7to10 = shuffle(
-      exception.slice(0, exCount).concat(late.slice(1, 1 + (4 - exCount)))
+    var r5 = [late[0]]; // R5は必ずbrainwash（後半への導入）
+    var exCount = 3 + Math.floor(Math.random() * 2); // 3-4問
+    var remaining = 5 - exCount; // 1-2問
+    var filler = shuffle(late.slice(1).concat(mid.slice(2)));
+    var r6to10 = shuffle(
+      exception.slice(0, exCount).concat(filler.slice(0, remaining))
     );
 
-    return phase1.concat(r6, r7to10);
+    return phase1.concat(r5, r6to10);
   },
 
   startGame() {
