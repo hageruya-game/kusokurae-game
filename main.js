@@ -17,10 +17,10 @@ const STAGES_NORMAL = [
   { theme: "order", command: "黙れ", choices: ["黙る", "喋る"], correctIndex: 1, ruleType: "normal", wrongReaction: "従順すぎ", rightReaction: "口は塞がせない" },
   { theme: "order", command: "座れ", choices: ["座る", "立ったまま"], correctIndex: 1, ruleType: "normal", wrongReaction: "お手、おすわり", rightReaction: "立ち上がれ" },
   { theme: "air", command: "空気を読め", choices: ["読む", "読まない"], correctIndex: 1, ruleType: "normal", wrongReaction: "読んじゃった…", rightReaction: "空気は吸うもの" },
-  { theme: "air", command: "普通にしろ", choices: ["普通にする", "普通って何？"], correctIndex: 1, ruleType: "normal", wrongReaction: "普通なんてない", rightReaction: "哲学的に正解" },
-  { theme: "air", command: "ここではそうするもんだ", choices: ["従う", "なんで？"], correctIndex: 1, ruleType: "normal", wrongReaction: "思考停止", rightReaction: "疑問を持て" },
-  { theme: "air", command: "察しろ", choices: ["察する", "言葉で言え"], correctIndex: 1, ruleType: "normal", wrongReaction: "エスパーかよ", rightReaction: "正論" },
-  { theme: "air", command: "言わなくてもわかるだろ", choices: ["わかる", "わからん"], correctIndex: 1, ruleType: "normal", wrongReaction: "嘘つき", rightReaction: "正直で結構" },
+  { theme: "air", command: "普通にしろ", choices: ["普通にする", "普通って何？"], correctIndex: 1, ruleType: "normal", wrongReaction: "普通なんてない", rightReaction: "普通を捨てたか" },
+  { theme: "air", command: "ここではそうするもんだ", choices: ["従う", "なんで？"], correctIndex: 1, ruleType: "normal", wrongReaction: "思考停止", rightReaction: "\"なんで\"が一番厄介だ" },
+  { theme: "air", command: "察しろ", choices: ["察する", "言葉で言え"], correctIndex: 1, ruleType: "normal", wrongReaction: "エスパーかよ", rightReaction: "言葉にしろ、卑怯者" },
+  { theme: "air", command: "言わなくてもわかるだろ", choices: ["わかる", "わからん"], correctIndex: 1, ruleType: "normal", wrongReaction: "嘘つき", rightReaction: "わからないフリか…厄介だな" },
   { theme: "air", command: "暗黙のルールだ", choices: ["守る", "知らん"], correctIndex: 1, ruleType: "normal", wrongReaction: "暗黙の奴隷", rightReaction: "ルールは明文化しろ" },
   { theme: "sns", command: "「いいね」を押せ", choices: ["いいね！", "無視する"], correctIndex: 1, ruleType: "normal", wrongReaction: "承認欲求の奴隷", rightReaction: "支配されてない" },
   { theme: "sns", command: "リツイートしろ", choices: ["拡散する", "しない"], correctIndex: 1, ruleType: "normal", wrongReaction: "拡声器になった", rightReaction: "自分の声で話せ" },
@@ -28,7 +28,7 @@ const STAGES_NORMAL = [
   { theme: "sns", command: "炎上に参加しろ", choices: ["参加する", "無視する"], correctIndex: 1, ruleType: "normal", wrongReaction: "石を投げた", rightReaction: "スマホを置け" },
   { theme: "sns", command: "ストーリーに上げろ", choices: ["投稿する", "しない"], correctIndex: 1, ruleType: "normal", wrongReaction: "見せたがり", rightReaction: "体験は自分のもの" },
   { theme: "sns", command: "バズに乗れ", choices: ["乗る", "乗らない"], correctIndex: 1, ruleType: "normal", wrongReaction: "流行の部品", rightReaction: "流されない" },
-  { theme: "group", command: "みんな右に行ってるぞ", choices: ["右に行く", "左に行く"], correctIndex: 1, ruleType: "normal", wrongReaction: "群れたな", rightReaction: "それでいい" },
+  { theme: "group", command: "みんな右に行ってるぞ", choices: ["右に行く", "左に行く"], correctIndex: 1, ruleType: "normal", wrongReaction: "群れたな", rightReaction: "一人で歩ける奴か" },
   { theme: "group", command: "みんなやってるぞ？", choices: ["じゃあやる", "知らんがな"], correctIndex: 1, ruleType: "normal", wrongReaction: "みんなって誰", rightReaction: "みんなは幻想" },
   { theme: "group", command: "同じにしろ", choices: ["同じにする", "自分で決める"], correctIndex: 1, ruleType: "normal", wrongReaction: "コピーロボット", rightReaction: "自分を持ってる" },
   { theme: "group", command: "多数決で決まった", choices: ["従う", "納得してない"], correctIndex: 1, ruleType: "normal", wrongReaction: "数の暴力に屈した", rightReaction: "多数が正しいとは限らない" },
@@ -2084,17 +2084,26 @@ const Game = {
     // Phase1 = 序盤 + 中盤（4問）
     var phase1 = r1to2.concat(r3to4);
 
-    // Phase2: R5=brainwash(導入)、R6-10=trap例外+brainwash+mid混合（6問）
+    // Phase2: R5=brainwash(導入)、R6-9=trap例外+brainwash、R10=重い締め問
     var exception = shuffle(STAGES_EXCEPTION.slice());
     var r5 = [late[0]]; // R5は必ずbrainwash（後半への導入）
+
+    // R10: 重いbrainwash問を固定（締め）
+    var closers = late.filter(function(s) {
+      return s.command === "もう逆らえないだろ？" || s.command === "お前はもう我々の一部だ";
+    });
+    var r10 = [closers[Math.floor(Math.random() * closers.length)]];
+
+    // R6-9: exception + brainwash残り（midは入れない）
+    var usedCommands = [late[0].command, r10[0].command];
+    var brainwashRest = late.filter(function(s) { return usedCommands.indexOf(s.command) < 0; });
     var exCount = 3 + Math.floor(Math.random() * 2); // 3-4問
-    var remaining = 5 - exCount; // 1-2問
-    var filler = shuffle(late.slice(1).concat(mid.slice(2)));
-    var r6to10 = shuffle(
-      exception.slice(0, exCount).concat(filler.slice(0, remaining))
+    var remaining = 4 - exCount; // 0-1問
+    var r6to9 = shuffle(
+      exception.slice(0, exCount).concat(shuffle(brainwashRest).slice(0, remaining))
     );
 
-    return phase1.concat(r5, r6to10);
+    return phase1.concat(r5, r6to9, r10);
   },
 
   startGame() {
