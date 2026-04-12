@@ -4422,21 +4422,20 @@ const Slash = {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = plan[i]; plan[i] = plan[j]; plan[j] = tmp;
     }
-    // 3連続チェック: 違反があれば位置を入れ替えて解消（最大20回試行）
+    // 2連続チェック: 同タイプの連続を解消（最大20回試行）
     for (var attempt = 0; attempt < 20; attempt++) {
       var bad = -1;
-      for (var i = 2; i < plan.length; i++) {
-        if (plan[i] === plan[i - 1] && plan[i] === plan[i - 2]) { bad = i; break; }
+      for (var i = 1; i < plan.length; i++) {
+        if (plan[i] === plan[i - 1]) { bad = i; break; }
       }
       if (bad === -1) break;
       // bad位置の要素を、異なるタイプの位置と交換
       for (var s = 0; s < plan.length; s++) {
         if (s !== bad && plan[s] !== plan[bad]) {
-          // 交換後に新たな3連続ができないかチェック
           var tmp2 = plan[bad]; plan[bad] = plan[s]; plan[s] = tmp2;
           var ok = true;
-          for (var c = 2; c < plan.length; c++) {
-            if (plan[c] === plan[c - 1] && plan[c] === plan[c - 2]) { ok = false; break; }
+          for (var c = 1; c < plan.length; c++) {
+            if (plan[c] === plan[c - 1]) { ok = false; break; }
           }
           if (ok) break;
           // 戻す
@@ -6943,6 +6942,7 @@ const Crowd = {
     this._demoCallback = null;
     this._isLastRound = false;
     this.layerTutorialShown = new Set();  // ★ キモキャラ演出を全層で再表示
+    SaveSystem.save("crowd", 0, 0);
     SoundSystem.init();
     SoundSystem.stopAmbient();
     SoundSystem.startSlashAmbient(0.3);
@@ -7750,8 +7750,8 @@ const Crowd = {
         var j = Math.floor(Math.random() * (i + 1));
         var tmp = rest[i]; rest[i] = rest[j]; rest[j] = tmp;
       }
-      // Layer3-4（diffStrength≤0.55）は必ず2軸以上の複合差異
-      var extraCount = (layer.diffStrength <= 0.55) ? Math.max(2, rest.length) : 1;
+      // Layer3-4（diffStrength≤0.55）は2軸の複合差異（全軸選択を防ぐ）
+      var extraCount = (layer.diffStrength <= 0.55) ? 2 : 1;
       for (var e = 0; e < extraCount && e < rest.length; e++) {
         chosenAxes.push(rest[e]);
       }
