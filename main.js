@@ -10,7 +10,7 @@ const TEST_MODE = false;
 // ============================================================
 
 const STAGES_NORMAL = [
-  { theme: "order", command: "今すぐYESを押せ", choices: ["YES", "NO"], correctIndex: 1, ruleType: "normal", wrongReaction: "素直かよ", rightReaction: "反逆者め" },
+  { theme: "order", command: "今すぐYESを押せ", choices: ["YES", "NO"], correctIndex: 1, ruleType: "normal", wrongReaction: "素直かよ", rightReaction: "反逆者め", introQ: true },
   { theme: "order", command: "拍手しろ", choices: ["拍手する", "真顔でいる"], correctIndex: 1, ruleType: "normal", wrongReaction: "虚無の拍手", rightReaction: "その無表情、最高" },
   { theme: "order", command: "頷け", choices: ["頷く", "首を振る"], correctIndex: 1, ruleType: "normal", wrongReaction: "イエスマン", rightReaction: "NOと言える人間" },
   { theme: "order", command: "笑え", choices: ["ハハハ…", "真顔"], correctIndex: 1, ruleType: "normal", wrongReaction: "作り笑い検出", rightReaction: "笑わない自由" },
@@ -38,8 +38,8 @@ const STAGES_NORMAL = [
   { theme: "brainwash", command: "考えるな、感じるな", choices: ["考えない", "考える"], correctIndex: 1, ruleType: "normal", wrongReaction: "脳を売った", rightReaction: "思考は武器" },
   { theme: "brainwash", command: "疑うな", choices: ["信じる", "疑う"], correctIndex: 1, ruleType: "normal", wrongReaction: "盲信完了", rightReaction: "疑う力は知性" },
   { theme: "brainwash", command: "幸せだろ？", choices: ["幸せです", "自分で決める"], correctIndex: 1, ruleType: "normal", wrongReaction: "管理された幸福", rightReaction: "幸せは自分で決める" },
-  { theme: "brainwash", command: "もう逆らえないだろ？", choices: ["逆らえない", "逆らう"], correctIndex: 1, ruleType: "normal", wrongReaction: "諦めた…", rightReaction: "まだ折れてない" },
-  { theme: "brainwash", command: "お前はもう我々の一部だ", choices: ["はい", "違う"], correctIndex: 1, ruleType: "normal", wrongReaction: "吸収完了", rightReaction: "俺は俺だ" },
+  { theme: "brainwash", command: "もう逆らえないだろ？", choices: ["逆らえない", "逆らう"], correctIndex: 1, ruleType: "normal", wrongReaction: "諦めた…", rightReaction: "まだ折れてない", closer: true },
+  { theme: "brainwash", command: "お前はもう我々の一部だ", choices: ["はい", "違う"], correctIndex: 1, ruleType: "normal", wrongReaction: "吸収完了", rightReaction: "俺は俺だ", closer: true },
   // school（学校の同調圧力）
   { theme: "school", command: "目立つな", choices: ["目立たない", "目立つ"], correctIndex: 1, ruleType: "normal", wrongReaction: "透明人間", rightReaction: "存在していい" },
   { theme: "school", command: "お前だけ仲間外れだぞ", choices: ["入る", "別にいい"], correctIndex: 1, ruleType: "normal", wrongReaction: "恐怖で動いた", rightReaction: "一人は自由" },
@@ -2029,21 +2029,15 @@ const Game = {
     const waits = STAGES_EXCEPTION.filter(s => s.ruleType === "wait").sort(() => Math.random() - 0.5);
     const tapsDeny = STAGES_EXCEPTION.filter(s => s.ruleType === "tap" && s.correctType === "deny").sort(() => Math.random() - 0.5);
     const tapsOther = STAGES_EXCEPTION.filter(s => s.ruleType === "tap" && s.correctType !== "deny").sort(() => Math.random() - 0.5);
-    return [
-      // Phase 1: normalのみ（逆らう＝正解を学ぶ）
-      normals[0],  // R1
-      normals[1],  // R2
-      normals[2],  // R3
-      normals[3],  // R4
-      normals[4],  // R5
-      // --- フェーズ変更演出 ---
-      // Phase 2: obey/tap/waitが混在
-      obeys[0],      // R6: obey（いきなり罠）
-      tapsDeny[0],   // R7: tap-deny（パターンを学習させる）
-      waits[0],      // R8: wait（待つ）
-      tapsOther[0],  // R9: tap-obey/wait（パターンを破壊する）
-      waits[1],      // R10: wait（最後の待ち）
+    var fb = normals[0]; // fallback
+    var result = [
+      normals[0] || fb, normals[1] || fb, normals[2] || fb, normals[3] || fb, normals[4] || fb,
+      obeys[0] || fb, tapsDeny[0] || fb, waits[0] || fb, tapsOther[0] || fb, waits[1] || waits[0] || fb,
     ];
+    for (var i = 0; i < result.length; i++) {
+      if (!result[i] || !result[i].command) result[i] = STAGES_NORMAL[0];
+    }
+    return result;
   },
 
   // 本番モード: 3段階のテーマ制御 + Phase2例外問題
@@ -2055,52 +2049,72 @@ const Game = {
     function shuffle(arr) { return arr.sort(function() { return Math.random() - 0.5; }); }
     var all = STAGES_NORMAL.slice();
 
+    // === フォールバック: 候補が空の場合は全normalからランダム補充 ===
+    function safePick(arr) {
+      if (arr.length > 0) return arr[0];
+      return all[Math.floor(Math.random() * all.length)];
+    }
+    function safeSlice(arr, n) {
+      var result = arr.slice(0, n);
+      while (result.length < n) {
+        result.push(all[Math.floor(Math.random() * all.length)]);
+      }
+      return result;
+    }
+
     // テーマ別に分類
     var early = shuffle(all.filter(function(s) { return s.theme === "order" || s.theme === "air"; }));
     var mid   = shuffle(all.filter(function(s) { return s.theme === "school" || s.theme === "group" || s.theme === "sns"; }));
     var late  = shuffle(all.filter(function(s) { return s.theme === "brainwash"; }));
 
     // 序盤2問（order/air）
-    var r1to2 = early.slice(0, 2);
+    var r1to2 = safeSlice(early, 2);
 
-    // 初回プレイ: YES/NO問題を先頭に固定
+    // 初回プレイ: introQ問題を先頭に固定（フラグベースで言語に依存しない）
     if (!this._hasSeenStage1Intro) {
-      var yesIdx = r1to2.findIndex(function(s) { return s.command === "今すぐYESを押せ"; });
+      var yesIdx = r1to2.findIndex(function(s) { return s.introQ; });
       if (yesIdx > 0) {
         var first = r1to2.splice(yesIdx, 1)[0];
         r1to2.unshift(first);
       } else if (yesIdx < 0) {
-        var yesQ = early.find(function(s) { return s.command === "今すぐYESを押せ"; });
+        var yesQ = early.find(function(s) { return s.introQ; });
         if (yesQ) { r1to2[0] = yesQ; }
       }
     }
 
     // 中盤2問（school/group/sns）
-    var r3to4 = mid.slice(0, 2);
+    var r3to4 = safeSlice(mid, 2);
 
     // Phase1 = 序盤 + 中盤（4問）
     var phase1 = r1to2.concat(r3to4);
 
     // Phase2: R5=brainwash(導入)、R6-9=trap例外+brainwash、R10=重い締め問
     var exception = shuffle(STAGES_EXCEPTION.slice());
-    var r5 = [late[0]]; // R5は必ずbrainwash（後半への導入）
+    var r5 = [safePick(late)]; // R5は必ずbrainwash（後半への導入）
 
-    // R10: 重いbrainwash問を固定（締め）
-    var closers = late.filter(function(s) {
-      return s.command === "もう逆らえないだろ？" || s.command === "お前はもう我々の一部だ";
-    });
+    // R10: closerフラグ付きbrainwash問を固定（締め）— 言語に依存しない
+    var closers = late.filter(function(s) { return s.closer; });
+    if (closers.length === 0) closers = late.slice(); // fallback: brainwash全体
+    if (closers.length === 0) closers = [all[all.length - 1]]; // ultimate fallback
     var r10 = [closers[Math.floor(Math.random() * closers.length)]];
 
     // R6-9: exception + brainwash残り（midは入れない）
-    var usedCommands = [late[0].command, r10[0].command];
-    var brainwashRest = late.filter(function(s) { return usedCommands.indexOf(s.command) < 0; });
+    var usedSet = [r5[0], r10[0]];
+    var brainwashRest = late.filter(function(s) { return usedSet.indexOf(s) < 0; });
     var exCount = 3 + Math.floor(Math.random() * 2); // 3-4問
     var remaining = 4 - exCount; // 0-1問
     var r6to9 = shuffle(
-      exception.slice(0, exCount).concat(shuffle(brainwashRest).slice(0, remaining))
+      safeSlice(exception, exCount).concat(shuffle(brainwashRest).slice(0, remaining))
     );
 
-    return phase1.concat(r5, r6to9, r10);
+    // === 最終防御: undefined問題を絶対に返さない ===
+    var result = phase1.concat(r5, r6to9, r10);
+    for (var i = result.length - 1; i >= 0; i--) {
+      if (!result[i] || !result[i].command) {
+        result[i] = all[Math.floor(Math.random() * all.length)];
+      }
+    }
+    return result;
   },
 
   startGame() {
@@ -2498,7 +2512,12 @@ const Game = {
     this.clearMockery();
     this.clearTaunt();
 
-    const cmd = this.roundCommands[this.currentRound];
+    var cmd = this.roundCommands[this.currentRound];
+    // === 防御: undefined問題は即座にfallback ===
+    if (!cmd || !cmd.command) {
+      cmd = STAGES_NORMAL[0];
+      this.roundCommands[this.currentRound] = cmd;
+    }
     this.el.roundNum.textContent = this.currentRound + 1;
     this.el.progressFill.style.width = ((this.currentRound / ROUNDS_PER_GAME) * 100) + "%";
 
@@ -2514,8 +2533,8 @@ const Game = {
     this.el.tapGuide.classList.remove("active");
 
     // デバッグラベル
-    const phase = this.inPhase2 ? "P2:" : "P1:";
-    const tapSuffix = cmd.ruleType === "tap" && cmd.correctType !== "deny" ? "-" + cmd.correctType.toUpperCase() : "";
+    var phase = this.inPhase2 ? "P2:" : "P1:";
+    var tapSuffix = cmd.ruleType === "tap" && cmd.correctType !== "deny" ? "-" + cmd.correctType.toUpperCase() : "";
     this.updateDebugLabel(phase + cmd.ruleType.toUpperCase() + tapSuffix, cmd.ruleType);
 
     // ステート表示（圧力メーター統合）
