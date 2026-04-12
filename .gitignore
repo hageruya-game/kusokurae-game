@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Diagnostic / dev tools
+_diag_output.txt
+_diag_server.py
+diag.html
+analyze_min_miss.js
+audit_directions.js
+verify.js
+
+# Dev test assets
+correct_fly.png
+image_0_original.png
+image_0_transparent.png

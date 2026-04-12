@@ -293,6 +293,21 @@ stageRank: {
   stage2B: "…Just luck.",
 },
 
+// === Interlude (stage transition enemy lines) ===
+interlude: {
+  s1toS2Lines: ["Don't think it's over", "The real test starts now", "Entertain me a little", "Don't get cocky"],
+  s1GoodLines: ["…You're catching on", "Annoying, but not bad", "That look on your face irritates me"],
+  s1MidLines: ["Don't get ahead of yourself", "There's a long way left", "Starting to read the room, huh"],
+  s1BadLines: ["…Not bad, I'll give you that", "Just barely made it", "Pathetic, but you survived"],
+},
+
+// === Final clear enemy reactions ===
+clearReact: {
+  goodLines: ["…What the hell was that", "Impossible", "This wasn't supposed to happen"],
+  midLines: ["…Not bad, I'll admit", "I don't like it", "Still too soft though"],
+  badLines: ["…So you survived", "Just got lucky", "Ugly, but alive"],
+},
+
 // === Comments ===
 comments: {
   title: ["Everyone's doing it, right?","You can read the room, can't you?","You're the only one who's different.","Don't fight it.","You know you don't fit in, right?"],

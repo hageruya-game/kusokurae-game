@@ -295,6 +295,21 @@ stages: {
       stage2B: "…Juste de la chance.",
     },
 
+// === Interlude (répliques de l'ennemi entre les étapes) ===
+interlude: {
+  s1toS2Lines: ["Ne crois pas que c'est fini", "Le vrai test commence maintenant", "Amuse-moi un peu", "Ne prends pas la grosse tête"],
+  s1GoodLines: ["…Tu commences à comprendre", "Agaçant, mais pas mal", "Cette tête que tu fais m'irrite"],
+  s1MidLines: ["Ne te relâche pas", "Il reste encore beaucoup", "Tu commences à y voir clair, hein ?"],
+  s1BadLines: ["…Pas mal, je l'admets", "De justesse", "Pitoyable, mais tu as survécu"],
+},
+
+// === Réaction de l'ennemi au clear final ===
+clearReact: {
+  goodLines: ["…C'était quoi, ça", "Impossible", "Ce n'était pas censé arriver"],
+  midLines: ["…J'admets, pas mal", "Ça ne me plaît pas du tout", "Mais tu es encore trop tendre"],
+  badLines: ["…Tu as donc survécu", "Juste de la chance", "Misérable, mais vivant"],
+},
+
 // === Commentaires ===
 comments: {
   title: ["Tout le monde le fait, non ?","Tu sens l'ambiance, quand même ?","T'es le seul à être différent.","Ne fais pas de vagues.","Tu sais que tu détonnes, hein ?"],

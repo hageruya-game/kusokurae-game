@@ -294,6 +294,21 @@ stages: {
       stage2B: "…Solo fue suerte.",
     },
 
+// === Interludio (frases del enemigo entre etapas) ===
+interlude: {
+  s1toS2Lines: ["No creas que esto acabó", "Lo real empieza ahora", "A ver si me entretienes", "No te lo creas tanto"],
+  s1GoodLines: ["…Vas pillando el truco", "Me molesta, pero nada mal", "Esa cara tuya me irrita"],
+  s1MidLines: ["No te confíes", "Aún queda mucho", "Empiezas a ver algo, ¿eh?"],
+  s1BadLines: ["…Vaya, no está mal", "Por los pelos", "Penoso, pero sobreviviste"],
+},
+
+// === Reacción del enemigo en el final ===
+clearReact: {
+  goodLines: ["…Qué demonios fue eso", "Imposible", "Esto no debía pasar"],
+  midLines: ["…Admito que no estuvo mal", "No me gusta nada", "Pero aún eres blando"],
+  badLines: ["…Así que sobreviviste", "Solo fue suerte", "Patético, pero vivo"],
+},
+
 // === Comentarios ===
 comments: {
   title: ["\u00BFTodos lo hacen, tú no?","\u00BFSabes leer el ambiente, verdad?","Eres el único diferente\u2026","\u00BFVas a llevar la contraria?","¿Te das cuenta de que desentonas?"],

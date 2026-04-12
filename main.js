@@ -1722,12 +1722,10 @@ const SoundSystem = {
 
 // ----- ステージランク表示 -----
 function showStageRank(stage, misses, displayEl, callback) {
-  console.log("[FLOW] showStageRank START | stage=" + stage + " misses=" + misses);
   var called = false;
   function safeCallback() {
     if (called) return;
     called = true;
-    console.log("[FLOW] showStageRank END → callback");
     displayEl.textContent = "";
     displayEl.style.color = "";
     displayEl.style.textShadow = "";
@@ -1752,12 +1750,10 @@ function showStageRank(stage, misses, displayEl, callback) {
     // 安全弁: 3秒経ってもcallbackが呼ばれなかったら強制発火
     setTimeout(function() {
       if (!called) {
-        console.warn("[FLOW] showStageRank SAFETY TIMEOUT — forcing callback");
         safeCallback();
       }
     }, 3000);
   } catch (e) {
-    console.error("[FLOW] showStageRank threw:", e);
     safeCallback();
   }
 }
@@ -1997,7 +1993,6 @@ const Game = {
   },
 
   showScreen(screenEl) {
-    console.log("[DIAG] Game.showScreen CALLED | target=" + (screenEl ? screenEl.id : "null") + " | sessionId BEFORE=" + this.sessionId);
     // ★ 全画面ビジュアル完全リセット（最優先）
     this._resetAllVisualState();
 
@@ -2008,7 +2003,6 @@ const Game = {
 
     // ★ 全セッション無効化: sessionIdを進めて古い全callbackを死滅させる
     this.sessionId++;
-    console.log("[DIAG] Game.showScreen sessionId AFTER=" + this.sessionId);
     this.answered = true;  // 入力拒否
     this.stopTimer();
     clearTimeout(this.oxTimeout);
@@ -2133,11 +2127,6 @@ const Game = {
     this.el.scoreNum.textContent = "0";
 
     this.roundCommands = TEST_MODE ? this.buildRoundsTest() : this.buildRounds();
-    console.log("[DIAG] Stage1 rounds | count=" + this.roundCommands.length + " | TEST_MODE=" + TEST_MODE);
-    for (var _di = 0; _di < this.roundCommands.length; _di++) {
-      var _dc = this.roundCommands[_di];
-      console.log("[DIAG] R" + (_di+1) + " theme=" + _dc.theme + " ruleType=" + _dc.ruleType + " cmd=" + _dc.command);
-    }
 
     this.clearMockery();
     this.clearTaunt();
@@ -2715,13 +2704,6 @@ const Game = {
     const cmd = this.roundCommands[this.currentRound];
     const highPressure = this.pressureLevel >= PRESSURE.thresholdHigh;
 
-    // === DEBUG: wait成功ログ ===
-    console.log("[JUDGE] R" + (this.currentRound+1) +
-      " | type:" + cmd.ruleType +
-      (cmd.correctType ? "/" + cmd.correctType : "") +
-      " | WAIT SUCCESS (timer expired = correct)" +
-      " | cmd:" + cmd.command);
-
     this.el.choicesArea.classList.remove("choices-appear");
     this.el.choicesArea.classList.add("choices-hidden");
     this.el.btnChoice0.disabled = true;
@@ -2761,13 +2743,6 @@ const Game = {
     }
 
     this.answered = true;  // ★ 判定消費（非waitの場合のみここで設定）
-
-    // === DEBUG: タイムアウト不正解ログ ===
-    console.log("[JUDGE] R" + (this.currentRound+1) +
-      " | type:" + cmd.ruleType +
-      (cmd.correctType ? "/" + cmd.correctType : "") +
-      " | TIMEOUT (wrong)" +
-      " | cmd:" + cmd.command);
 
     this.clearHint();
     this.isWaiting = true;
@@ -2812,16 +2787,6 @@ const Game = {
     const isCorrect = isWaitLike ? false : (index === cmd.correctIndex);
     const isEx = this.isException(cmd);
     const highPressure = this.pressureLevel >= PRESSURE.thresholdHigh;
-
-    // === DEBUG: 正解判定ログ ===
-    console.log("[JUDGE] R" + (this.currentRound+1) +
-      " | type:" + cmd.ruleType +
-      (cmd.correctType ? "/" + cmd.correctType : "") +
-      " | correct:" + cmd.correctIndex +
-      " | selected:" + index +
-      " | isWaitLike:" + isWaitLike +
-      " | result:" + (isCorrect ? "CORRECT" : "WRONG") +
-      " | cmd:" + cmd.command);
 
     this.el.choicesArea.classList.remove("choices-appear");
     this.el.btnChoice0.disabled = true;
@@ -2911,17 +2876,13 @@ const Game = {
 
   advanceAfterResult() {
     const gid = this.sessionId;
-    console.log("[DIAG] advanceAfterResult CALLED | R" + this.currentRound + " sessionId=" + gid);
     setTimeout(() => {
-      console.log("[DIAG] advanceAfterResult OUTER timeout | gid=" + gid + " current=" + this.sessionId);
-      if (this.sessionId !== gid) { console.error("[DIAG] OUTER sessionId MISMATCH — ABORTING"); return; }
+      if (this.sessionId !== gid) { return; }
       this.el.feedback.classList.add("feedback-fade");
       this.clearGameComment();
 
       setTimeout(() => {
-        console.log("[DIAG] advanceAfterResult INNER timeout | gid=" + gid + " current=" + this.sessionId);
-        if (this.sessionId !== gid) { console.error("[DIAG] INNER sessionId MISMATCH — ABORTING"); return; }
-        console.log("[FLOW] advanceAfterResult R" + this.currentRound + " contaminated=" + this.contaminated + " pressure=" + this.pressureLevel);
+        if (this.sessionId !== gid) { return; }
         if (this.contaminated) {
           // ゲームオーバー演出: laugh顔+捨てゼリフ+即リトライボタン→1秒後にリザルト
           var goTaunts = ["この程度で終わりか", "評価する価値もない", "ランク？ お前に？", "話にならんな", "もう帰れ"];
@@ -2946,10 +2907,8 @@ const Game = {
         }
 
         if (this.currentRound < ROUNDS_PER_GAME) {
-          console.log("[FLOW] → startRound R" + this.currentRound);
           this.startRound();
         } else {
-          console.log("[FLOW] → transitionToSlash (R" + this.currentRound + " >= " + ROUNDS_PER_GAME + ")");
           this.transitionToSlash();
         }
       }, TIMING.pausePhase);
@@ -2957,7 +2916,6 @@ const Game = {
   },
 
   transitionToSlash() {
-    console.log("[FLOW] transitionToSlash() ENTERED | sessionId=" + this.sessionId);
     this.stopTimer();
     SoundSystem.stopAmbient();
     SaveSystem.save("slash", 0, 0);
@@ -2971,7 +2929,6 @@ const Game = {
     // ★★ 強制通過型 proceed — 何があっても1回だけ Slash.start() を実行する ★★
     var proceeded = false;
     function proceed() {
-      console.log("[FLOW] proceed() called | proceeded=" + proceeded);
       if (proceeded) return;
       proceeded = true;
       overlay.removeEventListener("click", skipInterlude);
@@ -2983,23 +2940,19 @@ const Game = {
       text.textContent = "";
       overlay.classList.remove("dg-breakthrough-flash");
       // Stage2開始時のキモキャラ一言
-      var s2Lines = ["まだ終わったと思うな", "ここからが本番だ", "少しは楽しませろ", "調子に乗るなよ"];
+      var s2Lines = I18n.ta("interlude.s1toS2Lines");
+      if (!s2Lines.length) s2Lines = ["まだ終わったと思うな", "ここからが本番だ", "少しは楽しませろ", "調子に乗るなよ"];
       setTimeout(function() {
         text.textContent = s2Lines[Math.floor(Math.random() * s2Lines.length)];
         text.classList.add("dg-trans-text-show");
         setTimeout(function() {
           text.classList.remove("dg-trans-text-show");
           setTimeout(function() {
-            console.log("[FLOW] → Slash.start() about to fire");
             Game._transLock = 0;
-            try {
-              Slash.pressure = self.pressureLevel;
-              Slash.currentLayer = 0;
-              Slash.totalMisses = 0;
-              Slash.start();
-            } catch (e) {
-              console.error("[FLOW] Slash.start() threw:", e);
-            }
+            Slash.pressure = self.pressureLevel;
+            Slash.currentLayer = 0;
+            Slash.totalMisses = 0;
+            Slash.start();
             overlay.classList.remove("dg-trans-active");
             text.textContent = "";
           }, 400);
@@ -3016,33 +2969,30 @@ const Game = {
     var breakFace, breakLine;
     if (stage1Misses <= 1) {
       breakFace = "assets/enemy_frustrated_clean.png";
-      var lines = ["……読めてきたな", "気に食わないが、悪くない", "その顔、少し腹が立つな"];
+      var lines = I18n.ta("interlude.s1GoodLines");
+      if (!lines.length) lines = ["……読めてきたな", "気に食わないが、悪くない", "その顔、少し腹が立つな"];
       breakLine = lines[Math.floor(Math.random() * lines.length)];
     } else if (stage1Misses <= 3) {
       breakFace = "assets/enemy_blank_clean.png";
-      var lines = ["調子に乗るなよ", "まだ先は長いぞ", "少しは読めてきたか"];
+      var lines = I18n.ta("interlude.s1MidLines");
+      if (!lines.length) lines = ["調子に乗るなよ", "まだ先は長いぞ", "少しは読めてきたか"];
       breakLine = lines[Math.floor(Math.random() * lines.length)];
     } else {
       breakFace = "assets/enemy_shock_clean.png";
-      var lines = ["…やるじゃないか", "ギリギリだったな", "見苦しいが、生き残ったか"];
+      var lines = I18n.ta("interlude.s1BadLines");
+      if (!lines.length) lines = ["…やるじゃないか", "ギリギリだったな", "見苦しいが、生き残ったか"];
       breakLine = lines[Math.floor(Math.random() * lines.length)];
     }
     showStageRank("stage1", stage1Misses, text, function() {
-      console.log("[FLOW] stage1 rank complete → interlude");
-      try {
-        interImg.src = breakFace;
-        interImg.style.display = "";
-        interImg.classList.add("dg-interlude-show");
-        text.textContent = breakLine;
-        text.classList.add("dg-interlude-text-show");
-        overlay.classList.add("dg-breakthrough-flash");
-        SoundSystem.breakthroughChime();
-        overlay.addEventListener("click", skipInterlude);
-        interludeTimer = setTimeout(function() { proceed(); }, 2400);
-      } catch (e) {
-        console.error("[FLOW] stage1 interlude threw:", e);
-        proceed();
-      }
+      interImg.src = breakFace;
+      interImg.style.display = "";
+      interImg.classList.add("dg-interlude-show");
+      text.textContent = breakLine;
+      text.classList.add("dg-interlude-text-show");
+      overlay.classList.add("dg-breakthrough-flash");
+      SoundSystem.breakthroughChime();
+      overlay.addEventListener("click", skipInterlude);
+      interludeTimer = setTimeout(function() { proceed(); }, 2400);
     });
   },
 
@@ -4141,10 +4091,7 @@ const Dungeon = {
 
   // デバッグ用: 任意ステージから開始（コンソールで Dungeon.debugStartStage(5) 等）
   debugStartStage(stageNum) {
-    if (stageNum < 1 || stageNum > DUNGEON_STAGES.length) {
-      console.log("ステージは 1〜" + DUNGEON_STAGES.length + " の範囲で指定");
-      return;
-    }
+    if (stageNum < 1 || stageNum > DUNGEON_STAGES.length) return;
     this.currentStage = stageNum - 1;
     this.totalMisses = 0;
     this.pressure = 20;
@@ -4349,9 +4296,7 @@ const Slash = {
 
   start() {
     if (!this.el || !this.el.screen) this.init(); // init未実行ガード
-    console.log("[FLOW] Slash.start() entered | _transLock age=" + (Date.now() - Game._transLock) + "ms");
     if (!Game._guardTransition()) {
-      console.warn("[FLOW] Slash.start() BLOCKED by _guardTransition — forcing through");
       Game._transLock = 0; // 内部遷移は強制許可
     }
     Game._resetAllVisualState();
@@ -4383,14 +4328,12 @@ const Slash = {
 
   // === Stage2 導入演出（1行・軽め） ===
   _showSlashIntro(callback) {
-    console.log("[DIAG] _showSlashIntro CALLED | Slash.sessionId=" + this.sessionId);
     var sid = this.sessionId;
     var self = this;
     this.el.command.textContent = I18n.t("stageIntro.slash1");
     this.el.command.classList.add("sl-intro-text");
     setTimeout(function() {
-      console.log("[DIAG] _showSlashIntro timeout | sid=" + sid + " current=" + self.sessionId);
-      if (self.sessionId !== sid) { console.error("[DIAG] _showSlashIntro sessionId MISMATCH"); return; }
+      if (self.sessionId !== sid) { return; }
       self.el.command.classList.remove("sl-intro-text");
       self.el.command.textContent = "";
       if (callback) callback();
@@ -4447,7 +4390,6 @@ const Slash = {
   },
 
   showLayerTitle() {
-    console.log("[DIAG] Slash.showLayerTitle CALLED | layer=" + this.currentLayer);
     const layer = SLASH_LAYERS[this.currentLayer];
     this.el.layerName.textContent = layer.name;
     this.el.layerLabel.textContent = layer.name;
@@ -5257,7 +5199,6 @@ const Slash = {
     // ★★ 強制通過型 proceed — 何があっても1回だけ Crowd.start() を実行する ★★
     var proceeded = false;
     function proceed() {
-      console.log("[FLOW] proceed() called (→Crowd) | proceeded=" + proceeded);
       if (proceeded) return;
       proceeded = true;
       overlay.removeEventListener("click", skipInterlude);
@@ -5273,13 +5214,8 @@ const Slash = {
         setTimeout(function() {
           text.classList.remove("dg-trans-text-show");
           setTimeout(function() {
-            console.log("[FLOW] → Crowd.start() about to fire");
             Game._transLock = 0;
-            try {
-              Crowd.start();
-            } catch (e) {
-              console.error("[FLOW] Crowd.start() threw:", e);
-            }
+            Crowd.start();
             overlay.classList.remove("dg-trans-active");
             text.textContent = "";
           }, 400);
@@ -5293,21 +5229,15 @@ const Slash = {
 
     // ステージランク → キモキャラ割り込み演出
     showStageRank("stage2", self.totalMisses, text, function() {
-      console.log("[FLOW] stage2 rank complete → interlude");
-      try {
-        interImg.src = "assets/image_0.png";
-        interImg.style.display = "";
-        interImg.classList.add("dg-interlude-show");
-        text.textContent = I18n.t("crowd.interlude2");
-        text.classList.add("dg-interlude-text-show");
-        overlay.classList.add("dg-breakthrough-flash");
-        SoundSystem.breakthroughChime();
-        overlay.addEventListener("click", skipInterlude);
-        interludeTimer = setTimeout(function() { proceed(); }, 2400);
-      } catch (e) {
-        console.error("[FLOW] stage2 interlude threw:", e);
-        proceed();
-      }
+      interImg.src = "assets/image_0.png";
+      interImg.style.display = "";
+      interImg.classList.add("dg-interlude-show");
+      text.textContent = I18n.t("crowd.interlude2");
+      text.classList.add("dg-interlude-text-show");
+      overlay.classList.add("dg-breakthrough-flash");
+      SoundSystem.breakthroughChime();
+      overlay.addEventListener("click", skipInterlude);
+      interludeTimer = setTimeout(function() { proceed(); }, 2400);
     });
   },
 
@@ -6922,9 +6852,7 @@ const Crowd = {
   },
 
   start() {
-    console.log("[FLOW] Crowd.start() entered | _transLock age=" + (Date.now() - Game._transLock) + "ms");
     if (!Game._guardTransition()) {
-      console.warn("[FLOW] Crowd.start() BLOCKED by _guardTransition — forcing through");
       Game._transLock = 0;
     }
     Game._resetAllVisualState();
@@ -8762,13 +8690,16 @@ const Crowd = {
               var reactFace, reactLines;
               if (m <= 1) {
                 reactFace = "assets/enemy_shock_clean.png";
-                reactLines = ["……なんだそれは", "ありえない", "想定外だ"];
+                reactLines = I18n.ta("clearReact.goodLines");
+                if (!reactLines.length) reactLines = ["……なんだそれは", "ありえない", "想定外だ"];
               } else if (m <= 3) {
                 reactFace = "assets/enemy_frustrated_clean.png";
-                reactLines = ["……やるじゃないか", "気に入らない", "まだ あまいがな"];
+                reactLines = I18n.ta("clearReact.midLines");
+                if (!reactLines.length) reactLines = ["……やるじゃないか", "気に入らない", "まだ あまいがな"];
               } else {
                 reactFace = "assets/enemy_blank_clean.png";
-                reactLines = ["……生き残ったか", "運が良かったな", "見苦しいがな"];
+                reactLines = I18n.ta("clearReact.badLines");
+                if (!reactLines.length) reactLines = ["……生き残ったか", "運が良かったな", "見苦しいがな"];
               }
               var reactLine = reactLines[Math.floor(Math.random() * reactLines.length)];
 
@@ -8791,21 +8722,65 @@ const Crowd = {
                   reactWrap.classList.add("cw-clear-react-show");
                 });
 
-                // 三幕総括エピローグ
+                // 三幕総括エピローグ（タイプライター）
                 setTimeout(() => {
                   if (this.sessionId !== sid) return;
                   const epilogue = I18n.t("crowd.epilogue");
-                  this.el.clearEpilogue.textContent = epilogue;
-
-                  // ボタン
-                  setTimeout(() => {
-                    if (this.sessionId !== sid) return;
-                    this.el.clearButtons.style.opacity = "1";
-                    this.el.clearButtons.style.pointerEvents = "auto";
-                  }, 1000);
-                }, 700);
+                  const eChars = epilogue.split("");
+                  let ei = 0;
+                  const eTimer = setInterval(() => {
+                    if (this.sessionId !== sid) { clearInterval(eTimer); return; }
+                    if (ei < eChars.length) {
+                      const c = eChars[ei];
+                      if (c === "\n") {
+                        this.el.clearEpilogue.appendChild(document.createElement("br"));
+                        // \n\n（空行）の直後は400msポーズ
+                        if (ei + 1 < eChars.length && eChars[ei + 1] === "\n") {
+                          ei++;
+                          this.el.clearEpilogue.appendChild(document.createElement("br"));
+                          clearInterval(eTimer);
+                          setTimeout(() => {
+                            if (this.sessionId !== sid) return;
+                            ei++;
+                            const eTimer2 = setInterval(() => {
+                              if (this.sessionId !== sid) { clearInterval(eTimer2); return; }
+                              if (ei < eChars.length) {
+                                const c2 = eChars[ei];
+                                if (c2 === "\n") {
+                                  this.el.clearEpilogue.appendChild(document.createElement("br"));
+                                } else {
+                                  this.el.clearEpilogue.appendChild(document.createTextNode(c2));
+                                }
+                                ei++;
+                              } else {
+                                clearInterval(eTimer2);
+                                setTimeout(() => {
+                                  if (this.sessionId !== sid) return;
+                                  this.el.clearButtons.style.opacity = "1";
+                                  this.el.clearButtons.style.pointerEvents = "auto";
+                                }, 1500);
+                              }
+                            }, 80);
+                          }, 400);
+                          return;
+                        }
+                      } else {
+                        this.el.clearEpilogue.appendChild(document.createTextNode(c));
+                      }
+                      ei++;
+                    } else {
+                      clearInterval(eTimer);
+                      // ボタン
+                      setTimeout(() => {
+                        if (this.sessionId !== sid) return;
+                        this.el.clearButtons.style.opacity = "1";
+                        this.el.clearButtons.style.pointerEvents = "auto";
+                      }, 1500);
+                    }
+                  }, 80);
+                }, 800);
               }, 600);
-            }, 500);
+            }, 1200);
           }
         }, 75);
       }, 900);
@@ -8846,19 +8821,15 @@ const TitlePrologue = {
   shown: false,
 
   init() {
-    console.log("[PROLOGUE] init");
     this.el = document.getElementById("title-prologue");
-    if (!this.el) { console.error("[PROLOGUE] #title-prologue not found"); return; }
+    if (!this.el) { return; }
     this.lines = this.el.querySelectorAll(".prologue-line");
-    console.log("[PROLOGUE] init done — el:", this.el, "lines:", this.lines.length);
   },
 
   startIdle() {
-    console.log("[PROLOGUE] startIdle");
     this.stopAll();
     this.shown = false;
     this.idleTimeout = setTimeout(() => this.showPrologue(), 8000);
-    console.log("[PROLOGUE] timer set — id:", this.idleTimeout);
   },
 
   stopAll() {
@@ -8876,12 +8847,10 @@ const TitlePrologue = {
   },
 
   showPrologue() {
-    console.log("[PROLOGUE] showPrologue entered — shown:", this.shown, "el:", this.el);
     if (this.shown) return;
-    if (!this.el) { console.error("[PROLOGUE] el is null"); return; }
+    if (!this.el) { return; }
     this.shown = true;
 
-    console.log("[PROLOGUE] applying visible state");
     this.el.classList.add("prologue-active");
     this.el.classList.remove("prologue-fadeout");
     // CSS transition fallback: inline style guarantees visibility
@@ -8920,7 +8889,6 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem(SaveSystem.KEY);
     localStorage.removeItem("kusokurae_lang");
     localStorage.removeItem("kusokurae_tutorial_done");
-    console.log("[DEV] localStorage reset by ?reset=1");
     // パラメータ除去してリロード
     window.history.replaceState({}, "", window.location.pathname);
   }
@@ -8969,6 +8937,6 @@ document.addEventListener("DOMContentLoaded", function() {
     TitlePrologue.init();
     TitlePrologue.startIdle();
   } catch (e) {
-    console.error("[PROLOGUE] init failed:", e);
+    // silent
   }
 });
