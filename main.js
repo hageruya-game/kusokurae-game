@@ -1919,7 +1919,7 @@ const Game = {
       }, 450);
     });
 
-    CommentSystem.show("title", this.el.titleComment);
+    if (this.el.titleComment) CommentSystem.show("title", this.el.titleComment);
   },
 
   // ★★★ グローバル遷移ガード（連打・多重起動防止）★★★
